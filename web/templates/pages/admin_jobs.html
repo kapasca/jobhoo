@@ -1,0 +1,39 @@
+{{define "content"}}
+<section class="page-wrap max-w-5xl">
+    <div class="page-head">
+        <h1 class="section-title">Semua Lowongan</h1>
+        <span class="badge-count">{{.Pagination.TotalItems}} total</span>
+    </div>
+
+    {{if .Jobs}}
+    <div class="list-panel">
+        {{range .Jobs}}
+        <div class="list-row flex items-center justify-between gap-3 flex-wrap">
+            <div>
+                <a href="/jobs/{{.ID}}" class="text-sm font-medium hover:underline">{{.Title}}</a>
+                <p class="text-xs text-slate-500">{{.Position}} · {{.Location}}</p>
+            </div>
+            {{if eq .Status "open"}}
+                <span class="status-open">Dibuka</span>
+            {{else}}
+                <span class="status-closed">Ditutup</span>
+            {{end}}
+        </div>
+        {{end}}
+    </div>
+    <div class="mt-6 flex items-center justify-between gap-3">
+        <span class="text-xs text-slate-500">Halaman {{.Pagination.Page}} / {{.Pagination.TotalPages}}</span>
+        <div class="flex gap-2">
+            {{if .Pagination.HasPrev}}
+            <a href="/admin/jobs?page={{.Pagination.PrevPage}}" class="btn-secondary text-xs px-3 py-1.5">Sebelumnya</a>
+            {{end}}
+            {{if .Pagination.HasNext}}
+            <a href="/admin/jobs?page={{.Pagination.NextPage}}" class="btn-secondary text-xs px-3 py-1.5">Berikutnya</a>
+            {{end}}
+        </div>
+    </div>
+    {{else}}
+    <p class="text-sm text-slate-500">Belum ada lowongan.</p>
+    {{end}}
+</section>
+{{end}}

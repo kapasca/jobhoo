@@ -1,0 +1,82 @@
+{{define "content"}}
+<section class="page-wrap max-w-5xl">
+    <div class="page-head">
+        <h1 class="section-title">Approval Recruiter</h1>
+        <span class="badge-count">{{.AllPagination.TotalItems}} total</span>
+    </div>
+
+    <div class="mt-8">
+        <h2 class="font-semibold text-sm text-slate-700 mb-3">Pending ({{.PendingPagination.TotalItems}})</h2>
+        {{if .Pending}}
+        <div class="list-panel">
+            {{range .Pending}}
+            <div class="list-row flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                    <p class="font-medium text-sm">{{.CompanyName}}</p>
+                    <p class="text-xs text-slate-500">{{.Email}}</p>
+                    <a href="{{.DocumentPath}}" target="_blank" rel="noopener noreferrer" class="text-xs text-brand-700 underline underline-offset-4">Lihat dokumen</a>
+                </div>
+                <div class="flex gap-2">
+                    <form method="POST" action="/admin/recruiters/{{.UserID}}/approve">
+                        <button class="btn-primary text-xs px-3 py-1.5" type="submit">Approve</button>
+                    </form>
+                    <form method="POST" action="/admin/recruiters/{{.UserID}}/reject" onsubmit="return confirm('Reject recruiter ini?');">
+                        <button class="btn-secondary text-xs px-3 py-1.5 text-red-600" type="submit">Reject</button>
+                    </form>
+                </div>
+            </div>
+            {{end}}
+        </div>
+        <div class="mt-4 flex items-center justify-between gap-3">
+            <span class="text-xs text-slate-500">Halaman {{.PendingPagination.Page}} / {{.PendingPagination.TotalPages}}</span>
+            <div class="flex gap-2">
+                {{if .PendingPagination.HasPrev}}
+                <a href="/admin/recruiters?pending_page={{.PendingPagination.PrevPage}}&all_page={{.AllPagination.Page}}" class="btn-secondary text-xs px-3 py-1.5">Sebelumnya</a>
+                {{end}}
+                {{if .PendingPagination.HasNext}}
+                <a href="/admin/recruiters?pending_page={{.PendingPagination.NextPage}}&all_page={{.AllPagination.Page}}" class="btn-secondary text-xs px-3 py-1.5">Berikutnya</a>
+                {{end}}
+            </div>
+        </div>
+        {{else}}
+        <p class="text-sm text-slate-500">Tidak ada recruiter pending.</p>
+        {{end}}
+    </div>
+
+    <div class="mt-10">
+        <h2 class="font-semibold text-sm text-slate-700 mb-3">Semua Recruiter</h2>
+        {{if .All}}
+        <div class="list-panel">
+            {{range .All}}
+            <div class="list-row flex items-center justify-between gap-3 flex-wrap">
+                <div>
+                    <p class="font-medium text-sm">{{.CompanyName}}</p>
+                    <p class="text-xs text-slate-500">{{.Email}}</p>
+                </div>
+                {{if eq .Status "approved"}}
+                    <span class="status-approved">Approved</span>
+                {{else if eq .Status "rejected"}}
+                    <span class="status-rejected">Rejected</span>
+                {{else}}
+                    <span class="status-pending">Pending</span>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+        <div class="mt-4 flex items-center justify-between gap-3">
+            <span class="text-xs text-slate-500">Halaman {{.AllPagination.Page}} / {{.AllPagination.TotalPages}}</span>
+            <div class="flex gap-2">
+                {{if .AllPagination.HasPrev}}
+                <a href="/admin/recruiters?pending_page={{.PendingPagination.Page}}&all_page={{.AllPagination.PrevPage}}" class="btn-secondary text-xs px-3 py-1.5">Sebelumnya</a>
+                {{end}}
+                {{if .AllPagination.HasNext}}
+                <a href="/admin/recruiters?pending_page={{.PendingPagination.Page}}&all_page={{.AllPagination.NextPage}}" class="btn-secondary text-xs px-3 py-1.5">Berikutnya</a>
+                {{end}}
+            </div>
+        </div>
+        {{else}}
+        <p class="text-sm text-slate-500">Belum ada recruiter terdaftar.</p>
+        {{end}}
+    </div>
+</section>
+{{end}}

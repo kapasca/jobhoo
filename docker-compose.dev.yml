@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/jobhoo?sslmode=disable"
+      PORT: "8070"
+      MIGRATIONS_DIR: "/app/migrations"
+      TEMPLATES_DIR: "/app/web/templates"
+      STATIC_DIR: "/app/web/static"
+      UPLOAD_DIR: "/app/uploads"
+    ports:
+      - "8070:8070"
+    volumes:
+      - .:/app
+      - jobhoo_uploads:/app/uploads
+
+  seed:
+    image: golang:1.25-bookworm
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://postgres:postgres@db:5432/jobhoo?sslmode=disable"
+      MIGRATIONS_DIR: "/app/migrations"
+      TEMPLATES_DIR: "/app/web/templates"
+      STATIC_DIR: "/app/web/static"
+      UPLOAD_DIR: "/app/uploads"
+    volumes:
+      - .:/app
+      - jobhoo_uploads:/app/uploads
+    command: ["go", "run", "./cmd/seed"]

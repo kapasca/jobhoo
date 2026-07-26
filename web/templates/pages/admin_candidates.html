@@ -1,0 +1,32 @@
+{{define "content"}}
+<section class="page-wrap max-w-5xl">
+    <div class="page-head">
+        <h1 class="section-title">Candidates</h1>
+        <span class="badge-count">{{.Pagination.TotalItems}} total</span>
+    </div>
+
+    {{if .Candidates}}
+    <div class="list-panel">
+        {{range .Candidates}}
+        <div class="list-row flex items-center justify-between gap-3">
+            <p class="text-sm font-medium">{{.Email}}</p>
+            <p class="text-xs text-slate-400">{{.CreatedAt.Format "2 Jan 2006"}}</p>
+        </div>
+        {{end}}
+    </div>
+    <div class="mt-6 flex items-center justify-between gap-3">
+        <span class="text-xs text-slate-500">Halaman {{.Pagination.Page}} / {{.Pagination.TotalPages}}</span>
+        <div class="flex gap-2">
+            {{if .Pagination.HasPrev}}
+            <a href="/admin/candidates?page={{.Pagination.PrevPage}}" class="btn-secondary text-xs px-3 py-1.5">Sebelumnya</a>
+            {{end}}
+            {{if .Pagination.HasNext}}
+            <a href="/admin/candidates?page={{.Pagination.NextPage}}" class="btn-secondary text-xs px-3 py-1.5">Berikutnya</a>
+            {{end}}
+        </div>
+    </div>
+    {{else}}
+    <p class="text-sm text-slate-500">Belum ada candidate terdaftar.</p>
+    {{end}}
+</section>
+{{end}}

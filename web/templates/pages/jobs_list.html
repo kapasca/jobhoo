@@ -1,0 +1,30 @@
+{{define "content"}}
+<section class="page-wrap">
+    <div class="page-head">
+        <div>
+            <span class="section-kicker">Open roles</span>
+            <h1 class="section-title mt-3">Lowongan</h1>
+        </div>
+        <div class="badge-count">{{.Pagination.TotalItems}} aktif</div>
+    </div>
+
+    {{if .Jobs}}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {{range .Jobs}}{{template "job_card" .}}{{end}}
+    </div>
+    <div class="mt-8 flex items-center justify-between gap-3">
+        <span class="text-xs text-slate-500">Halaman {{.Pagination.Page}} / {{.Pagination.TotalPages}}</span>
+        <div class="flex gap-2">
+            {{if .Pagination.HasPrev}}
+            <a href="/jobs?page={{.Pagination.PrevPage}}" class="btn-secondary text-xs px-3 py-1.5">Sebelumnya</a>
+            {{end}}
+            {{if .Pagination.HasNext}}
+            <a href="/jobs?page={{.Pagination.NextPage}}" class="btn-secondary text-xs px-3 py-1.5">Berikutnya</a>
+            {{end}}
+        </div>
+    </div>
+    {{else}}
+    <div class="card p-8 text-sm text-slate-600">Belum ada lowongan saat ini.</div>
+    {{end}}
+</section>
+{{end}}

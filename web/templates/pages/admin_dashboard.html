@@ -1,0 +1,35 @@
+{{define "content"}}
+<section class="page-wrap">
+    <div class="page-head">
+        <h1 class="section-title">Super Admin</h1>
+        {{if gt .PendingRecruiters 0}}
+        <span class="status-pending">{{.PendingRecruiters}} butuh approval</span>
+        {{end}}
+    </div>
+
+    <div class="grid sm:grid-cols-4 gap-4 mt-8">
+        <a href="/admin/recruiters" class="metric-card hover:-translate-y-0.5">
+            <p class="metric-label">Pending</p>
+            <p class="metric-value">{{.PendingRecruiters}}</p>
+        </a>
+        <div class="metric-card">
+            <p class="metric-label">Recruiters</p>
+            <p class="metric-value">{{.TotalRecruiters}}</p>
+        </div>
+        <div class="metric-card">
+            <p class="metric-label">Candidates</p>
+            <p class="metric-value">{{.TotalCandidates}}</p>
+        </div>
+        <div class="metric-card">
+            <p class="metric-label">Jobs</p>
+            <p class="metric-value">{{.TotalJobs}}</p>
+        </div>
+    </div>
+
+    <div class="mt-8 flex gap-3 flex-wrap">
+        <a href="/admin/recruiters" class="btn-secondary">Kelola Approval Recruiter →</a>
+        <a href="/admin/candidates" class="btn-secondary">Lihat Candidates →</a>
+        <a href="/admin/jobs" class="btn-secondary">Lihat Jobs →</a>
+    </div>
+</section>
+{{end}}

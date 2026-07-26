@@ -1,0 +1,4 @@
+github.com/golang/crypto v0.17.0 h1:lU0jL88wT6rwhT+l2HrLJ2owjy60NK7dLlWYsSon9u8=
+github.com/golang/crypto v0.17.0/go.mod h1:gCAAfMLgwOJRpTjQ2zCCt2OcSfYMTeZVSRtQlPC7Nq4=
+github.com/lib/pq v1.12.3 h1:tTWxr2YLKwIvK90ZXEw8GP7UFHtcbTtty8zsI+YjrfQ=
+github.com/lib/pq v1.12.3/go.mod h1:/p+8NSbOcwzAEI7wiMXFlgydTwcgTr3OSKMsD2BitpA=

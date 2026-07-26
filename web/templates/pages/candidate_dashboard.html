@@ -1,0 +1,55 @@
+{{define "content"}}
+<section class="page-wrap">
+    <div class="page-head">
+        <div>
+            <span class="section-kicker">Candidate</span>
+            <h1 class="section-title mt-3">Dashboard</h1>
+        </div>
+        <span class="badge-count max-w-full truncate">{{.Profile.FullName}}</span>
+    </div>
+
+    <div class="grid sm:grid-cols-3 gap-4">
+        <div class="metric-card">
+            <p class="metric-label">Aktif</p>
+            <p class="metric-value">{{.ActiveCount}}</p>
+        </div>
+        <div class="metric-card">
+            <p class="metric-label">Total</p>
+            <p class="metric-value">{{.TotalCount}}</p>
+        </div>
+        <div class="metric-card">
+            <p class="metric-label">Resume</p>
+            <p class="text-sm font-semibold mt-2 truncate">{{.Profile.ResumeFilename}}</p>
+            <a href="/resume" class="text-xs text-brand-700 underline underline-offset-4 mt-1 inline-block">Ubah →</a>
+        </div>
+    </div>
+
+    <div class="mt-6 flex flex-wrap gap-2">
+        <a href="/jobs" class="quick-link">Cari Lowongan</a>
+        <a href="/applications" class="quick-link">Lihat Lamaran</a>
+        <a href="/resume" class="quick-link">Update Resume</a>
+    </div>
+
+    <div class="mt-10">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="font-semibold">Lamaran Terbaru</h2>
+            <a href="/applications" class="text-sm text-slate-500 hover:text-slate-950">Lihat semua →</a>
+        </div>
+        {{if .RecentApplications}}
+        <div class="list-panel">
+            {{range .RecentApplications}}
+            <div class="list-row flex items-center justify-between gap-3">
+                <div>
+                    <p class="font-medium text-sm">{{.JobTitle}}</p>
+                    <p class="text-xs text-slate-500">{{.CreatedAt.Format "2 Jan 2006"}}</p>
+                </div>
+                <span class="status-muted">{{stageLabel .Stage}}</span>
+            </div>
+            {{end}}
+        </div>
+        {{else}}
+        <p class="text-sm text-slate-500">Belum ada lamaran. <a href="/jobs" class="text-brand-700 underline underline-offset-4">Cari lowongan →</a></p>
+        {{end}}
+    </div>
+</section>
+{{end}}
