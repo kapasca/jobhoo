@@ -15,4 +15,4 @@ COPY --from=build /jobhoo ./jobhoo
 COPY --from=build /jobhoo-seed ./jobhoo-seed
 COPY --from=build /app/web ./web
 EXPOSE 8080
-ENTRYPOINT ["./jobhoo"]
+CMD ["./jobhoo"]

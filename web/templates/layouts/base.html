@@ -20,10 +20,11 @@
       </a>
       <nav class="jh-nav__links">
         <a href="/jobs" class="jh-nav__link {{if eq .ActiveNav "jobs"}}is-active{{end}}">Browse Jobs</a>
-        {{if or (not .CurrentUser) (eq .CurrentUser.Role "recruiter")}}
+        {{if not .CurrentUser}}
           <a href="/post-job" class="jh-nav__link {{if eq .ActiveNav "post"}}is-active{{end}}">Post a Job</a>
-        {{end}}
-        {{if eq .CurrentUser.Role "candidate"}}
+        {{else if eq .CurrentUser.Role "recruiter"}}
+          <a href="/post-job" class="jh-nav__link {{if eq .ActiveNav "post"}}is-active{{end}}">Post a Job</a>
+        {{else if eq .CurrentUser.Role "candidate"}}
           <a href="/profile" class="jh-nav__link {{if eq .ActiveNav "profile"}}is-active{{end}}">Profile</a>
         {{end}}
       </nav>

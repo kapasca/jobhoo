@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -45,9 +46,11 @@ type pageData struct {
 func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 	result, err := h.Jobs.ListPublished(r.Context(), database.JobListFilter{Limit: 6})
 	if err != nil {
+		log.Printf("Home handler error: %v", err)
 		http.Error(w, "could not load jobs", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("Home handler: loaded %d jobs (total: %d)", len(result.Jobs), result.Total)
 	h.Render.Render(w, http.StatusOK, "home.html", pageData{BasePageData: newBasePageData(r, "home"), Jobs: result.Jobs})
 }
 

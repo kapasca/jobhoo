@@ -97,8 +97,8 @@ func (c JobCategory) Label() string {
 type Job struct {
 	ID               string
 	CompanyID        string
-	CompanyName      string // denormalized for card rendering
-	CompanyLogoURL   string // denormalized for card rendering
+	CompanyName      string  // denormalized for card rendering
+	CompanyLogoURL   *string // denormalized for card rendering; nullable since logo_url can be NULL in companies table
 	CreatedBy        string
 	Title            string
 	Description      string

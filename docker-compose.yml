@@ -10,7 +10,8 @@ services:
       - "5432:5432"
     volumes:
       - jobhoo_pgdata:/var/lib/postgresql/data
-      - ./internal/database/migrations:/docker-entrypoint-initdb.d
+      - ./internal/database/migrations/init-migrations.sh:/docker-entrypoint-initdb.d/00-run-migrations.sh
+      - ./internal/database/migrations:/migrations:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U jobhoo"]
       interval: 5s
@@ -25,12 +26,12 @@ services:
         condition: service_healthy
     environment:
       APP_ENV: development
-      PORT: 8080
+      PORT: 8070
       DATABASE_URL: postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable
       SESSION_SECRET: dev-only-secret-change-me
       AI_PROVIDER: mock
     ports:
-      - "8080:8080"
+      - "8070:8070"
 
 volumes:
   jobhoo_pgdata:
