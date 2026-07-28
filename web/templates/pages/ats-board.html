@@ -1,0 +1,84 @@
+{{define "title"}}{{.Job.Title}} pipeline — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container" style="padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-4);">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:var(--jh-space-3);">
+    <div>
+      <a href="/dashboard/recruiter" style="font-size:var(--jh-text-sm);color:var(--jh-ink-500);">← Back to dashboard</a>
+      <h1 style="margin-top:4px;">{{.Job.Title}}</h1>
+    </div>
+    <button class="btn btn--primary" hx-post="/recruiter/jobs/{{.Job.ID}}/rank" hx-target="#ats-columns" hx-swap="outerHTML">
+      ✨ Rank candidates with AI
+    </button>
+  </div>
+  <p style="max-width:640px;">AI ranking is a suggestion to help you prioritize review — it never changes a candidate's stage or hides anyone.</p>
+</section>
+
+<section class="container" style="padding:0 var(--jh-space-5) var(--jh-space-9);overflow-x:auto;">
+  {{template "ats-columns" .}}
+
+  {{if .Rejected}}
+    <details style="margin-top:var(--jh-space-6);">
+      <summary style="cursor:pointer;color:var(--jh-ink-300);font-size:var(--jh-text-sm);">Rejected ({{len .Rejected}})</summary>
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));margin-top:var(--jh-space-3);">
+        {{range .Rejected}}{{template "ats-card" .}}{{end}}
+      </div>
+    </details>
+  {{end}}
+</section>
+{{end}}
+
+{{define "ats-columns"}}
+<div id="ats-columns" style="display:flex;gap:var(--jh-space-4);min-width:1100px;">
+  {{range .Columns}}
+    <div style="flex:1;min-width:220px;">
+      <h3 style="font-size:var(--jh-text-sm);text-transform:uppercase;letter-spacing:0.04em;color:var(--jh-ink-500);margin-bottom:var(--jh-space-3);">
+        {{.Label}} <span class="badge" style="margin-left:4px;">{{len .Applications}}</span>
+      </h3>
+      <div style="display:flex;flex-direction:column;gap:var(--jh-space-3);">
+        {{range .Applications}}{{template "ats-card" .}}{{end}}
+        {{if not .Applications}}
+          <div class="empty-state" style="padding:var(--jh-space-5) var(--jh-space-3);">
+            <p style="margin:0;font-size:var(--jh-text-xs);">No one here yet</p>
+          </div>
+        {{end}}
+      </div>
+    </div>
+  {{end}}
+</div>
+{{end}}
+
+{{define "ats-card"}}
+<div class="card" style="padding:var(--jh-space-4);">
+  <p style="color:var(--jh-white);font-weight:600;margin:0 0 2px;">{{.CandidateName}}</p>
+  <p style="font-size:var(--jh-text-xs);margin:0 0 var(--jh-space-2);">{{.CandidateEmail}}</p>
+
+  {{if .CandidateSkills}}
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:var(--jh-space-2);">
+      {{range .CandidateSkills}}<span class="badge" style="font-size:10px;padding:2px 8px;">{{.}}</span>{{end}}
+    </div>
+  {{end}}
+
+  {{if .HasAIRank}}
+    <div class="alert" style="padding:var(--jh-space-2) var(--jh-space-3);margin-bottom:var(--jh-space-2);border-color:var(--jh-orange-500);">
+      <p style="margin:0;font-size:var(--jh-text-xs);"><strong style="color:var(--jh-orange-400);">AI fit: {{.AIScore}}%</strong> — {{.AISummary}}</p>
+    </div>
+  {{end}}
+
+  {{if .CoverNote}}
+    <p style="font-size:var(--jh-text-xs);font-style:italic;">"{{.CoverNote}}"</p>
+  {{end}}
+
+  <form method="POST" action="/ats/applications/{{.ID}}/stage" style="margin-top:var(--jh-space-2);">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+    <select name="stage" onchange="this.form.submit()" style="font-size:var(--jh-text-xs);padding:0.4rem 0.6rem;">
+      <option value="applied" {{if eq .Stage "applied"}}selected{{end}}>Applied</option>
+      <option value="screening" {{if eq .Stage "screening"}}selected{{end}}>Screening</option>
+      <option value="interview" {{if eq .Stage "interview"}}selected{{end}}>Interview</option>
+      <option value="offer" {{if eq .Stage "offer"}}selected{{end}}>Offer</option>
+      <option value="hired" {{if eq .Stage "hired"}}selected{{end}}>Hired</option>
+      <option value="rejected" {{if eq .Stage "rejected"}}selected{{end}}>Rejected</option>
+    </select>
+  </form>
+</div>
+{{end}}

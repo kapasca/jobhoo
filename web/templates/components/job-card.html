@@ -1,0 +1,38 @@
+{{define "job-card"}}
+<article class="job-card">
+  <div class="job-card__top">
+    <div class="job-card__logo">
+      <img src="{{if .CompanyLogoURL}}{{.CompanyLogoURL}}{{else}}/static/img/jobhoo-icon.png{{end}}" alt="{{.CompanyName}} logo">
+    </div>
+    <div class="job-card__heading">
+      <p class="job-card__title">{{.Title}}</p>
+      <p class="job-card__company">{{.CompanyName}}</p>
+    </div>
+    <button class="job-card__bookmark" title="Save job" aria-label="Save job"
+            hx-post="/jobs/{{.ID}}/save" hx-swap="outerHTML">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="job-card__meta">
+    <span class="badge badge--orange">{{.Category.Label}}</span>
+    <span class="badge">{{.Location}}</span>
+    <span class="badge badge--remote">{{.WorkArrangement}}</span>
+    <span class="badge">{{.EmploymentType}}</span>
+  </div>
+
+  <div class="job-card__footer">
+    <div>
+      {{if .SalaryMin}}
+        <span class="job-card__salary">{{.SalaryCurrency}} {{.SalaryMin}}–{{.SalaryMax}}</span>
+      {{else}}
+        <span class="job-card__salary" style="color:var(--jh-ink-500);font-weight:500;">Salary not disclosed</span>
+      {{end}}
+      <div class="job-card__posted">{{.PostedAgo}}</div>
+    </div>
+    <a href="/jobs/{{.ID}}" class="btn btn--primary btn--sm">View & Apply</a>
+  </div>
+</article>
+{{end}}

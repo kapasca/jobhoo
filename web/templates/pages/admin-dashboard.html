@@ -1,0 +1,33 @@
+{{define "title"}}Admin — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container" style="padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-9);">
+  <h1>Platform overview</h1>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+    <div class="card">
+      <p style="font-size:var(--jh-text-3xl);color:var(--jh-white);font-weight:700;margin:0;">{{.TotalUsers}}</p>
+      <p style="margin:0;">Total users</p>
+    </div>
+    <div class="card">
+      <p style="font-size:var(--jh-text-3xl);color:var(--jh-orange-500);font-weight:700;margin:0;">{{.TotalCandidates}}</p>
+      <p style="margin:0;">Candidates</p>
+    </div>
+    <div class="card">
+      <p style="font-size:var(--jh-text-3xl);color:var(--jh-orange-500);font-weight:700;margin:0;">{{.TotalRecruiters}}</p>
+      <p style="margin:0;">Recruiters</p>
+    </div>
+    <div class="card">
+      <p style="font-size:var(--jh-text-3xl);color:var(--jh-white);font-weight:700;margin:0;">{{.TotalCompanies}}</p>
+      <p style="margin:0;">Companies</p>
+    </div>
+    <div class="card">
+      <p style="font-size:var(--jh-text-3xl);color:var(--jh-white);font-weight:700;margin:0;">{{.TotalJobs}}</p>
+      <p style="margin:0;">Jobs posted</p>
+    </div>
+    <div class="card">
+      <p style="font-size:var(--jh-text-3xl);color:var(--jh-white);font-weight:700;margin:0;">{{.TotalApplications}}</p>
+      <p style="margin:0;">Applications</p>
+    </div>
+  </div>
+</section>
+{{end}}

@@ -1,0 +1,65 @@
+{{define "title"}}Browse Jobs — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container" style="padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-4);">
+  <h1 style="font-size:var(--jh-text-3xl);">Browse Jobs</h1>
+
+  <form id="job-filters" hx-get="/jobs/search" hx-target="#job-results" hx-swap="innerHTML" hx-push-url="/jobs">
+    <div class="search-bar" style="margin-bottom:var(--jh-space-4);">
+      <input type="search" name="q" value="{{.Search}}" placeholder="Search job title or skill"
+             hx-get="/jobs/search" hx-trigger="keyup changed delay:400ms" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
+      <button type="submit" class="btn btn--primary btn--sm">Search</button>
+    </div>
+    <div style="display:flex;gap:var(--jh-space-2);flex-wrap:wrap;margin-bottom:var(--jh-space-6);">
+      {{range .Categories}}
+        <button type="submit" name="category" value="{{.Value}}"
+                class="filter-chip {{if .IsActive}}is-active{{end}}"
+                hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
+          {{.Label}}
+        </button>
+      {{end}}
+    </div>
+  </form>
+</section>
+
+<section class="container" style="padding:0 var(--jh-space-5) var(--jh-space-9);">
+  <div id="job-results">
+    {{template "job-results" .}}
+  </div>
+</section>
+{{end}}
+
+{{define "job-results"}}
+  <p style="margin:0 0 var(--jh-space-4);font-size:var(--jh-text-sm);color:var(--jh-ink-500);">
+    {{.Total}} job{{if ne .Total 1}}s{{end}} found
+  </p>
+
+  {{if .Jobs}}
+    <div class="grid grid--jobs">
+      {{range .Jobs}}
+        {{template "job-card" .}}
+      {{end}}
+    </div>
+
+    {{if gt .TotalPages 1}}
+      <div style="display:flex;justify-content:center;align-items:center;gap:var(--jh-space-3);margin-top:var(--jh-space-7);">
+        {{if .HasPrev}}
+          <button class="btn btn--secondary btn--sm"
+                  hx-get="/jobs/search?q={{.Search}}&category={{.Category}}&page={{.PrevPage}}"
+                  hx-target="#job-results" hx-push-url="/jobs">← Previous</button>
+        {{end}}
+        <span style="font-size:var(--jh-text-sm);color:var(--jh-ink-300);">Page {{.Page}} of {{.TotalPages}}</span>
+        {{if .HasNext}}
+          <button class="btn btn--secondary btn--sm"
+                  hx-get="/jobs/search?q={{.Search}}&category={{.Category}}&page={{.NextPage}}"
+                  hx-target="#job-results" hx-push-url="/jobs">Next →</button>
+        {{end}}
+      </div>
+    {{end}}
+  {{else}}
+    <div class="empty-state">
+      <h3>No jobs match yet</h3>
+      <p>Try a different search term or clear your filters.</p>
+    </div>
+  {{end}}
+{{end}}

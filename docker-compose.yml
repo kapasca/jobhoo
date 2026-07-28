@@ -3,15 +3,16 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: jobhoo
-    volumes:
-      - jobhoo_pgdata:/var/lib/postgresql/data
+      POSTGRES_USER: jobhoo
+      POSTGRES_PASSWORD: jobhoo_dev_password
     ports:
       - "5432:5432"
+    volumes:
+      - jobhoo_pgdata:/var/lib/postgresql/data
+      - ./internal/database/migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U jobhoo"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -23,27 +24,13 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: "postgres://postgres:postgres@db:5432/jobhoo?sslmode=disable"
-      PORT: "8070"
+      APP_ENV: development
+      PORT: 8080
+      DATABASE_URL: postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable
+      SESSION_SECRET: dev-only-secret-change-me
+      AI_PROVIDER: mock
     ports:
-      - "8070:8070"
-    volumes:
-      - jobhoo_uploads:/app/uploads
-
-  # One-off container to populate demo data. Run with:
-  #   docker compose run --rm seed
-  seed:
-    build: .
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: "postgres://postgres:postgres@db:5432/jobhoo?sslmode=disable"
-    volumes:
-      - jobhoo_uploads:/app/uploads
-    entrypoint: ["./seed"]
-    profiles: ["tools"]
+      - "8080:8080"
 
 volumes:
   jobhoo_pgdata:
-  jobhoo_uploads:

@@ -1,0 +1,35 @@
+{{define "title"}}Set up your company — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container" style="max-width:520px;padding:var(--jh-space-8) var(--jh-space-5);">
+  <div class="card card--pad-lg">
+    <h2>Set up your company</h2>
+    <p style="margin-bottom:var(--jh-space-5);">One quick step before you post your first job.</p>
+
+    {{if .Error}}
+      <div class="alert alert--warning" style="margin-bottom:var(--jh-space-4);">{{.Error}}</div>
+    {{end}}
+
+    <form method="POST" action="/company/setup">
+      <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+      <div class="field">
+        <label for="name">Company name</label>
+        <input type="text" id="name" name="name" value="{{.Name}}" placeholder="Acme Robotics" required autofocus>
+      </div>
+      <div class="field">
+        <label for="industry">Industry</label>
+        <input type="text" id="industry" name="industry" value="{{.Industry}}" placeholder="e.g. Technology, Retail, Healthcare">
+      </div>
+      <div class="field">
+        <label for="website">Website</label>
+        <input type="url" id="website" name="website" value="{{.Website}}" placeholder="https://example.com">
+      </div>
+      <div class="field">
+        <label for="description">Short description</label>
+        <textarea id="description" name="description" rows="3" placeholder="What does your company do?">{{.Description}}</textarea>
+      </div>
+      <button type="submit" class="btn btn--primary btn--block">Continue</button>
+    </form>
+  </div>
+</section>
+{{end}}

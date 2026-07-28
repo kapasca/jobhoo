@@ -1,0 +1,86 @@
+{{define "title"}}Post a Job — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container" style="max-width:680px;padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-9);">
+  <h1>Post a job</h1>
+
+  {{if .Error}}
+    <div class="alert alert--warning" style="margin-bottom:var(--jh-space-4);">{{.Error}}</div>
+  {{end}}
+
+  <form method="POST" action="/post-job" class="card card--pad-lg">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+    <div class="field">
+      <label for="title">Job title</label>
+      <input type="text" id="title" name="title" placeholder="Senior Backend Engineer" required autofocus>
+    </div>
+
+    <div class="field">
+      <label for="category">Category</label>
+      <select id="category" name="category" required>
+        {{range .Categories}}<option value="{{.Value}}">{{.Label}}</option>{{end}}
+      </select>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--jh-space-4);">
+      <div class="field">
+        <label for="employment_type">Employment type</label>
+        <select id="employment_type" name="employment_type">
+          <option value="full_time">Full-time</option>
+          <option value="part_time">Part-time</option>
+          <option value="contract">Contract</option>
+          <option value="internship">Internship</option>
+          <option value="freelance">Freelance</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="work_arrangement">Work arrangement</label>
+        <select id="work_arrangement" name="work_arrangement">
+          <option value="onsite">Onsite</option>
+          <option value="hybrid">Hybrid</option>
+          <option value="remote">Remote</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--jh-space-4);">
+      <div class="field">
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location" placeholder="San Francisco, CA or Remote">
+      </div>
+      <div class="field">
+        <label for="seniority">Seniority</label>
+        <input type="text" id="seniority" name="seniority" placeholder="Mid, Senior, Lead...">
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--jh-space-4);">
+      <div class="field">
+        <label for="salary_min">Salary min (optional)</label>
+        <input type="number" id="salary_min" name="salary_min" placeholder="120000">
+      </div>
+      <div class="field">
+        <label for="salary_max">Salary max (optional)</label>
+        <input type="number" id="salary_max" name="salary_max" placeholder="160000">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="6" placeholder="Responsibilities, what success looks like, team context..." required></textarea>
+    </div>
+
+    <div class="field">
+      <label for="must_have_skills">Must-have skills</label>
+      <input type="text" id="must_have_skills" name="must_have_skills" placeholder="Go, PostgreSQL, Distributed Systems">
+      <span class="field__hint">Comma-separated. Used for search matching and AI candidate ranking.</span>
+    </div>
+    <div class="field">
+      <label for="nice_to_have_skills">Nice-to-have skills</label>
+      <input type="text" id="nice_to_have_skills" name="nice_to_have_skills" placeholder="Kubernetes, gRPC">
+    </div>
+
+    <button type="submit" class="btn btn--primary btn--block">Publish job</button>
+  </form>
+</section>
+{{end}}

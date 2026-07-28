@@ -1,0 +1,47 @@
+{{define "title"}}Sign up — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container" style="max-width:480px;padding:var(--jh-space-8) var(--jh-space-5);">
+  <div class="card card--pad-lg">
+    <h2 style="text-align:center;">Create your account</h2>
+    <p style="text-align:center;margin-bottom:var(--jh-space-5);">Join JOBHOO as a candidate or a recruiter.</p>
+
+    {{if .Error}}
+      <div class="alert alert--warning" style="margin-bottom:var(--jh-space-4);">{{.Error}}</div>
+    {{end}}
+
+    <form method="POST" action="/signup">
+      <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+      <div class="field">
+        <label>I am a...</label>
+        <div style="display:flex;gap:var(--jh-space-3);">
+          <label class="filter-chip {{if ne .Role "recruiter"}}is-active{{end}}" style="flex:1;justify-content:center;cursor:pointer;">
+            <input type="radio" name="role" value="candidate" {{if ne .Role "recruiter"}}checked{{end}} style="display:none;"> Candidate
+          </label>
+          <label class="filter-chip {{if eq .Role "recruiter"}}is-active{{end}}" style="flex:1;justify-content:center;cursor:pointer;">
+            <input type="radio" name="role" value="recruiter" {{if eq .Role "recruiter"}}checked{{end}} style="display:none;"> Recruiter
+          </label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="full_name">Full name</label>
+        <input type="text" id="full_name" name="full_name" value="{{.FullName}}" placeholder="Jane Doe" required autofocus>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" value="{{.Email}}" placeholder="you@example.com" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="At least 8 characters" required minlength="8">
+        <span class="field__hint">Use at least 8 characters.</span>
+      </div>
+      <button type="submit" class="btn btn--primary btn--block">Create account</button>
+    </form>
+
+    <p style="text-align:center;margin-top:var(--jh-space-5);font-size:var(--jh-text-sm);">
+      Already have an account? <a href="/login" style="color:var(--jh-orange-500);font-weight:600;">Log in</a>
+    </p>
+  </div>
+</section>
+{{end}}

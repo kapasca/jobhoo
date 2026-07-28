@@ -1,0 +1,80 @@
+/*
+  JOBHOO Design Tokens
+  --------------------
+  Single source of truth for color, type, spacing, and radius. Every
+  component file (components.css) builds exclusively from these variables —
+  no hex codes or magic numbers should appear outside this file.
+*/
+
+:root {
+  /* --- Color: Navy (structural) --- */
+  --jh-navy-900: #14182c;   /* near-black end of the atmosphere gradient */
+  --jh-navy-800: #1a2038;
+  --jh-navy-700: #1f2747;   /* brand navy */
+  --jh-navy-600: #2a3358;
+  --jh-navy-500: #3a4570;
+
+  /* --- Color: Orange (accent, opportunity) --- */
+  --jh-orange-600: #e56d00;
+  --jh-orange-500: #ff7a00;  /* brand orange */
+  --jh-orange-400: #ff9433;
+  --jh-orange-100: #ffe4c7;
+
+  /* --- Color: Neutrals --- */
+  --jh-white: #ffffff;
+  --jh-ink-100: #eef0f6;     /* primary body text on dark surfaces */
+  --jh-ink-300: #b7bdd1;     /* secondary text */
+  --jh-ink-500: #7d84a3;     /* tertiary / placeholder text */
+  --jh-black: #0a0c16;
+
+  /* --- Surfaces --- */
+  --jh-bg: var(--jh-navy-700);
+  --jh-bg-atmosphere: linear-gradient(180deg, var(--jh-navy-700) 0%, var(--jh-navy-900) 100%);
+  --jh-surface-card: #262e4d;       /* lighter than bg for separation */
+  --jh-surface-card-hover: #2c3559;
+  --jh-surface-inset: #1b2140;      /* recessed fields/inputs */
+  --jh-border: #333c63;
+  --jh-border-strong: #454f7e;
+
+  /* --- Typography --- */
+  --jh-font: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --jh-text-xs: 0.75rem;
+  --jh-text-sm: 0.875rem;
+  --jh-text-base: 1rem;
+  --jh-text-lg: 1.125rem;
+  --jh-text-xl: 1.375rem;
+  --jh-text-2xl: 1.75rem;
+  --jh-text-3xl: 2.25rem;
+  --jh-text-4xl: 3rem;
+  --jh-leading-tight: 1.2;
+  --jh-leading-normal: 1.55;
+  --jh-leading-relaxed: 1.75;
+
+  /* --- Spacing (8px base scale) --- */
+  --jh-space-1: 0.25rem;
+  --jh-space-2: 0.5rem;
+  --jh-space-3: 0.75rem;
+  --jh-space-4: 1rem;
+  --jh-space-5: 1.5rem;
+  --jh-space-6: 2rem;
+  --jh-space-7: 3rem;
+  --jh-space-8: 4rem;
+  --jh-space-9: 6rem;
+
+  /* --- Radius: rounded geometric language from the logo --- */
+  --jh-radius-sm: 10px;
+  --jh-radius-md: 16px;
+  --jh-radius-lg: 22px;
+  --jh-radius-xl: 28px;
+  --jh-radius-pill: 999px;
+
+  /* --- Elevation --- */
+  --jh-shadow-sm: 0 2px 8px rgba(10, 12, 22, 0.24);
+  --jh-shadow-md: 0 8px 24px rgba(10, 12, 22, 0.32);
+  --jh-shadow-glow-orange: 0 0 0 4px rgba(255, 122, 0, 0.16);
+
+  /* --- Motion --- */
+  --jh-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --jh-duration-fast: 120ms;
+  --jh-duration-normal: 200ms;
+}

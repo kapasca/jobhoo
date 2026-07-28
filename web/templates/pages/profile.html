@@ -1,0 +1,59 @@
+{{define "title"}}Your Profile — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container" style="max-width:680px;padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-9);">
+  <h1>Your profile</h1>
+  <p>Keep this up to date — it's what recruiters and JOBHOO's AI see when matching you to jobs.</p>
+
+  {{if .Saved}}
+    <div class="alert" style="border-color:var(--jh-orange-500);margin-bottom:var(--jh-space-4);">
+      <p style="margin:0;">Profile saved.</p>
+    </div>
+  {{end}}
+
+  <form method="POST" action="/profile" class="card card--pad-lg" style="margin-bottom:var(--jh-space-6);">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+    <div class="field">
+      <label for="headline">Headline</label>
+      <input type="text" id="headline" name="headline" value="{{.Headline}}" placeholder="Senior Backend Engineer">
+    </div>
+    <div class="field">
+      <label for="location">Location</label>
+      <input type="text" id="location" name="location" value="{{.Location}}" placeholder="San Francisco, CA">
+    </div>
+    <div class="field">
+      <label for="skills">Skills</label>
+      <input type="text" id="skills" name="skills" value="{{.Skills}}" placeholder="Go, PostgreSQL, React">
+      <span class="field__hint">Comma-separated. Used for AI job matching.</span>
+    </div>
+    <div class="field">
+      <label for="resume_text">Resume</label>
+      <textarea id="resume_text" name="resume_text" rows="10" placeholder="Paste your resume text here...">{{.ResumeText}}</textarea>
+      <span class="field__hint">Plain text for now — file upload isn't wired up yet.</span>
+    </div>
+    <button type="submit" class="btn btn--primary btn--block">Save profile</button>
+  </form>
+
+  <div class="card card--pad-lg">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 style="margin:0;">AI resume suggestions</h3>
+      <button class="btn btn--secondary btn--sm" hx-post="/profile/suggestions" hx-target="#suggestions" hx-swap="innerHTML">
+        ✨ Suggest improvements
+      </button>
+    </div>
+    <div id="suggestions" style="margin-top:var(--jh-space-3);">
+      <p style="margin:0;font-size:var(--jh-text-sm);">Save a resume above, then click "Suggest improvements".</p>
+    </div>
+  </div>
+</section>
+{{end}}
+
+{{define "suggestions-list"}}
+  <ul style="margin:0;padding-left:1.2rem;">
+    {{range .}}<li style="margin-bottom:6px;">{{.}}</li>{{end}}
+  </ul>
+{{end}}
+
+{{define "suggestions-empty"}}
+  <p style="margin:0;font-size:var(--jh-text-sm);">Add your resume text above and save before requesting suggestions.</p>
+{{end}}

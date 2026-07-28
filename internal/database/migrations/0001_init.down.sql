@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS ai_match_insights;
+DROP TABLE IF EXISTS saved_jobs;
+DROP TABLE IF EXISTS applications;
+DROP TYPE IF EXISTS application_stage;
+DROP TABLE IF EXISTS candidate_profiles;
+DROP TABLE IF EXISTS jobs;
+DROP TYPE IF EXISTS job_status;
+DROP TYPE IF EXISTS work_arrangement;
+DROP TYPE IF EXISTS employment_type;
+DROP TABLE IF EXISTS companies;
+DROP TABLE IF EXISTS users;
+DROP TYPE IF EXISTS user_role;

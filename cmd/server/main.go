@@ -1,127 +1,88 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	"jobhoo/internal/db"
-	"jobhoo/internal/handlers"
-	"jobhoo/internal/middleware"
-	"jobhoo/internal/models"
-	"jobhoo/internal/repository"
-	"jobhoo/internal/services/aimatching"
-	authsvc "jobhoo/internal/services/auth"
+	"github.com/joho/godotenv"
+
+	"github.com/jobhoo/jobhoo/internal/ai"
+	"github.com/jobhoo/jobhoo/internal/config"
+	"github.com/jobhoo/jobhoo/internal/database"
+	"github.com/jobhoo/jobhoo/internal/handlers"
+	"github.com/jobhoo/jobhoo/internal/router"
 )
 
 func main() {
-	conn, err := db.Connect()
+	_ = godotenv.Load() // no-op if .env is absent (e.g. in production containers)
+
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
-	}
-	defer conn.Close()
-
-	migrationsDir := getenv("MIGRATIONS_DIR", "migrations")
-	if err := db.Migrate(conn, migrationsDir); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
+		log.Fatalf("config error: %v", err)
 	}
 
-	uploadDir := getenv("UPLOAD_DIR", "uploads")
-	templatesDir := getenv("TEMPLATES_DIR", "web/templates")
-	staticDir := getenv("STATIC_DIR", "web/static")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	renderer, err := handlers.NewRenderer(templatesDir)
+	pool, err := database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("failed to load templates: %v", err)
+		log.Fatalf("database connection error: %v", err)
+	}
+	defer pool.Close()
+
+	aiProvider, err := ai.New(cfg.AIProvider, cfg.AIAPIKey)
+	if err != nil {
+		log.Fatalf("ai provider error: %v", err)
+	}
+	log.Printf("AI provider active: %s", aiProvider.Name())
+
+	renderer, err := handlers.NewRenderer("web/templates")
+	if err != nil {
+		log.Fatalf("template loading error: %v", err)
 	}
 
-	userRepo := repository.NewUserRepo(conn)
-	sessionRepo := repository.NewSessionRepo(conn)
-	jobRepo := repository.NewJobRepo(conn)
-	applicationRepo := repository.NewApplicationRepo(conn)
+	usersRepo := database.NewUsersRepo(pool)
+	sessionsRepo := database.NewSessionsRepo(pool)
+	jobsRepo := database.NewJobsRepo(pool)
+	companiesRepo := database.NewCompaniesRepo(pool)
+	applicationsRepo := database.NewApplicationsRepo(pool)
+	savedJobsRepo := database.NewSavedJobsRepo(pool)
+	profilesRepo := database.NewCandidateProfilesRepo(pool)
 
-	authService := authsvc.NewService(sessionRepo)
-	aiProvider := aimatching.NewProvider()
+	h := handlers.New(
+		renderer, jobsRepo, usersRepo, sessionsRepo, companiesRepo,
+		applicationsRepo, savedJobsRepo, profilesRepo, aiProvider,
+	)
+	mux := router.New(h, usersRepo, sessionsRepo, "web/static")
 
-	app := &handlers.App{
-		DB:           conn,
-		Users:        userRepo,
-		Sessions:     sessionRepo,
-		Jobs:         jobRepo,
-		Applications: applicationRepo,
-		Auth:         authService,
-		AIMatching:   aiProvider,
-		Render:       renderer,
-		UploadDir:    uploadDir,
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      mux,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
-	authMW := middleware.NewAuthMiddleware(authService, userRepo)
+	go func() {
+		log.Printf("JOBHOO listening on :%s (env=%s)", cfg.Port, cfg.Env)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
 
-	candidateOnly := middleware.RequireRole(models.RoleCandidate)
-	recruiterOnly := middleware.RequireRole(models.RoleRecruiter)
-	adminOnly := middleware.RequireRole(models.RoleSuperAdmin)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
 
-	mux := http.NewServeMux()
-
-	// --- Static files & uploads ---
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
-	mux.Handle("GET /uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadDir))))
-
-	// --- Public pages ---
-	mux.HandleFunc("GET /{$}", app.HomePage)
-	mux.HandleFunc("GET /jobs", app.JobsListPage)
-	mux.HandleFunc("GET /jobs/{id}", app.JobDetailPage)
-	mux.HandleFunc("POST /jobs/{id}/apply", candidateOnly(app.JobApplySubmit))
-
-	mux.HandleFunc("GET /login", app.LoginPage)
-	mux.HandleFunc("POST /login", app.LoginSubmit)
-	mux.HandleFunc("POST /logout", app.Logout)
-
-	mux.HandleFunc("GET /register", app.RegisterChoicePage)
-	mux.HandleFunc("GET /register/candidate", app.RegisterCandidatePage)
-	mux.HandleFunc("POST /register/candidate", app.RegisterCandidateSubmit)
-	mux.HandleFunc("GET /register/recruiter", app.RegisterRecruiterPage)
-	mux.HandleFunc("POST /register/recruiter", app.RegisterRecruiterSubmit)
-
-	// --- Candidate ---
-	mux.HandleFunc("GET /dashboard", candidateOnly(app.CandidateDashboardPage))
-	mux.HandleFunc("GET /applications", candidateOnly(app.CandidateApplicationsPage))
-	mux.HandleFunc("GET /resume", candidateOnly(app.CandidateResumePage))
-	mux.HandleFunc("POST /resume", candidateOnly(app.CandidateResumeSubmit))
-
-	// --- Recruiter ---
-	mux.HandleFunc("GET /recruiter/pending-approval", recruiterOnly(app.RecruiterPendingApprovalPage))
-	mux.HandleFunc("GET /recruiter/dashboard", middleware.RequireApprovedRecruiter(app.RecruiterDashboardPage))
-	mux.HandleFunc("GET /recruiter/jobs", middleware.RequireApprovedRecruiter(app.RecruiterJobsPage))
-	mux.HandleFunc("GET /recruiter/jobs/new", middleware.RequireApprovedRecruiter(app.RecruiterJobNewPage))
-	mux.HandleFunc("POST /recruiter/jobs/new", middleware.RequireApprovedRecruiter(app.RecruiterJobCreateSubmit))
-	mux.HandleFunc("GET /recruiter/jobs/{id}/edit", middleware.RequireApprovedRecruiter(app.RecruiterJobEditPage))
-	mux.HandleFunc("POST /recruiter/jobs/{id}/edit", middleware.RequireApprovedRecruiter(app.RecruiterJobEditSubmit))
-	mux.HandleFunc("POST /recruiter/jobs/{id}/close", middleware.RequireApprovedRecruiter(app.RecruiterJobCloseSubmit))
-	mux.HandleFunc("GET /recruiter/jobs/{id}/applicants", middleware.RequireApprovedRecruiter(app.RecruiterJobApplicantsPage))
-	mux.HandleFunc("POST /recruiter/applications/{id}/stage", middleware.RequireApprovedRecruiter(app.RecruiterApplicationStageUpdate))
-	mux.HandleFunc("POST /recruiter/applications/{id}/final-status", middleware.RequireApprovedRecruiter(app.RecruiterApplicationFinalStatusUpdate))
-
-	// --- Super Admin ---
-	mux.HandleFunc("GET /admin/dashboard", adminOnly(app.AdminDashboardPage))
-	mux.HandleFunc("GET /admin/recruiters", adminOnly(app.AdminRecruitersPage))
-	mux.HandleFunc("POST /admin/recruiters/{id}/approve", adminOnly(app.AdminRecruiterApproveSubmit))
-	mux.HandleFunc("POST /admin/recruiters/{id}/reject", adminOnly(app.AdminRecruiterRejectSubmit))
-	mux.HandleFunc("GET /admin/candidates", adminOnly(app.AdminCandidatesPage))
-	mux.HandleFunc("GET /admin/jobs", adminOnly(app.AdminJobsPage))
-
-	handler := authMW.LoadUser(mux)
-
-	port := getenv("PORT", "8080")
-	log.Printf("JOBHOO server listening on :%s", port)
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
-		log.Fatal(err)
+	log.Println("shutting down gracefully...")
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("shutdown error: %v", err)
 	}
-}
-
-func getenv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }

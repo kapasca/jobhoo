@@ -1,118 +1,108 @@
+// Package middleware holds cross-cutting HTTP middleware: authentication
+// context and role-based route guards. Route-specific logic stays in
+// handlers; only concerns that apply across many routes belong here.
 package middleware
 
 import (
 	"context"
 	"net/http"
 
-	"jobhoo/internal/models"
-	"jobhoo/internal/repository"
-	authsvc "jobhoo/internal/services/auth"
+	"github.com/jobhoo/jobhoo/internal/auth"
+	"github.com/jobhoo/jobhoo/internal/database"
+	"github.com/jobhoo/jobhoo/internal/models"
 )
 
-type contextKey string
+type ctxKey string
 
-const userContextKey contextKey = "current_user"
+const userCtxKey ctxKey = "jobhoo_current_user"
 
-type AuthMiddleware struct {
-	auth  *authsvc.Service
-	users *repository.UserRepo
-}
+const SessionCookieName = "jobhoo_session"
 
-func NewAuthMiddleware(auth *authsvc.Service, users *repository.UserRepo) *AuthMiddleware {
-	return &AuthMiddleware{auth: auth, users: users}
-}
-
-// LoadUser reads the session cookie (if any) and, when valid, attaches the
-// authenticated user to the request context. It never blocks the request —
-// use RequireAuth / RequireRole for that.
-func (m *AuthMiddleware) LoadUser(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie, err := r.Cookie(authsvc.SessionCookieName)
-		if err != nil {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		userID, err := m.auth.UserIDFromSession(cookie.Value)
-		if err != nil {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		user, err := m.users.GetByID(userID)
-		if err != nil {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		authUser := &models.AuthUser{ID: user.ID, Email: user.Email, Role: user.Role}
-		if user.Role == models.RoleRecruiter {
-			if rp, err := m.users.GetRecruiterProfile(user.ID); err == nil {
-				authUser.RecruiterStatus = rp.Status
+// WithUser is middleware that looks up the session cookie (if present),
+// resolves it to a user, and attaches that user to the request context.
+// It never rejects a request by itself — routes that require a signed-in
+// user use RequireAuth in addition to this.
+func WithUser(sessions *database.SessionsRepo, users *database.UsersRepo) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			cookie, err := r.Cookie(SessionCookieName)
+			if err != nil || cookie.Value == "" {
+				next.ServeHTTP(w, r)
+				return
 			}
-		}
 
-		ctx := context.WithValue(r.Context(), userContextKey, authUser)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+			tokenHash := auth.HashToken(cookie.Value)
+			userID, err := sessions.UserIDForToken(r.Context(), tokenHash)
+			if err != nil {
+				// Invalid/expired session: clear the cookie and continue as anonymous.
+				clearSessionCookie(w)
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			user, err := users.GetByID(r.Context(), userID)
+			if err != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), userCtxKey, user)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }
 
-func CurrentUser(r *http.Request) *models.AuthUser {
-	u, _ := r.Context().Value(userContextKey).(*models.AuthUser)
+// CurrentUser retrieves the signed-in user from context, if any.
+func CurrentUser(r *http.Request) *models.User {
+	u, _ := r.Context().Value(userCtxKey).(*models.User)
 	return u
 }
 
-// RequireAuth redirects unauthenticated requests to the login page.
-func RequireAuth(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// RequireAuth blocks anonymous requests, redirecting browsers to /login.
+// For HTMX requests it sets HX-Redirect instead of a normal 3xx, since an
+// HTMX swap target (e.g. a bookmark button) should never receive a full
+// login page as its "fragment".
+func RequireAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if CurrentUser(r) == nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			loginURL := "/login?next=" + r.URL.Path
+			if r.Header.Get("HX-Request") == "true" {
+				w.Header().Set("HX-Redirect", loginURL)
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			http.Redirect(w, r, loginURL, http.StatusSeeOther)
 			return
 		}
 		next.ServeHTTP(w, r)
-	}
+	})
 }
 
-// RequireRole restricts access to one or more roles. It assumes RequireAuth
-// (or LoadUser + a nil check) already ran.
-func RequireRole(roles ...models.UserRole) func(http.HandlerFunc) http.HandlerFunc {
+// RequireRole blocks requests from signed-in users whose role isn't in the
+// allowed set. Must be used after RequireAuth in the middleware chain.
+func RequireRole(roles ...models.UserRole) func(http.Handler) http.Handler {
 	allowed := make(map[models.UserRole]bool, len(roles))
-	for _, r := range roles {
-		allowed[r] = true
+	for _, role := range roles {
+		allowed[role] = true
 	}
-
-	return func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			u := CurrentUser(r)
-			if u == nil {
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
-				return
-			}
-			if !allowed[u.Role] {
-				http.Error(w, "403 Forbidden", http.StatusForbidden)
+			if u == nil || !allowed[u.Role] {
+				http.Error(w, "forbidden", http.StatusForbidden)
 				return
 			}
 			next.ServeHTTP(w, r)
-		}
+		})
 	}
 }
 
-// RequireApprovedRecruiter additionally checks that a recruiter has been approved.
-func RequireApprovedRecruiter(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		u := CurrentUser(r)
-		if u == nil {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
-			return
-		}
-		if u.Role != models.RoleRecruiter {
-			http.Error(w, "403 Forbidden", http.StatusForbidden)
-			return
-		}
-		if u.RecruiterStatus != models.RecruiterApproved {
-			http.Redirect(w, r, "/recruiter/pending-approval", http.StatusSeeOther)
-			return
-		}
-		next.ServeHTTP(w, r)
-	}
+func clearSessionCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     SessionCookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+	})
 }

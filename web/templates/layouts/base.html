@@ -1,0 +1,57 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{block "title" .}}JOBHOO{{end}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <link rel="icon" href="/static/img/jobhoo-icon.png">
+</head>
+<body hx-headers='{"X-CSRF-Token": "{{.CSRFToken}}"}'>
+  <header class="jh-nav">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+      <a href="/" class="jh-nav__brand">
+        <img src="/static/img/jobhoo-logo-full.png" alt="JOBHOO">
+      </a>
+      <nav class="jh-nav__links">
+        <a href="/jobs" class="jh-nav__link {{if eq .ActiveNav "jobs"}}is-active{{end}}">Browse Jobs</a>
+        {{if or (not .CurrentUser) (eq .CurrentUser.Role "recruiter")}}
+          <a href="/post-job" class="jh-nav__link {{if eq .ActiveNav "post"}}is-active{{end}}">Post a Job</a>
+        {{end}}
+        {{if eq .CurrentUser.Role "candidate"}}
+          <a href="/profile" class="jh-nav__link {{if eq .ActiveNav "profile"}}is-active{{end}}">Profile</a>
+        {{end}}
+      </nav>
+      <div class="jh-nav__actions">
+        {{if .CurrentUser}}
+          <a href="{{.DashboardPath}}" class="btn btn--ghost btn--sm">{{.CurrentUser.FullName}}</a>
+          <form method="POST" action="/logout" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <button type="submit" class="btn btn--secondary btn--sm">Log out</button>
+          </form>
+        {{else}}
+          <a href="/login" class="btn btn--ghost btn--sm">Log in</a>
+          <a href="/signup" class="btn btn--primary btn--sm">Sign up</a>
+        {{end}}
+      </div>
+    </div>
+  </header>
+
+  <main>
+    {{block "content" .}}{{end}}
+  </main>
+
+  <footer style="border-top:1px solid var(--jh-border); margin-top:var(--jh-space-9); padding:var(--jh-space-7) 0;">
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--jh-space-4);">
+      <img src="/static/img/jobhoo-icon.png" alt="JOBHOO" style="height:28px;border-radius:6px;">
+      <p style="margin:0;font-size:var(--jh-text-sm);">© 2026 JOBHOO. Making hiring simpler.</p>
+    </div>
+  </footer>
+</body>
+</html>
+{{end}}

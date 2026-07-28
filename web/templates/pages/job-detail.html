@@ -1,0 +1,89 @@
+{{define "title"}}{{.Job.Title}} — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container" style="max-width:840px;padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-9);">
+  <div class="card card--pad-lg">
+    <div class="job-card__top" style="margin-bottom:var(--jh-space-4);">
+      <div class="job-card__logo" style="width:64px;height:64px;">
+        <img src="{{if .Job.CompanyLogoURL}}{{.Job.CompanyLogoURL}}{{else}}/static/img/jobhoo-icon.png{{end}}" alt="{{.Job.CompanyName}} logo">
+      </div>
+      <div class="job-card__heading">
+        <h1 style="font-size:var(--jh-text-2xl);margin-bottom:2px;">{{.Job.Title}}</h1>
+        <p class="job-card__company" style="font-size:var(--jh-text-base);">{{.Job.CompanyName}}</p>
+      </div>
+      {{if .CanApply}}
+        <button class="job-card__bookmark {{if .IsSaved}}is-saved{{end}}" title="Save job" aria-label="Save job"
+                hx-post="/jobs/{{.Job.ID}}/save" hx-swap="outerHTML">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="{{if .IsSaved}}currentColor{{else}}none{{end}}" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
+      {{end}}
+    </div>
+
+    <div class="job-card__meta" style="margin-bottom:var(--jh-space-5);">
+      <span class="badge badge--orange">{{.Job.Category.Label}}</span>
+      <span class="badge">{{.Job.Location}}</span>
+      <span class="badge badge--remote">{{.Job.WorkArrangement}}</span>
+      <span class="badge">{{.Job.EmploymentType}}</span>
+      <span class="badge">{{.Job.Seniority}}</span>
+    </div>
+
+    {{if .Job.SalaryMin}}
+      <p style="font-size:var(--jh-text-lg);font-weight:700;color:var(--jh-white);margin-bottom:var(--jh-space-5);">
+        {{.Job.SalaryCurrency}} {{.Job.SalaryMin}}–{{.Job.SalaryMax}}
+      </p>
+    {{end}}
+
+    <h3>About this role</h3>
+    <p style="white-space:pre-line;">{{.Job.Description}}</p>
+
+    {{if .Job.MustHaveSkills}}
+      <h3>Must have</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:var(--jh-space-2);margin-bottom:var(--jh-space-4);">
+        {{range .Job.MustHaveSkills}}<span class="badge">{{.}}</span>{{end}}
+      </div>
+    {{end}}
+
+    {{if .Job.NiceToHaveSkills}}
+      <h3>Nice to have</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:var(--jh-space-2);margin-bottom:var(--jh-space-5);">
+        {{range .Job.NiceToHaveSkills}}<span class="badge">{{.}}</span>{{end}}
+      </div>
+    {{end}}
+
+    <hr style="border:none;border-top:1px solid var(--jh-border);margin:var(--jh-space-5) 0;">
+
+    {{if .ApplySent}}
+      <div class="alert" style="border-color:var(--jh-orange-500);">
+        <div>
+          <strong style="color:var(--jh-white);">Application sent.</strong>
+          <p style="margin:2px 0 0;">The recruiter at {{.Job.CompanyName}} will review it soon. You can track its status from your dashboard.</p>
+        </div>
+      </div>
+    {{else if .HasApplied}}
+      <div class="alert">
+        <p style="margin:0;">You've already applied to this role. Check your dashboard for status updates.</p>
+      </div>
+    {{else if .CanApply}}
+      {{if .ApplyError}}
+        <div class="alert alert--warning" style="margin-bottom:var(--jh-space-4);">{{.ApplyError}}</div>
+      {{end}}
+      <form method="POST" action="/jobs/{{.Job.ID}}/apply">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <div class="field">
+          <label for="cover_note">Cover note (optional)</label>
+          <textarea id="cover_note" name="cover_note" rows="4" placeholder="A short note on why you're a fit..."></textarea>
+        </div>
+        <button type="submit" class="btn btn--primary">Apply to this job</button>
+      </form>
+    {{else if .CurrentUser}}
+      <div class="alert">
+        <p style="margin:0;">Recruiter and admin accounts can't apply to jobs. Sign in as a candidate to apply.</p>
+      </div>
+    {{else}}
+      <a href="/login?next=/jobs/{{.Job.ID}}" class="btn btn--primary">Log in to apply</a>
+    {{end}}
+  </div>
+</section>
+{{end}}

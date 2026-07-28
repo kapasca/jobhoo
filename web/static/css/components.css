@@ -1,0 +1,281 @@
+/* JOBHOO Component Library — every rule derives from tokens.css variables. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--jh-bg-atmosphere);
+  background-attachment: fixed;
+  color: var(--jh-ink-100);
+  font-family: var(--jh-font);
+  font-size: var(--jh-text-base);
+  line-height: var(--jh-leading-normal);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+  color: var(--jh-white);
+  font-weight: 700;
+  line-height: var(--jh-leading-tight);
+  margin: 0 0 var(--jh-space-3);
+}
+h1 { font-size: var(--jh-text-4xl); }
+h2 { font-size: var(--jh-text-3xl); }
+h3 { font-size: var(--jh-text-xl); }
+p  { color: var(--jh-ink-300); margin: 0 0 var(--jh-space-4); }
+a  { color: inherit; text-decoration: none; }
+
+:focus-visible {
+  outline: 2px solid var(--jh-orange-400);
+  outline-offset: 2px;
+  border-radius: var(--jh-radius-sm);
+}
+
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 var(--jh-space-5);
+}
+
+/* --- Navigation --- */
+.jh-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--jh-space-4) 0;
+  background: rgba(20, 24, 44, 0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--jh-border);
+}
+.jh-nav__brand img { height: 36px; display: block; }
+.jh-nav__links { display: flex; align-items: center; gap: var(--jh-space-6); }
+.jh-nav__link {
+  color: var(--jh-ink-300);
+  font-weight: 500;
+  font-size: var(--jh-text-sm);
+  padding: var(--jh-space-2) var(--jh-space-1);
+  border-bottom: 2px solid transparent;
+  transition: color var(--jh-duration-fast) var(--jh-ease), border-color var(--jh-duration-fast) var(--jh-ease);
+}
+.jh-nav__link:hover { color: var(--jh-white); }
+.jh-nav__link.is-active { color: var(--jh-orange-500); border-bottom-color: var(--jh-orange-500); }
+.jh-nav__actions { display: flex; gap: var(--jh-space-3); align-items: center; }
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--jh-space-2);
+  font-family: var(--jh-font);
+  font-weight: 600;
+  font-size: var(--jh-text-sm);
+  padding: 0.75rem 1.375rem;
+  border-radius: var(--jh-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform var(--jh-duration-fast) var(--jh-ease),
+              background var(--jh-duration-fast) var(--jh-ease),
+              box-shadow var(--jh-duration-fast) var(--jh-ease);
+}
+.btn:active { transform: translateY(1px); }
+
+.btn--primary { background: var(--jh-orange-500); color: var(--jh-white); }
+.btn--primary:hover { background: var(--jh-orange-400); box-shadow: var(--jh-shadow-glow-orange); }
+
+.btn--secondary {
+  background: transparent;
+  color: var(--jh-white);
+  border-color: var(--jh-border-strong);
+}
+.btn--secondary:hover { background: var(--jh-surface-card-hover); border-color: var(--jh-orange-500); }
+
+.btn--ghost { background: transparent; color: var(--jh-ink-300); }
+.btn--ghost:hover { color: var(--jh-white); background: var(--jh-surface-card); }
+
+.btn--sm { padding: 0.5rem 1rem; font-size: var(--jh-text-xs); border-radius: var(--jh-radius-sm); }
+.btn--icon { padding: 0.6rem; border-radius: var(--jh-radius-sm); }
+.btn--block { width: 100%; }
+
+/* --- Cards --- */
+.card {
+  background: var(--jh-surface-card);
+  border: 1px solid var(--jh-border);
+  border-radius: var(--jh-radius-lg);
+  padding: var(--jh-space-5);
+  box-shadow: var(--jh-shadow-sm);
+}
+.card--pad-lg { padding: var(--jh-space-6); }
+
+/* --- Job Card: JOBHOO's signature component --- */
+.job-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jh-space-4);
+  background: var(--jh-surface-card);
+  border: 1px solid var(--jh-border);
+  border-radius: var(--jh-radius-lg);
+  padding: var(--jh-space-5);
+  transition: border-color var(--jh-duration-normal) var(--jh-ease),
+              transform var(--jh-duration-normal) var(--jh-ease),
+              background var(--jh-duration-normal) var(--jh-ease);
+}
+.job-card:hover {
+  border-color: var(--jh-border-strong);
+  background: var(--jh-surface-card-hover);
+  transform: translateY(-2px);
+}
+.job-card__top { display: flex; align-items: flex-start; gap: var(--jh-space-4); }
+.job-card__logo {
+  width: 52px; height: 52px;
+  border-radius: var(--jh-radius-md);
+  background: var(--jh-surface-inset);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.job-card__logo img { width: 100%; height: 100%; object-fit: cover; }
+.job-card__heading { flex: 1; min-width: 0; }
+.job-card__title { font-size: var(--jh-text-lg); font-weight: 700; color: var(--jh-white); margin: 0 0 2px; }
+.job-card__company { font-size: var(--jh-text-sm); color: var(--jh-ink-300); margin: 0; }
+.job-card__bookmark {
+  background: none; border: none; color: var(--jh-ink-500); cursor: pointer;
+  padding: var(--jh-space-1); border-radius: var(--jh-radius-sm);
+  transition: color var(--jh-duration-fast) var(--jh-ease);
+}
+.job-card__bookmark:hover, .job-card__bookmark.is-saved { color: var(--jh-orange-500); }
+
+.job-card__meta {
+  display: flex; flex-wrap: wrap; gap: var(--jh-space-2);
+}
+.job-card__salary {
+  font-weight: 700; color: var(--jh-white); font-size: var(--jh-text-base);
+}
+.job-card__footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: var(--jh-space-3);
+  border-top: 1px solid var(--jh-border);
+}
+.job-card__posted { font-size: var(--jh-text-xs); color: var(--jh-ink-500); }
+
+/* --- Badges --- */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: var(--jh-text-xs); font-weight: 600;
+  padding: 0.3rem 0.7rem; border-radius: var(--jh-radius-pill);
+  background: var(--jh-surface-inset); color: var(--jh-ink-300);
+  border: 1px solid var(--jh-border);
+}
+.badge--orange { background: rgba(255,122,0,0.12); color: var(--jh-orange-400); border-color: rgba(255,122,0,0.3); }
+.badge--remote { background: rgba(255,122,0,0.12); color: var(--jh-orange-400); border-color: rgba(255,122,0,0.3); }
+
+/* --- Forms --- */
+.field { display: flex; flex-direction: column; gap: var(--jh-space-2); margin-bottom: var(--jh-space-4); }
+.field label { font-size: var(--jh-text-sm); font-weight: 600; color: var(--jh-white); }
+.field__hint { font-size: var(--jh-text-xs); color: var(--jh-ink-500); }
+input, select, textarea {
+  font-family: var(--jh-font);
+  font-size: var(--jh-text-base);
+  color: var(--jh-white);
+  background: var(--jh-surface-inset);
+  border: 1px solid var(--jh-border);
+  border-radius: var(--jh-radius-md);
+  padding: 0.75rem 1rem;
+  width: 100%;
+}
+input::placeholder, textarea::placeholder { color: var(--jh-ink-500); }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--jh-orange-500);
+  box-shadow: var(--jh-shadow-glow-orange);
+  outline: none;
+}
+
+/* --- Search / Filter bar --- */
+.search-bar {
+  display: flex; gap: var(--jh-space-3);
+  background: var(--jh-surface-card);
+  border: 1px solid var(--jh-border);
+  border-radius: var(--jh-radius-lg);
+  padding: var(--jh-space-3);
+}
+.search-bar input { border: none; background: transparent; }
+.search-bar input:focus { box-shadow: none; }
+
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--jh-surface-inset);
+  border: 1px solid var(--jh-border);
+  border-radius: var(--jh-radius-pill);
+  padding: 0.5rem 1rem;
+  font-size: var(--jh-text-sm);
+  color: var(--jh-ink-300);
+  cursor: pointer;
+}
+.filter-chip.is-active { background: var(--jh-orange-500); border-color: var(--jh-orange-500); color: var(--jh-white); }
+
+/* --- Tabs --- */
+.tabs { display: flex; gap: var(--jh-space-5); border-bottom: 1px solid var(--jh-border); }
+.tab {
+  padding: var(--jh-space-3) var(--jh-space-1);
+  color: var(--jh-ink-300); font-weight: 600; font-size: var(--jh-text-sm);
+  border-bottom: 2px solid transparent; cursor: pointer;
+}
+.tab.is-active { color: var(--jh-white); border-bottom-color: var(--jh-orange-500); }
+
+/* --- Tables --- */
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left; font-size: var(--jh-text-xs); text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--jh-ink-500); font-weight: 600;
+  padding: var(--jh-space-3) var(--jh-space-4); border-bottom: 1px solid var(--jh-border);
+}
+td { padding: var(--jh-space-4); border-bottom: 1px solid var(--jh-border); font-size: var(--jh-text-sm); }
+tr:last-child td { border-bottom: none; }
+
+/* --- Alerts / Toasts --- */
+.alert {
+  display: flex; gap: var(--jh-space-3); align-items: flex-start;
+  padding: var(--jh-space-4); border-radius: var(--jh-radius-md);
+  border: 1px solid var(--jh-border); background: var(--jh-surface-card);
+}
+.alert--warning { border-color: var(--jh-orange-500); background: rgba(255,122,0,0.08); }
+
+.toast {
+  position: fixed; bottom: var(--jh-space-6); right: var(--jh-space-6);
+  background: var(--jh-navy-800); border: 1px solid var(--jh-border-strong);
+  border-radius: var(--jh-radius-md); padding: var(--jh-space-4) var(--jh-space-5);
+  box-shadow: var(--jh-shadow-md); color: var(--jh-white); z-index: 100;
+}
+
+/* --- Empty / Error states --- */
+.empty-state {
+  text-align: center; padding: var(--jh-space-9) var(--jh-space-5);
+  color: var(--jh-ink-300);
+}
+.empty-state__icon { width: 56px; height: 56px; margin: 0 auto var(--jh-space-4); opacity: 0.7; }
+
+/* --- Skeleton loading --- */
+.skeleton {
+  background: linear-gradient(90deg, var(--jh-surface-inset) 25%, var(--jh-surface-card-hover) 37%, var(--jh-surface-inset) 63%);
+  background-size: 400% 100%;
+  animation: jh-shimmer 1.4s ease infinite;
+  border-radius: var(--jh-radius-sm);
+}
+@keyframes jh-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* --- Grid utility --- */
+.grid { display: grid; gap: var(--jh-space-5); }
+.grid--jobs { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+
+@media (max-width: 640px) {
+  .jh-nav__links { display: none; }
+  h1 { font-size: var(--jh-text-3xl); }
+}

@@ -1,180 +1,74 @@
-// Command seed populates the database with enough dummy data to try every
-// flow immediately: a super admin, an approved recruiter with sample jobs,
-// and a candidate with a couple of applications.
+// Command seed populates JOBHOO with realistic demo data for testing search,
+// filtering, category classification, and pagination at a non-trivial scale:
+// 10 recruiter accounts (one company each) and 100 jobs spread across the
+// platform's 5 job categories.
 //
-// Usage: go run ./cmd/seed
+// It is safe to re-run: it first deletes any existing rows tagged with the
+// demo email domain (@jobhoo.demo), then reinserts fresh data, so it never
+// touches real accounts and never silently duplicates on a second run.
+//
+// Usage:
+//
+//	go run ./cmd/seed
 package main
 
 import (
+	"context"
 	"log"
-	"os"
-	"time"
+	"math/rand"
 
-	"jobhoo/internal/db"
-	"jobhoo/internal/models"
-	"jobhoo/internal/repository"
-	"jobhoo/internal/services/aimatching"
-	authsvc "jobhoo/internal/services/auth"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
+
+	"github.com/jobhoo/jobhoo/internal/config"
+	"github.com/jobhoo/jobhoo/internal/database"
 )
 
+const demoEmailDomain = "@jobhoo.demo"
+const numCompanies = 10
+const numJobs = 100
+
 func main() {
-	conn, err := db.Connect()
+	_ = godotenv.Load()
+
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("connect db: %v", err)
-	}
-	defer conn.Close()
-
-	migrationsDir := getenv("MIGRATIONS_DIR", "migrations")
-	if err := db.Migrate(conn, migrationsDir); err != nil {
-		log.Fatalf("migrate: %v", err)
+		log.Fatalf("config error: %v", err)
 	}
 
-	users := repository.NewUserRepo(conn)
-	jobs := repository.NewJobRepo(conn)
-	applications := repository.NewApplicationRepo(conn)
-	ai := aimatching.NewProvider()
-
-	uploadDir := getenv("UPLOAD_DIR", "uploads")
-	os.MkdirAll(uploadDir+"/resumes", 0o755)
-	os.MkdirAll(uploadDir+"/documents", 0o755)
-
-	dummyResumePath := uploadDir + "/resumes/seed-resume.pdf"
-	dummyDocPath := uploadDir + "/documents/seed-document.pdf"
-	writeIfMissing(dummyResumePath, "%PDF-1.4 seed resume\n")
-	writeIfMissing(dummyDocPath, "%PDF-1.4 seed supporting document\n")
-
-	// --- Super Admin ---
-	adminID := ensureUser(users, "admin@jobhoo.com", "admin12345", models.RoleSuperAdmin)
-	log.Printf("super admin: admin@jobhoo.com / admin12345 (id=%d)", adminID)
-
-	// --- Approved recruiter ---
-	recruiterID := ensureUser(users, "recruiter@jobhoo.com", "recruiter123", models.RoleRecruiter)
-	if _, err := users.GetRecruiterProfile(recruiterID); err == repository.ErrNotFound {
-		_ = users.CreateRecruiterProfile(recruiterID, "PT Jobhoo Teknologi Indonesia", "/uploads/documents/seed-document.pdf", "seed-document.pdf")
-		_ = users.UpdateRecruiterStatus(recruiterID, adminID, models.RecruiterApproved)
-	}
-	log.Printf("recruiter (approved): recruiter@jobhoo.com / recruiter123 (id=%d)", recruiterID)
-
-	// --- Pending recruiter (to demo the approval flow) ---
-	pendingRecruiterID := ensureUser(users, "pending-recruiter@jobhoo.com", "recruiter123", models.RoleRecruiter)
-	if _, err := users.GetRecruiterProfile(pendingRecruiterID); err == repository.ErrNotFound {
-		_ = users.CreateRecruiterProfile(pendingRecruiterID, "PT Kandidat Approval", "/uploads/documents/seed-document.pdf", "seed-document.pdf")
-	}
-	log.Printf("recruiter (pending): pending-recruiter@jobhoo.com / recruiter123 (id=%d)", pendingRecruiterID)
-
-	// --- Candidate ---
-	candidateID := ensureUser(users, "candidate@jobhoo.com", "candidate123", models.RoleCandidate)
-	if _, err := users.GetCandidateProfile(candidateID); err == repository.ErrNotFound {
-		_ = users.CreateCandidateProfile(candidateID, "Andi Wijaya", "/uploads/resumes/seed-resume.pdf", "seed-resume.pdf")
-	}
-	log.Printf("candidate: candidate@jobhoo.com / candidate123 (id=%d)", candidateID)
-
-	// --- Sample jobs ---
-	closing := time.Now().AddDate(0, 1, 0)
-	salaryMin1, salaryMax1 := int64(8000000), int64(15000000)
-	job1, err := createJobIfNotExists(jobs, recruiterID, "Backend Engineer (Go)", repository.JobInput{
-		Title: "Backend Engineer (Go)", Position: "Backend Engineer",
-		EmploymentType: models.FullTime, WorkArrangement: models.Remote,
-		Location: "Jakarta (Remote)", SalaryMin: &salaryMin1, SalaryMax: &salaryMax1,
-		Benefits:     "BPJS Kesehatan & Ketenagakerjaan, remote allowance, laptop.",
-		Requirements: "Minimal 2 tahun pengalaman Go, familiar dengan PostgreSQL dan REST API.",
-		Description:  "Membangun dan memelihara layanan backend untuk platform JOBHOO.",
-		ClosingDate:  closing,
-	})
+	ctx := context.Background()
+	pool, err := database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Printf("job1: %v", err)
+		log.Fatalf("database connection error: %v", err)
+	}
+	defer pool.Close()
+
+	rng := rand.New(rand.NewSource(42)) // fixed seed: reproducible data across re-runs
+
+	log.Println("clearing previous demo data...")
+	if err := clearDemoData(ctx, pool); err != nil {
+		log.Fatalf("clear error: %v", err)
 	}
 
-	salaryMin2, salaryMax2 := int64(6000000), int64(10000000)
-	job2, err := createJobIfNotExists(jobs, recruiterID, "Frontend Developer (Next.js)", repository.JobInput{
-		Title: "Frontend Developer (Next.js)", Position: "Frontend Developer",
-		EmploymentType: models.FullTime, WorkArrangement: models.Hybrid,
-		Location: "Yogyakarta", SalaryMin: &salaryMin2, SalaryMax: &salaryMax2,
-		Benefits:     "BPJS, jam kerja fleksibel.",
-		Requirements: "Pengalaman React/Next.js, TypeScript, Tailwind CSS.",
-		Description:  "Mengembangkan antarmuka pengguna JOBHOO yang cepat dan minimalis.",
-		ClosingDate:  closing,
-	})
+	log.Printf("creating %d recruiter accounts + companies...", numCompanies)
+	companyIDs, recruiterIDs, err := seedCompanies(ctx, pool)
 	if err != nil {
-		log.Printf("job2: %v", err)
+		log.Fatalf("company seed error: %v", err)
 	}
 
-	_, err = createJobIfNotExists(jobs, recruiterID, "UI/UX Designer", repository.JobInput{
-		Title: "UI/UX Designer", Position: "Product Designer",
-		EmploymentType: models.Contract, WorkArrangement: models.Remote,
-		Location: "Remote (Indonesia)",
-		Benefits:     "Fleksibel, proyek jangka pendek 3 bulan.",
-		Requirements: "Portfolio kuat di Figma, pengalaman design system.",
-		Description:  "Merancang pengalaman pengguna untuk fitur ATS Kanban JOBHOO.",
-		ClosingDate:  closing,
-	})
-	if err != nil {
-		log.Printf("job3: %v", err)
+	log.Printf("creating %d jobs across %d categories...", numJobs, len(jobCategories))
+	if err := seedJobs(ctx, pool, rng, companyIDs, recruiterIDs); err != nil {
+		log.Fatalf("job seed error: %v", err)
 	}
 
-	// --- Sample application with AI match result ---
-	if job1 != 0 {
-		applied, _ := applications.HasApplied(job1, candidateID)
-		if !applied {
-			appID, err := applications.Create(job1, candidateID, "/uploads/resumes/seed-resume.pdf")
-			if err == nil {
-				result, _ := ai.Analyze("/uploads/resumes/seed-resume.pdf", "Membangun layanan backend", "Go, PostgreSQL, REST API")
-				_ = applications.SetAIMatchResult(appID, result.MatchScore, result.SkillMatch, result.ExperienceMatch, result.EducationMatch)
-				_ = applications.UpdateStage(appID, models.StageResumeReviewed)
-			}
-		}
-	}
-	if job2 != 0 {
-		applied, _ := applications.HasApplied(job2, candidateID)
-		if !applied {
-			appID, err := applications.Create(job2, candidateID, "/uploads/resumes/seed-resume.pdf")
-			if err == nil {
-				result, _ := ai.Analyze("/uploads/resumes/seed-resume.pdf", "Mengembangkan antarmuka", "React, Next.js, TypeScript")
-				_ = applications.SetAIMatchResult(appID, result.MatchScore, result.SkillMatch, result.ExperienceMatch, result.EducationMatch)
-			}
-		}
-	}
-
-	log.Println("seed complete")
+	log.Println("done: 10 companies and 100 jobs across 5 categories seeded.")
 }
 
-func ensureUser(users *repository.UserRepo, email, password string, role models.UserRole) int64 {
-	if u, err := users.GetByEmail(email); err == nil {
-		return u.ID
-	}
-	hash, err := authsvc.HashPassword(password)
-	if err != nil {
-		log.Fatalf("hash password: %v", err)
-	}
-	id, err := users.CreateUser(email, hash, role)
-	if err != nil {
-		log.Fatalf("create user %s: %v", email, err)
-	}
-	return id
-}
-
-func createJobIfNotExists(jobs *repository.JobRepo, recruiterID int64, title string, input repository.JobInput) (int64, error) {
-	existing, err := jobs.ListByRecruiter(recruiterID)
-	if err == nil {
-		for _, j := range existing {
-			if j.Title == title {
-				return j.ID, nil
-			}
-		}
-	}
-	return jobs.Create(recruiterID, input)
-}
-
-func writeIfMissing(path, content string) {
-	if _, err := os.Stat(path); err == nil {
-		return
-	}
-	_ = os.WriteFile(path, []byte(content), 0o644)
-}
-
-func getenv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
+// clearDemoData removes every row created by a previous seed run, identified
+// by the reserved @jobhoo.demo email domain. Deleting users cascades to
+// companies, jobs, applications, etc. via foreign keys, so this alone is
+// enough to fully reset demo state.
+func clearDemoData(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, `DELETE FROM users WHERE email LIKE '%' || $1`, demoEmailDomain)
+	return err
 }

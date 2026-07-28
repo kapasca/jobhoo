@@ -1,66 +1,48 @@
+{{define "title"}}JOBHOO — Hiring, simplified{{end}}
+
 {{define "content"}}
-<section class="max-w-6xl mx-auto px-4 sm:px-6 pt-8 pb-10 sm:pt-10 sm:pb-12 lg:pt-14 lg:pb-14">
-    <div class="panel-dark relative overflow-hidden p-8 sm:p-10 lg:p-12">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,122,0,0.28),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.1),transparent_30%)]"></div>
-        <div class="relative grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-            <div>
-                <span class="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">Jobhoo platform</span>
-                <img src="/static/img/jobhoo-title-desc.png" alt="JOBHOO" class="mt-6 h-20 sm:h-24 w-auto object-contain">
-                <p class="mt-5 max-w-xl text-base sm:text-lg text-white/75 leading-8">Recruitment yang bersih, cepat, dan fokus hasil.</p>
-                <div class="mt-8 flex flex-col sm:flex-row gap-3">
-                    <a href="/jobs" class="btn-primary px-7 py-3 text-base">Cari Lowongan</a>
-                    <a href="/register?role=recruiter" class="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-7 py-3 text-base font-semibold text-white transition hover:bg-white/20">Pasang Lowongan</a>
-                </div>
-            </div>
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div class="rounded-[1.5rem] border border-white/15 bg-white/10 p-5">
-                    <p class="text-xs uppercase tracking-[0.18em] text-brand-100">Candidate</p>
-                    <p class="mt-3 text-2xl font-display font-bold">Apply faster</p>
-                </div>
-                <div class="rounded-[1.5rem] border border-white/15 bg-white/10 p-5">
-                    <p class="text-xs uppercase tracking-[0.18em] text-brand-100">Recruiter</p>
-                    <p class="mt-3 text-2xl font-display font-bold">Screen cleaner</p>
-                </div>
-                <div class="rounded-[1.5rem] border border-white/15 bg-white/10 p-5 sm:col-span-2">
-                    <p class="text-xs uppercase tracking-[0.18em] text-brand-100">Admin control</p>
-                    <p class="mt-3 text-2xl font-display font-bold">Signal over noise</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<section class="container" style="padding:var(--jh-space-9) var(--jh-space-5) var(--jh-space-7);text-align:center;">
+  <span class="badge badge--orange" style="margin-bottom:var(--jh-space-4);">AI-assisted hiring, built for humans</span>
+  <h1 style="max-width:820px;margin:0 auto var(--jh-space-4);">Hiring, simpler, faster, and more transparent.</h1>
+  <p style="max-width:640px;margin:0 auto var(--jh-space-6);font-size:var(--jh-text-lg);">
+    JOBHOO connects candidates with the right roles and helps recruiters find the right people —
+    without the noise of a social network or the weight of enterprise HR software.
+  </p>
+  <div style="display:flex;gap:var(--jh-space-3);justify-content:center;flex-wrap:wrap;">
+    <a href="/jobs" class="btn btn--primary">Browse Jobs</a>
+    <a href="/post-job" class="btn btn--secondary">Post a Job</a>
+  </div>
 </section>
 
-<section class="max-w-6xl mx-auto px-4 sm:px-6 pb-12 sm:pb-14">
-    <div class="grid gap-5 md:grid-cols-3">
-        <div class="card p-6">
-            <p class="text-xs uppercase tracking-[0.2em] text-brand-600">Clean</p>
-            <h3 class="mt-3 font-display text-2xl font-bold">No clutter</h3>
-        </div>
-        <div class="card p-6">
-            <p class="text-xs uppercase tracking-[0.2em] text-brand-600">Fast</p>
-            <h3 class="mt-3 font-display text-2xl font-bold">No friction</h3>
-        </div>
-        <div class="card p-6">
-            <p class="text-xs uppercase tracking-[0.2em] text-brand-600">Strong</p>
-            <h3 class="mt-3 font-display text-2xl font-bold">Brand first</h3>
-        </div>
+<section class="container" style="padding:var(--jh-space-7) var(--jh-space-5);">
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
+    <div class="card card--pad-lg">
+      <h3>For Candidates</h3>
+      <p>Discover roles matched to your actual skills, understand exactly why a job fits, and apply in a click.</p>
+      <a href="/jobs" class="btn btn--secondary btn--sm">Find your next role</a>
     </div>
+    <div class="card card--pad-lg">
+      <h3>For Recruiters</h3>
+      <p>Post a role, let AI rank and summarize applicants, and keep every candidate moving without the busywork.</p>
+      <a href="/post-job" class="btn btn--secondary btn--sm">Post a job</a>
+    </div>
+    <div class="card card--pad-lg">
+      <h3>Featured Companies</h3>
+      <p>Explore teams that are hiring right now across engineering, design, sales, and operations.</p>
+      <a href="/companies" class="btn btn--secondary btn--sm">Explore companies</a>
+    </div>
+  </div>
 </section>
 
-<section class="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-20 lg:pb-24">
-    <div class="mb-6 flex items-end justify-between gap-4">
-        <div>
-            <span class="section-kicker">Newest roles</span>
-            <h2 class="section-title mt-3">Lowongan Terbaru</h2>
-        </div>
-        <a href="/jobs" class="hidden sm:inline-flex text-sm font-semibold text-slate-500 transition hover:text-slate-950">Lihat semua →</a>
-    </div>
-    {{if .Jobs}}
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {{range .Jobs}}{{template "job_card" .}}{{end}}
-    </div>
-    {{else}}
-    <div class="card p-8 text-sm text-slate-600">Belum ada lowongan yang dibuka.</div>
+<section class="container" style="padding:var(--jh-space-7) var(--jh-space-5) var(--jh-space-9);">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--jh-space-5);">
+    <h2>Latest opportunities</h2>
+    <a href="/jobs" class="btn btn--ghost btn--sm">View all jobs →</a>
+  </div>
+  <div class="grid grid--jobs">
+    {{range .Jobs}}
+      {{template "job-card" .}}
     {{end}}
+  </div>
 </section>
 {{end}}
