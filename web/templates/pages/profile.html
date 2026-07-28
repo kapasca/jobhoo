@@ -1,17 +1,17 @@
 {{define "title"}}Your Profile — JOBHOO{{end}}
 
 {{define "content"}}
-<section class="container" style="max-width:680px;padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-9);">
+<section class="container container-max-lg container-padding-full">
   <h1>Your profile</h1>
   <p>Keep this up to date — it's what recruiters and JOBHOO's AI see when matching you to jobs.</p>
 
   {{if .Saved}}
-    <div class="alert" style="border-color:var(--jh-orange-500);margin-bottom:var(--jh-space-4);">
-      <p style="margin:0;">Profile saved.</p>
+    <div class="alert alert-success mb-4">
+      <p class="m-0">Profile saved.</p>
     </div>
   {{end}}
 
-  <form method="POST" action="/profile" class="card card--pad-lg" style="margin-bottom:var(--jh-space-6);">
+  <form method="POST" action="/profile" class="card card--pad-lg mb-6">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
     <div class="field">
       <label for="headline">Headline</label>
@@ -35,25 +35,25 @@
   </form>
 
   <div class="card card--pad-lg">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="margin:0;">AI resume suggestions</h3>
+    <div class="d-flex justify-between items-center">
+      <h3 class="m-0">AI resume suggestions</h3>
       <button class="btn btn--secondary btn--sm" hx-post="/profile/suggestions" hx-target="#suggestions" hx-swap="innerHTML">
         ✨ Suggest improvements
       </button>
     </div>
-    <div id="suggestions" style="margin-top:var(--jh-space-3);">
-      <p style="margin:0;font-size:var(--jh-text-sm);">Save a resume above, then click "Suggest improvements".</p>
+    <div id="suggestions" class="mt-3">
+      <p class="m-0 font-sm">Save a resume above, then click "Suggest improvements".</p>
     </div>
   </div>
 </section>
 {{end}}
 
 {{define "suggestions-list"}}
-  <ul style="margin:0;padding-left:1.2rem;">
-    {{range .}}<li style="margin-bottom:6px;">{{.}}</li>{{end}}
+  <ul class="list-unstyled">
+    {{range .}}<li>{{.}}</li>{{end}}
   </ul>
 {{end}}
 
 {{define "suggestions-empty"}}
-  <p style="margin:0;font-size:var(--jh-text-sm);">Add your resume text above and save before requesting suggestions.</p>
+  <p class="profile-note">Add your resume text above and save before requesting suggestions.</p>
 {{end}}

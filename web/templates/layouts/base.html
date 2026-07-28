@@ -14,30 +14,32 @@
 </head>
 <body hx-headers='{"X-CSRF-Token": "{{.CSRFToken}}"}'>
   <header class="jh-nav">
-    <div class="container" style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+    <div class="container nav__header-layout">
       <a href="/" class="jh-nav__brand">
         <img src="/static/img/jobhoo-logo-full.png" alt="JOBHOO">
       </a>
       <nav class="jh-nav__links">
+        {{if .CurrentUser}}
+          <a href="{{.DashboardPath}}" class="jh-nav__link {{if eq .ActiveNav "dashboard"}}is-active{{end}}">Dashboard</a>
+        {{end}}
         <a href="/jobs" class="jh-nav__link {{if eq .ActiveNav "jobs"}}is-active{{end}}">Browse Jobs</a>
         {{if not .CurrentUser}}
           <a href="/post-job" class="jh-nav__link {{if eq .ActiveNav "post"}}is-active{{end}}">Post a Job</a>
         {{else if eq .CurrentUser.Role "recruiter"}}
           <a href="/post-job" class="jh-nav__link {{if eq .ActiveNav "post"}}is-active{{end}}">Post a Job</a>
         {{else if eq .CurrentUser.Role "candidate"}}
-          <a href="/profile" class="jh-nav__link {{if eq .ActiveNav "profile"}}is-active{{end}}">Profile</a>
+          <a href="/profile" class="jh-nav__link {{if eq .ActiveNav "profile"}}is-active{{end}}">{{.CurrentUser.FullName}}</a>
         {{end}}
       </nav>
       <div class="jh-nav__actions">
         {{if .CurrentUser}}
-          <a href="{{.DashboardPath}}" class="btn btn--ghost btn--sm">{{.CurrentUser.FullName}}</a>
-          <form method="POST" action="/logout" style="margin:0;">
+          <form method="POST" action="/logout" class="form-inline">
             <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-            <button type="submit" class="btn btn--secondary btn--sm">Log out</button>
+            <button type="submit" class="btn btn--secondary btn--lg">Log out</button>
           </form>
         {{else}}
-          <a href="/login" class="btn btn--ghost btn--sm">Log in</a>
-          <a href="/signup" class="btn btn--primary btn--sm">Sign up</a>
+          <button hx-get="/login" hx-target="body" hx-swap="beforeend" class="btn btn--ghost btn--lg btn-ghost-reset">Log in</button>
+          <a href="/signup" class="btn btn--primary btn--lg">Sign up</a>
         {{end}}
       </div>
     </div>
@@ -47,10 +49,10 @@
     {{block "content" .}}{{end}}
   </main>
 
-  <footer style="border-top:1px solid var(--jh-border); margin-top:var(--jh-space-9); padding:var(--jh-space-7) 0;">
-    <div class="container" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--jh-space-4);">
-      <img src="/static/img/jobhoo-icon.png" alt="JOBHOO" style="height:28px;border-radius:6px;">
-      <p style="margin:0;font-size:var(--jh-text-sm);">© 2026 JOBHOO. Making hiring simpler.</p>
+  <footer class="footer__wrapper">
+    <div class="container footer__content">
+      <p class="footer__copyright">© 2026 JOBHOO. <span class="orange-text">Connecting Recruiters with Outstanding Talent.</span></p>
+      <img src="/static/img/jobhoo-icon.png" alt="JOBHOO" class="footer__logo">
     </div>
   </footer>
 </body>

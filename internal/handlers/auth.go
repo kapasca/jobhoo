@@ -78,7 +78,13 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) LoginPage(w http.ResponseWriter, r *http.Request) {
-	h.Render.Render(w, http.StatusOK, "login.html", authPageData{BasePageData: newBasePageData(r, "login"), NextURL: r.URL.Query().Get("next")})
+	// Only allow HTMX modal requests to this endpoint
+	if r.Header.Get("HX-Request") != "true" {
+		h.NotFoundPage(w, r)
+		return
+	}
+
+	h.Render.RenderBlock(w, "login-modal.html", "login-modal", authPageData{BasePageData: newBasePageData(r, "login"), NextURL: r.URL.Query().Get("next")})
 }
 
 func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +102,11 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 	user, err := h.Users.GetByEmail(r.Context(), email)
 	if err != nil || !auth.VerifyPassword(user.PasswordHash, password) {
 		data.Error = "Incorrect email or password."
-		h.Render.Render(w, http.StatusUnauthorized, "login.html", data)
+		if r.Header.Get("HX-Request") == "true" {
+			h.Render.RenderBlock(w, "login-modal.html", "login-modal", data)
+		} else {
+			h.Render.Render(w, http.StatusUnauthorized, "login.html", data)
+		}
 		return
 	}
 
@@ -105,6 +115,18 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// For HTMX requests, redirect via HX-Redirect header
+	if r.Header.Get("HX-Request") == "true" {
+		redirectTo := next
+		if redirectTo == "" {
+			redirectTo = dashboardPathForRole(user.Role)
+		}
+		w.Header().Set("HX-Redirect", redirectTo)
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// For normal requests, redirect as before
 	if next != "" {
 		http.Redirect(w, r, next, http.StatusSeeOther)
 		return

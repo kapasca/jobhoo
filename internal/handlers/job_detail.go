@@ -44,7 +44,13 @@ func (h *Handlers) JobDetail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	h.Render.Render(w, http.StatusOK, "job-detail.html", data)
+	// Only allow HTMX modal requests to this endpoint
+	if r.Header.Get("HX-Request") != "true" {
+		h.NotFoundPage(w, r)
+		return
+	}
+
+	h.Render.RenderBlock(w, "job-detail-modal.html", "job-detail-modal", data)
 }
 
 func (h *Handlers) ApplyToJob(w http.ResponseWriter, r *http.Request) {
@@ -72,13 +78,15 @@ func (h *Handlers) ApplyToJob(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.ApplyError = "Something went wrong submitting your application. Please try again."
 		}
-		h.Render.Render(w, http.StatusOK, "job-detail.html", data)
+		if r.Header.Get("HX-Request") == "true" {
+			h.Render.RenderBlock(w, "job-detail-modal.html", "job-detail-modal", data)
+		}
 		return
 	}
 
 	data.HasApplied = true
 	data.ApplySent = true
-	h.Render.Render(w, http.StatusOK, "job-detail.html", data)
+	h.Render.RenderBlock(w, "job-detail-modal.html", "job-detail-modal", data)
 }
 
 // SaveJob is an HTMX endpoint: it toggles the bookmark and returns just the

@@ -10,7 +10,7 @@ import (
 	"github.com/jobhoo/jobhoo/internal/models"
 )
 
-const jobsPerPage = 20
+const jobsPerPage = 30
 
 // BasePageData carries the fields every page needs for shared chrome (nav
 // login state, active nav highlighting). Every page-specific data struct
@@ -44,7 +44,7 @@ type pageData struct {
 }
 
 func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
-	result, err := h.Jobs.ListPublished(r.Context(), database.JobListFilter{Limit: 6})
+	result, err := h.Jobs.ListPublished(r.Context(), database.JobListFilter{Limit: 9})
 	if err != nil {
 		log.Printf("Home handler error: %v", err)
 		http.Error(w, "could not load jobs", http.StatusInternalServerError)

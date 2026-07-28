@@ -1,0 +1,63 @@
+{{define "login-modal"}}
+<div class="modal-wrapper">
+  <div class="modal-backdrop" onclick="this.closest('.modal-wrapper')?.remove()"></div>
+  <div class="modal modal-max-sm">
+    <script>
+      // Close modal on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          document.querySelector('.modal-wrapper')?.remove();
+        }
+      });
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+      // Re-enable body scroll when modal is closed
+      const observer = new MutationObserver(() => {
+        if (!document.querySelector('.modal-wrapper')) {
+          document.body.style.overflow = 'auto';
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true });
+    </script>
+
+    <!-- Header -->
+    <div class="login-modal-header">
+      <h2 class="login-modal-title">Log in to JOBHOO</h2>
+      <button class="modal-close" onclick="this.closest('.modal-wrapper')?.remove()" title="Close" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="login-modal-content">
+      {{if .Error}}
+        <div class="alert alert--warning login-modal-error">{{.Error}}</div>
+      {{end}}
+
+      <form method="POST" action="/login" hx-post="/login" hx-swap="outerHTML">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <input type="hidden" name="next" value="{{.NextURL}}">
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="your@email.com" value="{{.Email}}" required>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn-full-width mb-3 mt-7">Log in</button>
+
+        <p class="login-modal-signup-link">
+          Don't have an account? <a href="/signup">Sign up</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+{{end}}

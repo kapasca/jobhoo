@@ -44,6 +44,23 @@ const (
 	Freelance  EmploymentType = "freelance"
 )
 
+func (e EmploymentType) String() string {
+	switch e {
+	case FullTime:
+		return "Full Time"
+	case PartTime:
+		return "Part Time"
+	case Contract:
+		return "Contract"
+	case Internship:
+		return "Internship"
+	case Freelance:
+		return "Freelance"
+	default:
+		return string(e)
+	}
+}
+
 type WorkArrangement string
 
 const (
@@ -51,6 +68,19 @@ const (
 	Hybrid WorkArrangement = "hybrid"
 	Remote WorkArrangement = "remote"
 )
+
+func (w WorkArrangement) String() string {
+	switch w {
+	case Onsite:
+		return "Onsite"
+	case Hybrid:
+		return "Hybrid"
+	case Remote:
+		return "Remote"
+	default:
+		return string(w)
+	}
+}
 
 type JobStatus string
 

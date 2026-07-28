@@ -1,17 +1,17 @@
 {{define "title"}}Recruiter Dashboard — JOBHOO{{end}}
 
 {{define "content"}}
-<section class="container" style="padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-9);">
-  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--jh-space-2);">
+<section class="container container-padding-full">
+  <div class="d-flex justify-between items-baseline mb-2">
     <div>
-      <h1 style="margin-bottom:2px;">{{.Company.Name}}</h1>
-      <p style="margin:0;">Manage your open roles and applicant pipeline.</p>
+      <h1 class="mb-0">{{.Company.Name}}</h1>
+      <p class="m-0">Manage your open roles and applicant pipeline.</p>
     </div>
     <a href="/post-job" class="btn btn--primary">+ Post a job</a>
   </div>
 
   {{if .Jobs}}
-    <div style="margin-top:var(--jh-space-6);">
+    <div class="mt-6">
       <table>
         <thead>
           <tr>
@@ -26,7 +26,7 @@
         <tbody>
           {{range .Jobs}}
           <tr>
-            <td style="color:var(--jh-white);font-weight:600;">{{.Title}}</td>
+            <td class="text-white font-semibold">{{.Title}}</td>
             <td><span class="badge">{{.Status}}</span></td>
             <td><span class="badge badge--orange">{{.Category.Label}}</span></td>
             <td>{{.ApplicantCount}}</td>
@@ -41,7 +41,7 @@
     <div class="empty-state">
       <h3>No jobs posted yet</h3>
       <p>Post your first job to start receiving applicants.</p>
-      <a href="/post-job" class="btn btn--primary" style="margin-top:var(--jh-space-3);">Post a job</a>
+      <a href="/post-job" class="btn btn--primary recruiter-post-button">Post a job</a>
     </div>
   {{end}}
 </section>

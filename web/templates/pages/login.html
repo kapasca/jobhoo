@@ -1,13 +1,13 @@
 {{define "title"}}Log in — JOBHOO{{end}}
 
 {{define "content"}}
-<section class="container" style="max-width:440px;padding:var(--jh-space-8) var(--jh-space-5);">
+<section class="container login-page-section">
   <div class="card card--pad-lg">
-    <h2 style="text-align:center;">Welcome back</h2>
-    <p style="text-align:center;margin-bottom:var(--jh-space-5);">Log in to continue to JOBHOO.</p>
+    <h2 class="login-page-title">Welcome back</h2>
+    <p class="login-page-subtitle">Log in to continue to JOBHOO.</p>
 
     {{if .Error}}
-      <div class="alert alert--warning" style="margin-bottom:var(--jh-space-4);">{{.Error}}</div>
+      <div class="alert alert--warning mb-4">{{.Error}}</div>
     {{end}}
 
     <form method="POST" action="/login">
@@ -24,8 +24,8 @@
       <button type="submit" class="btn btn--primary btn--block">Log in</button>
     </form>
 
-    <p style="text-align:center;margin-top:var(--jh-space-5);font-size:var(--jh-text-sm);">
-      New to JOBHOO? <a href="/signup" style="color:var(--jh-orange-500);font-weight:600;">Create an account</a>
+    <p class="login-page-footer">
+      New to JOBHOO? <a href="/signup">Create an account</a>
     </p>
   </div>
 </section>

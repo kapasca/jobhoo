@@ -1,48 +1,26 @@
-{{define "title"}}JOBHOO — Hiring, simplified{{end}}
+{{define "title"}}JOBHOO — Simpler. Faster. Smarter.{{end}}
 
 {{define "content"}}
-<section class="container" style="padding:var(--jh-space-9) var(--jh-space-5) var(--jh-space-7);text-align:center;">
-  <span class="badge badge--orange" style="margin-bottom:var(--jh-space-4);">AI-assisted hiring, built for humans</span>
-  <h1 style="max-width:820px;margin:0 auto var(--jh-space-4);">Hiring, simpler, faster, and more transparent.</h1>
-  <p style="max-width:640px;margin:0 auto var(--jh-space-6);font-size:var(--jh-text-lg);">
-    JOBHOO connects candidates with the right roles and helps recruiters find the right people —
-    without the noise of a social network or the weight of enterprise HR software.
+<section class="container home__hero">
+  <span class="badge badge--orange home__hero-badge">Connecting Recruiters with Outstanding Talent</span>
+  <h1 class="home__hero-title">Simpler. Faster. Smarter.</h1>
+  <p class="home__hero-description">
+    Designed with simplicity at its core, JOBHOO delivers a faster and more transparent recruitment experience, enhanced by smart methods to support better hiring decisions.
   </p>
-  <div style="display:flex;gap:var(--jh-space-3);justify-content:center;flex-wrap:wrap;">
+  <div class="home__hero-actions">
     <a href="/jobs" class="btn btn--primary">Browse Jobs</a>
     <a href="/post-job" class="btn btn--secondary">Post a Job</a>
   </div>
 </section>
 
-<section class="container" style="padding:var(--jh-space-7) var(--jh-space-5);">
-  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));">
-    <div class="card card--pad-lg">
-      <h3>For Candidates</h3>
-      <p>Discover roles matched to your actual skills, understand exactly why a job fits, and apply in a click.</p>
-      <a href="/jobs" class="btn btn--secondary btn--sm">Find your next role</a>
-    </div>
-    <div class="card card--pad-lg">
-      <h3>For Recruiters</h3>
-      <p>Post a role, let AI rank and summarize applicants, and keep every candidate moving without the busywork.</p>
-      <a href="/post-job" class="btn btn--secondary btn--sm">Post a job</a>
-    </div>
-    <div class="card card--pad-lg">
-      <h3>Featured Companies</h3>
-      <p>Explore teams that are hiring right now across engineering, design, sales, and operations.</p>
-      <a href="/companies" class="btn btn--secondary btn--sm">Explore companies</a>
-    </div>
-  </div>
-</section>
-
-<section class="container" style="padding:var(--jh-space-7) var(--jh-space-5) var(--jh-space-9);">
-  <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--jh-space-5);">
-    <h2>Latest opportunities</h2>
-    <a href="/jobs" class="btn btn--ghost btn--sm">View all jobs →</a>
-  </div>
-  <div class="grid grid--jobs">
+<section class="container home__latest-section">
+  <div class="grid grid--jobs-homepage">
     {{range .Jobs}}
       {{template "job-card" .}}
     {{end}}
+  </div>
+  <div class="home__view-all-container">
+    <a href="/jobs" class="btn btn--primary btn--lg">View all jobs</a>
   </div>
 </section>
 {{end}}

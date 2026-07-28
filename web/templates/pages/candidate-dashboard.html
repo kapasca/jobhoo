@@ -1,33 +1,33 @@
 {{define "title"}}Your Dashboard — JOBHOO{{end}}
 
 {{define "content"}}
-<section class="container" style="padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-9);">
+<section class="container container-padding-full">
   <h1>Your dashboard</h1>
 
   {{if not .HasProfile}}
-    <div class="alert alert--warning" style="margin-bottom:var(--jh-space-5);">
+    <div class="alert alert--warning mb-5">
       <div>
-        <strong style="color:var(--jh-white);">Your profile is empty.</strong>
-        <p style="margin:2px 0 0;">Add your resume and skills so recruiters — and JOBHOO's AI — can match you to the right roles.</p>
+        <strong class="text-white">Your profile is empty.</strong>
+        <p class="text-with-margin">Add your resume and skills so recruiters — and JOBHOO's AI — can match you to the right roles.</p>
       </div>
-      <a href="/profile" class="btn btn--secondary btn--sm" style="margin-left:auto;white-space:nowrap;">Complete profile</a>
+      <a href="/profile" class="btn btn--secondary btn--sm profile-complete-button">Complete profile</a>
     </div>
   {{end}}
 
-  <div class="tabs" style="margin-bottom:var(--jh-space-5);">
+  <div class="tabs mb-5">
     <span class="tab is-active">Applications ({{len .Applications}})</span>
     <span class="tab">Saved jobs ({{len .SavedJobs}})</span>
   </div>
 
   {{if .Applications}}
-    <table style="margin-bottom:var(--jh-space-7);">
+    <table class="mb-7">
       <thead>
         <tr><th>Job</th><th>Company</th><th>Status</th><th>Applied</th></tr>
       </thead>
       <tbody>
         {{range .Applications}}
         <tr>
-          <td><a href="/jobs/{{.JobID}}" style="color:var(--jh-white);font-weight:600;">{{.JobTitle}}</a></td>
+          <td><a href="/jobs/{{.JobID}}" class="text-white font-semibold">{{.JobTitle}}</a></td>
           <td>{{.CompanyName}}</td>
           <td><span class="badge {{if eq .Stage "hired"}}badge--orange{{end}}">{{.Stage.Label}}</span></td>
           <td>{{.CreatedAt.Format "Jan 2, 2006"}}</td>
@@ -36,32 +36,32 @@
       </tbody>
     </table>
   {{else}}
-    <div class="empty-state" style="margin-bottom:var(--jh-space-7);">
+    <div class="empty-state mb-7">
       <h3>No applications yet</h3>
       <p>Once you apply to jobs, you can track their status here.</p>
-      <a href="/jobs" class="btn btn--primary" style="margin-top:var(--jh-space-3);">Browse jobs</a>
+      <a href="/jobs" class="btn btn--primary mt-3">Browse jobs</a>
     </div>
   {{end}}
 
-  <h2 style="font-size:var(--jh-text-xl);">Saved jobs</h2>
+  <h2 class="font-xl mb-5">Saved jobs</h2>
   {{if .SavedJobs}}
     <div class="grid grid--jobs">
       {{range .SavedJobs}}{{template "job-card" .}}{{end}}
     </div>
   {{else}}
     <div class="empty-state">
-      <p style="margin:0;">Jobs you bookmark will show up here.</p>
+      <p class="m-0">Jobs you bookmark will show up here.</p>
     </div>
   {{end}}
 
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:var(--jh-space-7);">
-    <h2 style="font-size:var(--jh-text-xl);margin:0;">Recommended for you</h2>
+  <div class="d-flex justify-between items-center mt-7">
+    <h2 class="font-xl m-0">Recommended for you</h2>
     <button class="btn btn--secondary btn--sm" hx-post="/dashboard/candidate/recommendations" hx-target="#recommendations" hx-swap="innerHTML">
       ✨ Get AI recommendations
     </button>
   </div>
-  <div id="recommendations" style="margin-top:var(--jh-space-4);">
-    <p style="margin:0;font-size:var(--jh-text-sm);">Click above for jobs matched to your profile skills.</p>
+  <div id="recommendations" class="mt-3">
+    <p class="m-0 font-sm">Click above for jobs matched to your profile skills.</p>
   </div>
 </section>
 {{end}}
@@ -80,16 +80,16 @@
               <p class="job-card__company">{{.CompanyName}}</p>
             </div>
           </div>
-          <p style="font-size:var(--jh-text-xs);color:var(--jh-orange-400);margin:0;">AI fit: {{.Score}}% — {{.Reason}}</p>
+          <p class="recommendation-ai-fit">AI fit: {{.Score}}% — {{.Reason}}</p>
           <a href="/jobs/{{.ID}}" class="btn btn--primary btn--sm">View job</a>
         </div>
       {{end}}
     </div>
   {{else}}
-    <p style="margin:0;font-size:var(--jh-text-sm);">Complete your profile with some skills to get recommendations.</p>
+    <p class="recommendation-empty">Complete your profile with some skills to get recommendations.</p>
   {{end}}
 {{end}}
 
 {{define "recommendations-empty"}}
-  <p style="margin:0;font-size:var(--jh-text-sm);">Complete your profile first to get AI job recommendations.</p>
+  <p class="recommendation-empty">Complete your profile first to get AI job recommendations.</p>
 {{end}}

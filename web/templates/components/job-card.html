@@ -1,38 +1,67 @@
 {{define "job-card"}}
-<article class="job-card">
-  <div class="job-card__top">
+<div class="job-card" hx-get="/jobs/{{.ID}}" hx-trigger="click" hx-target="body" hx-swap="beforeend">
+  <!-- Header: Company + Posted time + Bookmark -->
+  <div class="job-card__header">
+    <div class="job-card__company-section">
+      <img src="/static/img/company.svg" alt="Company" class="job-card__company-icon">
+      <span class="job-card__company">{{.CompanyName}}</span>
+    </div>
+    <div class="job-card__header-right">
+      <span class="job-card__posted">{{.PostedAgo}}</span>
+      <button class="job-card__bookmark" title="Save Job" aria-label="Save Job"
+              hx-post="/jobs/{{.ID}}/save" hx-swap="outerHTML" onclick="event.preventDefault(); event.stopPropagation();">
+        <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Body: Logo + Content -->
+  <div class="job-card__body">
     <div class="job-card__logo">
       <img src="{{if .CompanyLogoURL}}{{.CompanyLogoURL}}{{else}}/static/img/jobhoo-icon.png{{end}}" alt="{{.CompanyName}} logo">
     </div>
-    <div class="job-card__heading">
-      <p class="job-card__title">{{.Title}}</p>
-      <p class="job-card__company">{{.CompanyName}}</p>
+    
+    <div class="job-card__content">
+      <!-- Title -->
+      <h3 class="job-card__title">{{.Title}}</h3>
+      
+      <!-- Metadata: Each on separate line with SVG icon -->
+      <div class="job-card__metadata">
+        <!-- Category -->
+        <div class="job-card__meta-item">
+          <svg class="job-card__meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 6v6h4"/>
+          </svg>
+          <span class="job-card__meta-text">{{.Category.Label}}</span>
+        </div>
+        
+        <!-- Location -->
+        <div class="job-card__meta-item">
+          <svg class="job-card__meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+          </svg>
+          <span class="job-card__meta-text">{{.Location}}</span>
+        </div>
+        
+        <!-- Work Arrangement -->
+        <div class="job-card__meta-item">
+          <svg class="job-card__meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 12c0-1.1.9-2 2-2h16c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2v-8z"/><path d="M2 7h20M6 7V5c0-1 1-2 2-2h8c1 0 2 1 2 2v2"/>
+          </svg>
+          <span class="job-card__meta-text">{{.WorkArrangement.String}}</span>
+        </div>
+        
+        <!-- Employment Type -->
+        <div class="job-card__meta-item">
+          <svg class="job-card__meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span class="job-card__meta-text">{{.EmploymentType.String}}</span>
+        </div>
+      </div>
     </div>
-    <button class="job-card__bookmark" title="Save job" aria-label="Save job"
-            hx-post="/jobs/{{.ID}}/save" hx-swap="outerHTML">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-      </svg>
-    </button>
   </div>
-
-  <div class="job-card__meta">
-    <span class="badge badge--orange">{{.Category.Label}}</span>
-    <span class="badge">{{.Location}}</span>
-    <span class="badge badge--remote">{{.WorkArrangement}}</span>
-    <span class="badge">{{.EmploymentType}}</span>
-  </div>
-
-  <div class="job-card__footer">
-    <div>
-      {{if .SalaryMin}}
-        <span class="job-card__salary">{{.SalaryCurrency}} {{.SalaryMin}}–{{.SalaryMax}}</span>
-      {{else}}
-        <span class="job-card__salary" style="color:var(--jh-ink-500);font-weight:500;">Salary not disclosed</span>
-      {{end}}
-      <div class="job-card__posted">{{.PostedAgo}}</div>
-    </div>
-    <a href="/jobs/{{.ID}}" class="btn btn--primary btn--sm">View & Apply</a>
-  </div>
-</article>
+</div>
 {{end}}

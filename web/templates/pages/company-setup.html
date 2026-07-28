@@ -1,13 +1,13 @@
 {{define "title"}}Set up your company — JOBHOO{{end}}
 
 {{define "content"}}
-<section class="container" style="max-width:520px;padding:var(--jh-space-8) var(--jh-space-5);">
+<section class="container container-max-md container-padding-auth">
   <div class="card card--pad-lg">
     <h2>Set up your company</h2>
-    <p style="margin-bottom:var(--jh-space-5);">One quick step before you post your first job.</p>
+    <p class="mb-5">One quick step before you post your first job.</p>
 
     {{if .Error}}
-      <div class="alert alert--warning" style="margin-bottom:var(--jh-space-4);">{{.Error}}</div>
+      <div class="alert alert--warning mb-4">{{.Error}}</div>
     {{end}}
 
     <form method="POST" action="/company/setup">

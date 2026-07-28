@@ -7,18 +7,24 @@
 */
 
 :root {
-  /* --- Color: Navy (structural) --- */
-  --jh-navy-900: #14182c;   /* near-black end of the atmosphere gradient */
-  --jh-navy-800: #1a2038;
-  --jh-navy-700: #1f2747;   /* brand navy */
-  --jh-navy-600: #2a3358;
-  --jh-navy-500: #3a4570;
+  --jh-darker-transparent: rgba(0, 0, 0, 0.4);  /* for overlaying on top of the background gradient */
 
-  /* --- Color: Orange (accent, opportunity) --- */
-  --jh-orange-600: #e56d00;
-  --jh-orange-500: #ff7a00;  /* brand orange */
-  --jh-orange-400: #ff9433;
-  --jh-orange-100: #ffe4c7;
+  /* --- Color: Navy (structural) — darker, desaturated --- */
+  --jh-navy-1000: #0b0e1a;  /* near-black start of the atmosphere gradient */
+  --jh-navy-900: #0f1220;   /* near-black end of the atmosphere gradient */
+  --jh-navy-800: #141a2e;
+  --jh-navy-700: #192132;   /* brand navy — more muted */
+  --jh-navy-600: #232d45;
+  --jh-navy-500: #2d3854;
+  --jh-navy-rgb: 25 33 50;   /* for rgba() variants */
+
+  /* --- Color: Orange (accent, opportunity) — darker, desaturated --- */
+  --jh-orange-600: #c85900;
+  --jh-orange-500: #d96600;  /* brand orange — more muted */
+  --jh-orange-400: #e87d33;
+  --jh-orange-300: #f29b66;
+  --jh-orange-100: #f5dcc9;
+  --jh-orange-rgb: 217 102 0;   /* for rgba() variants */
 
   /* --- Color: Neutrals --- */
   --jh-white: #ffffff;
@@ -26,15 +32,16 @@
   --jh-ink-300: #b7bdd1;     /* secondary text */
   --jh-ink-500: #7d84a3;     /* tertiary / placeholder text */
   --jh-black: #0a0c16;
+  --jh-black-rgb: 10 12 22;   /* for rgba() variants */
 
-  /* --- Surfaces --- */
+  /* --- Surfaces (adjusted for new navy tone) --- */
   --jh-bg: var(--jh-navy-700);
   --jh-bg-atmosphere: linear-gradient(180deg, var(--jh-navy-700) 0%, var(--jh-navy-900) 100%);
-  --jh-surface-card: #262e4d;       /* lighter than bg for separation */
-  --jh-surface-card-hover: #2c3559;
-  --jh-surface-inset: #1b2140;      /* recessed fields/inputs */
-  --jh-border: #333c63;
-  --jh-border-strong: #454f7e;
+  --jh-surface-card: #1f2942;       /* lighter than bg for separation */
+  --jh-surface-card-hover: #242f4c;
+  --jh-surface-inset: #151d30;      /* recessed fields/inputs */
+  --jh-border: #2a3549;
+  --jh-border-strong: #3a4462;
 
   /* --- Typography --- */
   --jh-font: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -69,9 +76,9 @@
   --jh-radius-pill: 999px;
 
   /* --- Elevation --- */
-  --jh-shadow-sm: 0 2px 8px rgba(10, 12, 22, 0.24);
-  --jh-shadow-md: 0 8px 24px rgba(10, 12, 22, 0.32);
-  --jh-shadow-glow-orange: 0 0 0 4px rgba(255, 122, 0, 0.16);
+  --jh-shadow-sm: 0 2px 8px rgba(var(--jh-black-rgb), 0.24);
+  --jh-shadow-md: 0 8px 24px rgba(var(--jh-black-rgb), 0.32);
+  --jh-shadow-glow-orange: 0 0 0 4px rgba(var(--jh-orange-rgb), 0.16);
 
   /* --- Motion --- */
   --jh-ease: cubic-bezier(0.4, 0, 0.2, 1);

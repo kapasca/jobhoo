@@ -1,32 +1,32 @@
 {{define "title"}}Admin — JOBHOO{{end}}
 
 {{define "content"}}
-<section class="container" style="padding:var(--jh-space-6) var(--jh-space-5) var(--jh-space-9);">
+<section class="container container-padding-full">
   <h1>Platform overview</h1>
-  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  <div class="grid grid-auto-fit-160">
     <div class="card">
-      <p style="font-size:var(--jh-text-3xl);color:var(--jh-white);font-weight:700;margin:0;">{{.TotalUsers}}</p>
-      <p style="margin:0;">Total users</p>
+      <p class="stat-card-value">{{.TotalUsers}}</p>
+      <p class="stat-card-label">Total users</p>
     </div>
     <div class="card">
-      <p style="font-size:var(--jh-text-3xl);color:var(--jh-orange-500);font-weight:700;margin:0;">{{.TotalCandidates}}</p>
-      <p style="margin:0;">Candidates</p>
+      <p class="stat-card-value text-orange">{{.TotalCandidates}}</p>
+      <p class="stat-card-label">Candidates</p>
     </div>
     <div class="card">
-      <p style="font-size:var(--jh-text-3xl);color:var(--jh-orange-500);font-weight:700;margin:0;">{{.TotalRecruiters}}</p>
-      <p style="margin:0;">Recruiters</p>
+      <p class="stat-card-value text-orange">{{.TotalRecruiters}}</p>
+      <p class="stat-card-label">Recruiters</p>
     </div>
     <div class="card">
-      <p style="font-size:var(--jh-text-3xl);color:var(--jh-white);font-weight:700;margin:0;">{{.TotalCompanies}}</p>
-      <p style="margin:0;">Companies</p>
+      <p class="stat-card-value">{{.TotalCompanies}}</p>
+      <p class="stat-card-label">Companies</p>
     </div>
     <div class="card">
-      <p style="font-size:var(--jh-text-3xl);color:var(--jh-white);font-weight:700;margin:0;">{{.TotalJobs}}</p>
-      <p style="margin:0;">Jobs posted</p>
+      <p class="stat-card-value">{{.TotalJobs}}</p>
+      <p class="stat-card-label">Jobs posted</p>
     </div>
     <div class="card">
-      <p style="font-size:var(--jh-text-3xl);color:var(--jh-white);font-weight:700;margin:0;">{{.TotalApplications}}</p>
-      <p style="margin:0;">Applications</p>
+      <p class="stat-card-value">{{.TotalApplications}}</p>
+      <p class="stat-card-label">Applications</p>
     </div>
   </div>
 </section>
