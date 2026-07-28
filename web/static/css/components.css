@@ -105,6 +105,10 @@ a  { color: inherit; text-decoration: none; }
 .jh-nav__link.is-active { color: var(--jh-orange-500); border-bottom-color: var(--jh-orange-500); }
 .jh-nav__actions { display: flex; gap: var(--jh-space-3); align-items: center; }
 
+@media (max-width: 768px) {
+  .jh-nav__brand img { height: 45px; }
+}
+
 /* --- Buttons --- */
 .btn {
   display: inline-flex;
