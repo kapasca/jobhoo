@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{block "title" .}}JOBHOO{{end}}</title>
+  <title>{{block "title" .}}JOBHOO - Job Portal{{end}}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/tokens.css">
@@ -19,9 +19,6 @@
         <img src="/static/img/jobhoo-logo-full.png" alt="JOBHOO">
       </a>
       <nav class="jh-nav__links">
-        {{if .CurrentUser}}
-          <a href="{{.DashboardPath}}" class="jh-nav__link {{if eq .ActiveNav "dashboard"}}is-active{{end}}">Dashboard</a>
-        {{end}}
         <a href="/jobs" class="jh-nav__link {{if eq .ActiveNav "jobs"}}is-active{{end}}">Browse Jobs</a>
         {{if not .CurrentUser}}
           <a href="/post-job" class="jh-nav__link {{if eq .ActiveNav "post"}}is-active{{end}}">Post a Job</a>
@@ -30,20 +27,91 @@
         {{else if eq .CurrentUser.Role "candidate"}}
           <a href="/profile" class="jh-nav__link {{if eq .ActiveNav "profile"}}is-active{{end}}">{{.CurrentUser.FullName}}</a>
         {{end}}
+        {{if .CurrentUser}}
+          <a href="{{.DashboardPath}}" class="jh-nav__link {{if eq .ActiveNav "dashboard"}}is-active{{end}}">Dashboard</a>
+        {{end}}
       </nav>
       <div class="jh-nav__actions">
         {{if .CurrentUser}}
           <form method="POST" action="/logout" class="form-inline">
             <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-            <button type="submit" class="btn btn--secondary btn--lg">Log out</button>
+            <button type="submit" class="btn btn--secondary btn--lg">Sign Out</button>
           </form>
         {{else}}
-          <button hx-get="/login" hx-target="body" hx-swap="beforeend" class="btn btn--ghost btn--lg btn-ghost-reset">Log in</button>
-          <a href="/signup" class="btn btn--primary btn--lg">Sign up</a>
+          <button hx-get="/login" hx-target="body" hx-swap="beforeend" class="btn btn--secondary btn--lg">My Account</button>
         {{end}}
       </div>
+      <!-- Hamburger: mobile only -->
+      <button class="jh-nav__hamburger" id="jh-hamburger" aria-label="Open menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
     </div>
   </header>
+
+  <!-- Mobile drawer menu -->
+  <div class="jh-mobile-menu" id="jh-mobile-menu">
+    <div class="jh-mobile-menu__backdrop" id="jh-mobile-backdrop"></div>
+    <div class="jh-mobile-menu__drawer">
+      <div class="jh-mobile-menu__header">
+        <a href="/" class="jh-nav__brand">
+          <img src="/static/img/jobhoo-logo-full.png" alt="JOBHOO">
+        </a>
+        <button class="jh-mobile-menu__close" id="jh-mobile-close" aria-label="Close menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="jh-mobile-menu__nav">
+        <a href="/jobs" class="jh-mobile-menu__link">Browse Jobs</a>
+        {{if not .CurrentUser}}
+          <a href="/post-job" class="jh-mobile-menu__link">Post a Job</a>
+        {{else if eq .CurrentUser.Role "recruiter"}}
+          <a href="/post-job" class="jh-mobile-menu__link">Post a Job</a>
+        {{else if eq .CurrentUser.Role "candidate"}}
+          <a href="/profile" class="jh-mobile-menu__link">My Profile</a>
+        {{end}}
+        {{if .CurrentUser}}
+          <a href="{{.DashboardPath}}" class="jh-mobile-menu__link">Dashboard</a>
+        {{end}}
+        <a href="/companies" class="jh-mobile-menu__link">Explore Companies</a>
+      </nav>
+
+      <div class="jh-mobile-menu__actions">
+        {{if .CurrentUser}}
+          <form method="POST" action="/logout" class="form-inline">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <button type="submit" class="btn btn--secondary w-full">Sign Out</button>
+          </form>
+        {{else}}
+          <button hx-get="/login" hx-target="body" hx-swap="beforeend"
+                  class="btn btn--secondary w-full">My Account</button>
+        {{end}}
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Capture URL before any HTMX history push so modals can restore it on close
+    document.addEventListener('htmx:beforeHistoryUpdate', function() {
+      document.body.dataset.preModalUrl = window.location.href;
+    });
+    (function() {
+      const hamburger = document.getElementById('jh-hamburger');
+      const menu = document.getElementById('jh-mobile-menu');
+      const backdrop = document.getElementById('jh-mobile-backdrop');
+      const closeBtn = document.getElementById('jh-mobile-close');
+      function openMenu() { menu.classList.add('is-open'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('is-open'); document.body.style.overflow = ''; }
+      if (hamburger) hamburger.addEventListener('click', openMenu);
+      if (backdrop) backdrop.addEventListener('click', closeMenu);
+      if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+    })();
+  </script>
 
   <main>
     {{block "content" .}}{{end}}

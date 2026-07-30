@@ -1,22 +1,21 @@
-{{define "title"}}{{.Job.Title}} pipeline — JOBHOO{{end}}
+{{define "title"}}ATS Board — JOBHOO{{end}}
 
 {{define "content"}}
 <section class="ats-section-header">
   <div class="ats-header-top">
     <div>
-      <a href="/dashboard/recruiter" class="ats-back-link">← Back to dashboard</a>
-      <h1 class="ats-header-title">{{.Job.Title}}</h1>
+      <a href="/dashboard/recruiter" class="ats-back-link">← Back to Dashboard</a>
+      <h1 class="ats-header-title">ATS Board</h1>
+      <p class="ats-job-position">{{.Job.Title}}</p>
     </div>
     <button class="btn btn--primary" hx-post="/recruiter/jobs/{{.Job.ID}}/rank" hx-target="#ats-columns" hx-swap="outerHTML">
       ✨ Rank candidates with AI
     </button>
   </div>
-  <p class="max-width-640">AI ranking is a suggestion to help you prioritize review — it never changes a candidate's stage or hides anyone.</p>
 </section>
 
 <section class="ats-columns-wrapper">
   {{template "ats-columns" .}}
-
   {{if .Rejected}}
     <details class="ats-rejected-section">
       <summary class="ats-rejected-summary">Rejected ({{len .Rejected}})</summary>
@@ -26,6 +25,7 @@
     </details>
   {{end}}
 </section>
+<p class="ats-ai-note">AI ranking is only a suggestion to help prioritize review — it never changes a candidate's stage or hides anyone.</p>
 {{end}}
 
 {{define "ats-columns"}}

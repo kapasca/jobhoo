@@ -5,7 +5,19 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"unicode/utf8"
 )
+
+var templateFuncs = template.FuncMap{
+	// truncate cuts s to at most n runes and appends "..." if it was longer.
+	"truncate": func(n int, s string) string {
+		if utf8.RuneCountInString(s) <= n {
+			return s
+		}
+		runes := []rune(s)
+		return string(runes[:n]) + "..."
+	},
+}
 
 // Renderer parses each page template together with the shared layout and
 // component partials, then caches the result by page name. Every page
@@ -43,7 +55,7 @@ func (r *Renderer) loadAll() error {
 		files := append([]string{page}, layouts...)
 		files = append(files, components...)
 
-		tmpl, err := template.New(name).ParseFiles(files...)
+		tmpl, err := template.New(name).Funcs(templateFuncs).ParseFiles(files...)
 		if err != nil {
 			return fmt.Errorf("parsing template %s: %w", name, err)
 		}

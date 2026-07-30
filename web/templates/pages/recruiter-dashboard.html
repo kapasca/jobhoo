@@ -7,19 +7,19 @@
       <h1 class="mb-0">{{.Company.Name}}</h1>
       <p class="m-0">Manage your open roles and applicant pipeline.</p>
     </div>
-    <a href="/post-job" class="btn btn--primary">+ Post a job</a>
+    <a href="/post-job" class="btn btn--primary">+ Post a Job</a>
   </div>
 
   {{if .Jobs}}
-    <div class="mt-6">
+    <div class="mt-6 table-responsive">
       <table>
         <thead>
           <tr>
-            <th>Job</th>
-            <th>Status</th>
-            <th>Category</th>
-            <th>Applicants</th>
-            <th>Posted</th>
+            <th align="left">Job</th>
+            <th align="center">Status</th>
+            <th align="center">Category</th>
+            <th align="center">Applicants</th>
+            <th align="center">Posted</th>
             <th></th>
           </tr>
         </thead>
@@ -27,11 +27,11 @@
           {{range .Jobs}}
           <tr>
             <td class="text-white font-semibold">{{.Title}}</td>
-            <td><span class="badge">{{.Status}}</span></td>
-            <td><span class="badge badge--orange">{{.Category.Label}}</span></td>
-            <td>{{.ApplicantCount}}</td>
-            <td>{{.PostedAgo}}</td>
-            <td><a href="/recruiter/jobs/{{.ID}}/applicants" class="btn btn--secondary btn--sm">View pipeline</a></td>
+            <td align="center"><span class="badge">{{.Status}}</span></td>
+            <td align="center"><span class="badge badge--orange">{{.Category.Label}}</span></td>
+            <td align="center">{{.ApplicantCount}}</td>
+            <td align="center">{{.PostedAgo}}</td>
+            <td align="right"><a href="/recruiter/jobs/{{.ID}}/applicants" class="btn btn--secondary btn--sm">View pipeline</a></td>
           </tr>
           {{end}}
         </tbody>

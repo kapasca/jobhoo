@@ -25,10 +25,14 @@ const jobSelectColumns = `
 // JobListFilter narrows ListPublished's results. Zero-value fields are
 // treated as "no filter" (e.g. empty Category means all categories).
 type JobListFilter struct {
-	Search   string
-	Category models.JobCategory
-	Limit    int
-	Offset   int
+	Search           string
+	Category         models.JobCategory
+	Location         string   // substring match against j.location
+	WorkArrangements []string // e.g. {"remote","hybrid"} — empty/nil means all
+	EmploymentTypes  []string // e.g. {"full_time","contract"} — empty/nil means all
+	Sort             string   // "recent" (default), "title", or "company"
+	Limit            int
+	Offset           int
 }
 
 // JobListResult carries a page of jobs plus the total count matching the
@@ -38,22 +42,47 @@ type JobListResult struct {
 	Total int
 }
 
-// ListPublished returns a page of published jobs, most recent first,
-// optionally filtered by free-text search and/or category.
+// ListPublished returns a page of published jobs, optionally filtered by
+// free-text search, category, location, work arrangement, and/or employment
+// type, sorted per f.Sort.
 func (r *JobsRepo) ListPublished(ctx context.Context, f JobListFilter) (JobListResult, error) {
 	if f.Limit <= 0 {
 		f.Limit = 20
 	}
+	// nil (not empty-non-nil) so the SQL "IS NULL" no-filter check below
+	// behaves the same whether the caller passed nil or an empty slice.
+	arrangements := f.WorkArrangements
+	if len(arrangements) == 0 {
+		arrangements = nil
+	}
+	employmentTypes := f.EmploymentTypes
+	if len(employmentTypes) == 0 {
+		employmentTypes = nil
+	}
+
+	const filterClauses = `
+		  AND (
+		    $1 = ''
+		    OR j.title ILIKE '%' || $1 || '%'
+		    OR $1 ILIKE ANY(j.must_have_skills)
+		    OR c.name ILIKE '%' || $1 || '%'
+		    OR replace(j.category::text, '_', ' ') ILIKE '%' || replace($1, '_', ' ') || '%'
+		  )
+		  AND ($2 = '' OR j.category = $2::job_category)
+		  AND ($3 = '' OR j.location ILIKE '%' || $3 || '%')
+		  AND ($4::text[] IS NULL OR j.work_arrangement::text = ANY($4::text[]))
+		  AND ($5::text[] IS NULL OR j.employment_type::text = ANY($5::text[]))
+	`
+	filterArgs := []any{f.Search, string(f.Category), f.Location, arrangements, employmentTypes}
 
 	countQuery := `
 		SELECT count(*)
 		FROM jobs j
+		JOIN companies c ON c.id = j.company_id
 		WHERE j.status = 'published'
-		  AND ($1 = '' OR j.title ILIKE '%' || $1 || '%' OR $1 ILIKE ANY(j.must_have_skills))
-		  AND ($2 = '' OR j.category = $2::job_category)
-	`
+	` + filterClauses
 	var total int
-	if err := r.pool.QueryRow(ctx, countQuery, f.Search, string(f.Category)).Scan(&total); err != nil {
+	if err := r.pool.QueryRow(ctx, countQuery, filterArgs...).Scan(&total); err != nil {
 		return JobListResult{}, err
 	}
 
@@ -62,12 +91,12 @@ func (r *JobsRepo) ListPublished(ctx context.Context, f JobListFilter) (JobListR
 		FROM jobs j
 		JOIN companies c ON c.id = j.company_id
 		WHERE j.status = 'published'
-		  AND ($1 = '' OR j.title ILIKE '%' || $1 || '%' OR $1 ILIKE ANY(j.must_have_skills))
-		  AND ($2 = '' OR j.category = $2::job_category)
-		ORDER BY j.published_at DESC
-		LIMIT $3 OFFSET $4
+	` + filterClauses + `
+		ORDER BY ` + orderByForSort(f.Sort) + `
+		LIMIT $6 OFFSET $7
 	`
-	rows, err := r.pool.Query(ctx, query, f.Search, string(f.Category), f.Limit, f.Offset)
+	args := append(append([]any{}, filterArgs...), f.Limit, f.Offset)
+	rows, err := r.pool.Query(ctx, query, args...)
 	if err != nil {
 		return JobListResult{}, err
 	}
@@ -86,6 +115,19 @@ func (r *JobsRepo) ListPublished(ctx context.Context, f JobListFilter) (JobListR
 	}
 
 	return JobListResult{Jobs: jobs, Total: total}, nil
+}
+
+// orderByForSort maps a sort key to a SQL ORDER BY clause via an explicit
+// whitelist — never interpolate f.Sort directly into SQL.
+func orderByForSort(sort string) string {
+	switch sort {
+	case "title":
+		return "j.title ASC"
+	case "company":
+		return "c.name ASC, j.title ASC"
+	default: // "recent" and anything unrecognized
+		return "j.published_at DESC"
+	}
 }
 
 // ListByCompany returns every job (any status) owned by a company, newest

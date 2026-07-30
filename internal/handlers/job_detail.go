@@ -44,13 +44,11 @@ func (h *Handlers) JobDetail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Only allow HTMX modal requests to this endpoint
-	if r.Header.Get("HX-Request") != "true" {
-		h.NotFoundPage(w, r)
-		return
-	}
-
-	h.Render.RenderBlock(w, "job-detail-modal.html", "job-detail-modal", data)
+	// HTMX requests (clicking a job card) get the modal fragment. Everything
+	// else — a direct visit, a shared/bookmarked link, a search-engine
+	// crawler, browser back/forward — is a normal navigation and gets the
+	// real page, so job listings stay linkable and shareable.
+	h.renderJobDetail(w, r, data)
 }
 
 func (h *Handlers) ApplyToJob(w http.ResponseWriter, r *http.Request) {
@@ -78,15 +76,41 @@ func (h *Handlers) ApplyToJob(w http.ResponseWriter, r *http.Request) {
 		} else {
 			data.ApplyError = "Something went wrong submitting your application. Please try again."
 		}
-		if r.Header.Get("HX-Request") == "true" {
-			h.Render.RenderBlock(w, "job-detail-modal.html", "job-detail-modal", data)
-		}
+		h.renderApplySection(w, r, data)
 		return
 	}
 
 	data.HasApplied = true
 	data.ApplySent = true
-	h.Render.RenderBlock(w, "job-detail-modal.html", "job-detail-modal", data)
+	h.renderApplySection(w, r, data)
+}
+
+// renderApplySection responds to an apply-form submission. The form always
+// submits via hx-post (on both the full page and inside the modal) with
+// hx-target="#job-apply-section", so an HTMX request here must get back
+// exactly that fragment — never the whole modal or whole page. Sending back
+// the full modal (as renderJobDetail does) would nest a second copy of the
+// modal's backdrop, close button, and script tag inside the fragment being
+// swapped, since outerHTML on #job-apply-section replaces only that element.
+// A non-HTMX request (JS disabled) falls back to a full page render.
+func (h *Handlers) renderApplySection(w http.ResponseWriter, r *http.Request, data jobDetailData) {
+	if r.Header.Get("HX-Request") == "true" {
+		h.Render.RenderBlock(w, "job-detail.html", "job-apply-section", data)
+		return
+	}
+	h.Render.Render(w, http.StatusOK, "job-detail.html", data)
+}
+
+// renderJobDetail sends the modal fragment for HTMX requests and the full
+// page for everything else — used by both JobDetail and ApplyToJob so a
+// plain (non-HTMX) form submission on the full job-detail.html page never
+// gets a bare modal fragment back.
+func (h *Handlers) renderJobDetail(w http.ResponseWriter, r *http.Request, data jobDetailData) {
+	if r.Header.Get("HX-Request") == "true" {
+		h.Render.RenderBlock(w, "job-detail-modal.html", "job-detail-modal", data)
+		return
+	}
+	h.Render.Render(w, http.StatusOK, "job-detail.html", data)
 }
 
 // SaveJob is an HTMX endpoint: it toggles the bookmark and returns just the

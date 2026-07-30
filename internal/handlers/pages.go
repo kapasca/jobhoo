@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/jobhoo/jobhoo/internal/database"
@@ -59,23 +60,26 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 // reflect what was actually applied), and pagination bounds.
 type jobsPageData struct {
 	BasePageData
-	Jobs       []models.Job
-	Categories []jobCategoryOption
-	Search     string
-	Category   string
-	Page       int
-	TotalPages int
-	Total      int
-	HasPrev    bool
-	HasNext    bool
-	PrevPage   int
-	NextPage   int
-}
-
-type jobCategoryOption struct {
-	Value    string
-	Label    string
-	IsActive bool
+	Jobs         []models.Job
+	Search       string
+	Category     string
+	Location     string
+	Sort         string
+	Arrangements map[string]bool // e.g. Arrangements["remote"] == true if that checkbox is active
+	Employments  map[string]bool
+	Page         int
+	TotalPages   int
+	Total        int
+	From         int
+	To           int
+	HasPrev      bool
+	HasNext      bool
+	PrevPage     int
+	NextPage     int
+	// FilterQuery is the current filters pre-encoded as a URL query string
+	// fragment (no leading "?"/"&"), so Prev/Next pagination links can carry
+	// every active filter forward instead of only q/category.
+	FilterQuery string
 }
 
 func (h *Handlers) JobsIndex(w http.ResponseWriter, r *http.Request) {
@@ -90,18 +94,27 @@ func (h *Handlers) JobsSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) renderJobsPage(w http.ResponseWriter, r *http.Request, page string, blockName ...string) {
-	search := r.URL.Query().Get("q")
-	category := r.URL.Query().Get("category")
-	pageNum, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	q := r.URL.Query()
+	search := q.Get("q")
+	category := q.Get("category")
+	location := q.Get("location")
+	sort := q.Get("sort")
+	arrangements := q["arrangement"] // multi-value checkboxes, e.g. ?arrangement=remote&arrangement=hybrid
+	employments := q["employment"]
+	pageNum, _ := strconv.Atoi(q.Get("page"))
 	if pageNum < 1 {
 		pageNum = 1
 	}
 
 	result, err := h.Jobs.ListPublished(r.Context(), database.JobListFilter{
-		Search:   search,
-		Category: models.JobCategory(category),
-		Limit:    jobsPerPage,
-		Offset:   (pageNum - 1) * jobsPerPage,
+		Search:           search,
+		Category:         models.JobCategory(category),
+		Location:         location,
+		Sort:             sort,
+		WorkArrangements: arrangements,
+		EmploymentTypes:  employments,
+		Limit:            jobsPerPage,
+		Offset:           (pageNum - 1) * jobsPerPage,
 	})
 	if err != nil {
 		http.Error(w, "could not load jobs", http.StatusInternalServerError)
@@ -113,27 +126,55 @@ func (h *Handlers) renderJobsPage(w http.ResponseWriter, r *http.Request, page s
 		totalPages = 1
 	}
 
-	categoryOptions := make([]jobCategoryOption, 0, len(models.JobCategories)+1)
-	categoryOptions = append(categoryOptions, jobCategoryOption{Value: "", Label: "All categories", IsActive: category == ""})
-	for _, c := range models.JobCategories {
-		categoryOptions = append(categoryOptions, jobCategoryOption{
-			Value: string(c.Value), Label: c.Label, IsActive: string(c.Value) == category,
-		})
+	arrangementSet := toSet(arrangements)
+	employmentSet := toSet(employments)
+
+	filterQuery := url.Values{}
+	if search != "" {
+		filterQuery.Set("q", search)
+	}
+	if category != "" {
+		filterQuery.Set("category", category)
+	}
+	if location != "" {
+		filterQuery.Set("location", location)
+	}
+	if sort != "" {
+		filterQuery.Set("sort", sort)
+	}
+	for _, a := range arrangements {
+		filterQuery.Add("arrangement", a)
+	}
+	for _, e := range employments {
+		filterQuery.Add("employment", e)
+	}
+
+	from := (pageNum-1)*jobsPerPage + 1
+	to := from + len(result.Jobs) - 1
+	if result.Total == 0 {
+		from = 0
+		to = 0
 	}
 
 	data := jobsPageData{
 		BasePageData: newBasePageData(r, "jobs"),
 		Jobs:         result.Jobs,
-		Categories:   categoryOptions,
 		Search:       search,
 		Category:     category,
+		Location:     location,
+		Sort:         sort,
+		Arrangements: arrangementSet,
+		Employments:  employmentSet,
 		Page:         pageNum,
 		TotalPages:   totalPages,
 		Total:        result.Total,
+		From:         from,
+		To:           to,
 		HasPrev:      pageNum > 1,
 		HasNext:      pageNum < totalPages,
 		PrevPage:     pageNum - 1,
 		NextPage:     pageNum + 1,
+		FilterQuery:  filterQuery.Encode(),
 	}
 
 	if len(blockName) == 1 {
@@ -150,4 +191,12 @@ func (h *Handlers) renderJobsPage(w http.ResponseWriter, r *http.Request, page s
 	}
 
 	h.Render.Render(w, http.StatusOK, page, data)
+}
+
+func toSet(values []string) map[string]bool {
+	set := make(map[string]bool, len(values))
+	for _, v := range values {
+		set[v] = true
+	}
+	return set
 }

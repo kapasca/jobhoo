@@ -17,7 +17,7 @@
 
     <div class="field">
       <label for="category">Category</label>
-      <select id="category" name="category" required>
+      <select id="category" name="category" class="dropdown" required>
         {{range .Categories}}<option value="{{.Value}}">{{.Label}}</option>{{end}}
       </select>
     </div>
@@ -25,7 +25,7 @@
     <div class="d-grid grid-2-col gap-4">
       <div class="field">
         <label for="employment_type">Employment type</label>
-        <select id="employment_type" name="employment_type">
+        <select id="employment_type" name="employment_type" class="dropdown">
           <option value="full_time">Full-time</option>
           <option value="part_time">Part-time</option>
           <option value="contract">Contract</option>
@@ -35,7 +35,7 @@
       </div>
       <div class="field">
         <label for="work_arrangement">Work arrangement</label>
-        <select id="work_arrangement" name="work_arrangement">
+        <select id="work_arrangement" name="work_arrangement" class="dropdown">
           <option value="onsite">Onsite</option>
           <option value="hybrid">Hybrid</option>
           <option value="remote">Remote</option>

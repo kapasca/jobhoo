@@ -14,13 +14,14 @@
 </section>
 
 <section class="container home__latest-section">
-  <div class="grid grid--jobs-homepage">
+  <div class="grid">
     {{range .Jobs}}
       {{template "job-card" .}}
     {{end}}
   </div>
   <div class="home__view-all-container">
-    <a href="/jobs" class="btn btn--primary btn--lg">View all jobs</a>
+    <a href="/jobs" class="btn btn--primary btn--lg">View All Jobs</a>
   </div>
 </section>
+
 {{end}}

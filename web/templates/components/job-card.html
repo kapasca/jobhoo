@@ -1,5 +1,5 @@
 {{define "job-card"}}
-<div class="job-card" hx-get="/jobs/{{.ID}}" hx-trigger="click" hx-target="body" hx-swap="beforeend">
+<div class="job-card" hx-get="/jobs/{{.ID}}" hx-trigger="click" hx-target="body" hx-swap="beforeend" hx-push-url="/jobs/{{.ID}}">
   <!-- Header: Company + Posted time + Bookmark -->
   <div class="job-card__header">
     <div class="job-card__company-section">
@@ -17,18 +17,16 @@
     </div>
   </div>
   
-  <!-- Body: Logo + Content -->
+  <!-- Title: full width above body -->
+  <h3 class="job-card__title" title="{{.Title}}">{{.Title}}</h3>
+
+  <!-- Body: Logo + Meta -->
   <div class="job-card__body">
     <div class="job-card__logo">
       <img src="{{if .CompanyLogoURL}}{{.CompanyLogoURL}}{{else}}/static/img/jobhoo-icon.png{{end}}" alt="{{.CompanyName}} logo">
     </div>
     
-    <div class="job-card__content">
-      <!-- Title -->
-      <h3 class="job-card__title">{{.Title}}</h3>
-      
-      <!-- Metadata: Each on separate line with SVG icon -->
-      <div class="job-card__metadata">
+    <div class="job-card__metadata">
         <!-- Category -->
         <div class="job-card__meta-item">
           <svg class="job-card__meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -60,7 +58,6 @@
           </svg>
           <span class="job-card__meta-text">{{.EmploymentType.String}}</span>
         </div>
-      </div>
     </div>
   </div>
 </div>

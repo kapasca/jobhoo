@@ -5,64 +5,39 @@
 <div class="jobs__header-section">
   <div class="container">
     <div class="jobs__header-top">
-      <div class="jobs__header-content">
+      <div class="jobs__header-content pb-2">
         <h1 class="jobs__page-title">Browse Jobs</h1>
         <p class="jobs__page-subtitle">Find your next opportunity</p>
       </div>
-      
+
       <!-- Explore Companies Card -->
       <div class="jobs__header-featured">
-        <p class="featured-section__description">Discover teams that are hiring right now <br />across engineering, design, sales, and operations. <br /><a href="/companies" class="featured-section__link">Explore Companies!</a></p>
+        <div>
+          <p class="featured-section__description">See who's hiring, what they offer, and where your next career could begin. <br /><a href="/companies" class="featured-section__link">Explore Companies!</a></p>
+        </div>
       </div>
     </div>
-    
-    <!-- Mobile Filter Button (sticky) -->
-    <button class="jobs__filter-toggle" id="filter-toggle" aria-label="Toggle filters">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
-      </svg>
-      Filters
-    </button>
   </div>
 </div>
 
 <section class="jobs__container">
   <!-- Left Sidebar: Filters -->
   <aside class="jobs__sidebar" id="filters-panel">
+    <!-- Close button: only visible in mobile overlay mode -->
+    <button class="jobs__sidebar-close" id="filter-close" aria-label="Close filters">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+      Close
+    </button>
     <div class="jobs__sidebar-inner">
       <form id="job-filters" hx-get="/jobs/search" hx-target="#job-results" hx-swap="innerHTML" hx-push-url="/jobs">
-        <!-- Search Bar (Top Position) -->
+        <!-- Search Bar (Top Position) — matches job title, company, category, and skills -->
         <div class="jobs__filter-group">
           <label class="jobs__filter-label">General Search</label>
-          <input type="search" name="q" value="{{.Search}}" placeholder="Search job, category, or skill"
+          <input type="search" name="q" value="{{.Search}}" placeholder="Search job details..."
                  class="jobs__search-input"
                  hx-get="/jobs/search" hx-trigger="keyup changed delay:400ms" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
-        </div>
-
-        <!-- Sort Options (Dropdown) -->
-        <div class="jobs__filter-group">
-          <label class="jobs__filter-label">Sort by</label>
-          <select name="sort" class="jobs__select"
-                  hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
-            <option value="recent">Most Recent</option>
-            <option value="title">Job Title (A-Z)</option>
-            <option value="company">Company Name (A-Z)</option>
-          </select>
-        </div>
-
-        <!-- Location Filter (Dropdown) -->
-        <div class="jobs__filter-group">
-          <label class="jobs__filter-label">Location</label>
-          <select name="location" class="jobs__select"
-                  hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
-            <option value="">All locations</option>
-            <option value="remote">Remote</option>
-            <option value="hybrid">Hybrid</option>
-            <option value="onsite">Onsite</option>
-            <option value="seattle">Seattle, WA</option>
-            <option value="sf">San Francisco, CA</option>
-            <option value="nyc">New York, NY</option>
-          </select>
         </div>
 
         <!-- Work Arrangement Filter (Button Group) -->
@@ -70,17 +45,17 @@
           <label class="jobs__filter-label">Work Type</label>
           <div class="jobs__filter-button-group">
             <label class="jobs__filter-button">
-              <input type="checkbox" name="arrangement" value="remote" class="jobs__checkbox"
+              <input type="checkbox" name="arrangement" value="remote" class="jobs__checkbox" {{if index .Arrangements "remote"}}checked{{end}}
                      hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
               <span>Remote</span>
             </label>
             <label class="jobs__filter-button">
-              <input type="checkbox" name="arrangement" value="hybrid" class="jobs__checkbox"
+              <input type="checkbox" name="arrangement" value="hybrid" class="jobs__checkbox" {{if index .Arrangements "hybrid"}}checked{{end}}
                      hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
               <span>Hybrid</span>
             </label>
             <label class="jobs__filter-button">
-              <input type="checkbox" name="arrangement" value="onsite" class="jobs__checkbox"
+              <input type="checkbox" name="arrangement" value="onsite" class="jobs__checkbox" {{if index .Arrangements "onsite"}}checked{{end}}
                      hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
               <span>Onsite</span>
             </label>
@@ -92,31 +67,50 @@
           <label class="jobs__filter-label">Employment Type</label>
           <div class="jobs__filter-button-group">
             <label class="jobs__filter-button">
-              <input type="checkbox" name="employment" value="full_time" class="jobs__checkbox"
+              <input type="checkbox" name="employment" value="full_time" class="jobs__checkbox" {{if index .Employments "full_time"}}checked{{end}}
                      hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
               <span>Full Time</span>
             </label>
             <label class="jobs__filter-button">
-              <input type="checkbox" name="employment" value="part_time" class="jobs__checkbox"
+              <input type="checkbox" name="employment" value="part_time" class="jobs__checkbox" {{if index .Employments "part_time"}}checked{{end}}
                      hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
               <span>Part Time</span>
             </label>
             <label class="jobs__filter-button">
-              <input type="checkbox" name="employment" value="contract" class="jobs__checkbox"
+              <input type="checkbox" name="employment" value="contract" class="jobs__checkbox" {{if index .Employments "contract"}}checked{{end}}
                      hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
               <span>Contract</span>
             </label>
             <label class="jobs__filter-button">
-              <input type="checkbox" name="employment" value="internship" class="jobs__checkbox"
+              <input type="checkbox" name="employment" value="internship" class="jobs__checkbox" {{if index .Employments "internship"}}checked{{end}}
                      hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
               <span>Internship</span>
             </label>
             <label class="jobs__filter-button">
-              <input type="checkbox" name="employment" value="freelance" class="jobs__checkbox"
+              <input type="checkbox" name="employment" value="freelance" class="jobs__checkbox" {{if index .Employments "freelance"}}checked{{end}}
                      hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
               <span>Freelance</span>
             </label>
           </div>
+        </div>
+
+        <!-- Location Filter (free text — matches the job's actual location string) -->
+        <div class="jobs__filter-group">
+          <label class="jobs__filter-label">Location</label>
+          <input type="search" name="location" value="{{.Location}}" placeholder="e.g. Seattle, or Remote"
+                 class="jobs__search-input"
+                 hx-get="/jobs/search" hx-trigger="keyup changed delay:400ms" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
+        </div>
+
+        <!-- Sort Options (Dropdown) -->
+        <div class="jobs__filter-group">
+          <label class="jobs__filter-label">Sort by</label>
+          <select name="sort" class="jobs__select"
+                  hx-get="/jobs/search" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
+            <option value="recent" {{if or (eq .Sort "recent") (eq .Sort "")}}selected{{end}}>Most Recent</option>
+            <option value="title" {{if eq .Sort "title"}}selected{{end}}>Job Title (A-Z)</option>
+            <option value="company" {{if eq .Sort "company"}}selected{{end}}>Company Name (A-Z)</option>
+          </select>
         </div>
 
       </form>
@@ -130,15 +124,65 @@
     </div>
   </main>
 </section>
+
+<!-- Floating filter button: mobile only -->
+<button class="jobs__filter-fab" id="filter-fab" aria-label="Open filters">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/>
+  </svg>
+  Filter
+</button>
+
+<script>
+document.addEventListener('htmx:afterSwap', function(e) {
+  if (e.detail && e.detail.target && e.detail.target.id === 'job-results') {
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }
+});
+
+(function() {
+  var fab   = document.getElementById('filter-fab');
+  var close = document.getElementById('filter-close');
+  var panel = document.getElementById('filters-panel');
+
+  function openPanel()  { panel.classList.add('is-open');    document.body.style.overflow = 'hidden'; }
+  function closePanel() { panel.classList.remove('is-open'); document.body.style.overflow = ''; }
+
+  if (fab)   fab.addEventListener('click', openPanel);
+  if (close) close.addEventListener('click', closePanel);
+
+  if (panel) {
+    panel.querySelectorAll('input, select').forEach(function(el) {
+      el.addEventListener('change', function() {
+        if (window.innerWidth <= 640) closePanel();
+      });
+    });
+  }
+})();
+</script>
 {{end}}
 
 {{define "job-results"}}
-  <p class="jobs__results-info">
-    {{.Total}} job{{if ne .Total 1}}s{{end}} found
-  </p>
+  <div class="jobs__results-header">
+    <p class="jobs__results-info">
+      <span class="me-4">{{if gt .Total 0}}Showing {{.From}} &ndash; {{.To}} of {{.Total}} entries.{{end}}</span>
+    </p>
+    <button class="btn btn--secondary btn--reset" hx-get="/jobs/search" hx-target="#job-results" hx-push-url="/jobs"
+            hx-on::before-request="document.getElementById('job-filters').reset()">Reset Filters</button>
+  </div>
+  {{if or .Search .Location (gt (len .Arrangements) 0) (gt (len .Employments) 0) .Sort}}
+    <div class="jobs__results-info-active-filter">
+      {{if .Search}}<span class="badge">Search: {{.Search}}</span>{{end}}
+      {{if .Location}}<span class="badge">Location: {{.Location}}</span>{{end}}
+      {{range $key, $value := .Arrangements}}{{if $value}}<span class="badge">{{if eq $key "remote"}}Remote{{else if eq $key "hybrid"}}Hybrid{{else if eq $key "onsite"}}Onsite{{else}}{{$key}}{{end}}</span>{{end}}{{end}}
+      {{range $key, $value := .Employments}}{{if $value}}<span class="badge">{{if eq $key "full_time"}}Full Time{{else if eq $key "part_time"}}Part Time{{else if eq $key "contract"}}Contract{{else if eq $key "internship"}}Internship{{else if eq $key "freelance"}}Freelance{{else}}{{$key}}{{end}}</span>{{end}}{{end}}
+      {{if .Sort}}<span class="badge">Sort by {{if eq .Sort "title"}}Job Title (A-Z){{else if eq .Sort "company"}}Company Name (A-Z){{else}}Most Recent{{end}}</span>{{end}}
+    </div>
+  {{end}}
 
   {{if .Jobs}}
-    <div class="grid grid--jobs">
+    <div class="grid">
       {{range .Jobs}}
         {{template "job-card" .}}
       {{end}}
@@ -148,13 +192,13 @@
       <div class="pagination__wrapper">
         {{if .HasPrev}}
           <button class="btn btn--secondary btn--sm"
-                  hx-get="/jobs/search?q={{.Search}}&category={{.Category}}&page={{.PrevPage}}"
+                  hx-get="/jobs/search?{{.FilterQuery}}&page={{.PrevPage}}"
                   hx-target="#job-results" hx-push-url="/jobs">← Previous</button>
         {{end}}
         <span class="pagination__info">Page {{.Page}} of {{.TotalPages}}</span>
         {{if .HasNext}}
           <button class="btn btn--secondary btn--sm"
-                  hx-get="/jobs/search?q={{.Search}}&category={{.Category}}&page={{.NextPage}}"
+                  hx-get="/jobs/search?{{.FilterQuery}}&page={{.NextPage}}"
                   hx-target="#job-results" hx-push-url="/jobs">Next →</button>
         {{end}}
       </div>
@@ -169,44 +213,27 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  const filterToggle = document.getElementById('filter-toggle');
+  const filterFab   = document.getElementById('filter-fab');
+  const filterClose = document.getElementById('filter-close');
   const filtersPanel = document.getElementById('filters-panel');
-  
-  if (filterToggle && filtersPanel) {
-    filterToggle.addEventListener('click', function() {
-      filtersPanel.classList.toggle('is-open');
-    });
-    
-    // Close filters when a filter is changed (for mobile)
-    const filterInputs = filtersPanel.querySelectorAll('input, select, button');
-    filterInputs.forEach(input => {
-      input.addEventListener('change', function() {
-        if (window.innerWidth <= 640) {
-          filtersPanel.classList.remove('is-open');
-        }
-      });
-    });
-  }
-});
-</script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const filterToggle = document.getElementById('filter-toggle');
-  const filtersPanel = document.getElementById('filters-panel');
-  
-  if (filterToggle && filtersPanel) {
-    filterToggle.addEventListener('click', function() {
-      filtersPanel.classList.toggle('is-open');
-    });
-    
-    // Close filters when a filter is changed (for mobile)
-    const filterInputs = filtersPanel.querySelectorAll('input, select, button');
-    filterInputs.forEach(input => {
+  function openFilters() {
+    filtersPanel.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeFilters() {
+    filtersPanel.classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+
+  if (filterFab)   filterFab.addEventListener('click', openFilters);
+  if (filterClose) filterClose.addEventListener('click', closeFilters);
+
+  if (filtersPanel) {
+    // Close after filter change on mobile
+    filtersPanel.querySelectorAll('input, select').forEach(function(input) {
       input.addEventListener('change', function() {
-        if (window.innerWidth <= 640) {
-          filtersPanel.classList.remove('is-open');
-        }
+        if (window.innerWidth <= 640) closeFilters();
       });
     });
   }

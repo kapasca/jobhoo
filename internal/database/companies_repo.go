@@ -47,3 +47,42 @@ func (r *CompaniesRepo) Create(ctx context.Context, ownerID, name, website, desc
 	}
 	return &c, nil
 }
+
+// CompanyWithJobCount pairs a company with how many published jobs it
+// currently has open, for the public company directory.
+type CompanyWithJobCount struct {
+	models.Company
+	OpenJobCount int
+}
+
+// ListAll returns every company, most-actively-hiring first (published job
+// count descending), for the public "Explore Companies" directory.
+func (r *CompaniesRepo) ListAll(ctx context.Context) ([]CompanyWithJobCount, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT
+			c.id, c.owner_id, c.name, coalesce(c.logo_url, ''), coalesce(c.website, ''),
+			coalesce(c.description, ''), coalesce(c.industry, ''), c.created_at,
+			count(j.id) FILTER (WHERE j.status = 'published') AS open_job_count
+		FROM companies c
+		LEFT JOIN jobs j ON j.company_id = c.id
+		GROUP BY c.id
+		ORDER BY open_job_count DESC, c.name ASC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var companies []CompanyWithJobCount
+	for rows.Next() {
+		var c CompanyWithJobCount
+		if err := rows.Scan(
+			&c.ID, &c.OwnerID, &c.Name, &c.LogoURL, &c.Website,
+			&c.Description, &c.Industry, &c.CreatedAt, &c.OpenJobCount,
+		); err != nil {
+			return nil, err
+		}
+		companies = append(companies, c)
+	}
+	return companies, rows.Err()
+}

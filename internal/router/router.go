@@ -77,7 +77,7 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Get("/dashboard/admin", h.AdminDashboard)
 	})
 
-	// TODO: /companies (public company directory)
+	r.Get("/companies", h.CompaniesDirectory)
 
 	r.NotFound(h.NotFoundPage)
 

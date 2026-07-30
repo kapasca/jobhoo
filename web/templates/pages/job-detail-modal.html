@@ -1,20 +1,21 @@
 {{define "job-detail-modal"}}
 <div class="modal-wrapper">
-  <div class="modal-backdrop" onclick="this.closest('.modal-wrapper')?.remove()"></div>
+  <div class="modal-backdrop" onclick="_closeJobModal()"></div>
   <div class="modal">
     <script>
-      // Close modal on Escape key
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          document.querySelector(".modal-wrapper")?.remove();
-        }
+      // Restore URL when modal closes, since HTMX pushed /jobs/:id on open
+      function _closeJobModal() {
+        const prev = document.body.dataset.preModalUrl;
+        if (prev) history.replaceState(null, '', prev);
+        document.querySelector('.modal-wrapper')?.remove();
+      }
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') _closeJobModal();
       });
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = "hidden";
-      // Re-enable body scroll when modal is closed
+      document.body.style.overflow = 'hidden';
       const observer = new MutationObserver(() => {
-        if (!document.querySelector(".modal-wrapper")) {
-          document.body.style.overflow = "auto";
+        if (!document.querySelector('.modal-wrapper')) {
+          document.body.style.overflow = 'auto';
           observer.disconnect();
         }
       });
@@ -27,14 +28,12 @@
         <span class="job-card__company">{{.Job.CompanyName}}</span>
       </div>
       <div class="job-card__header-right">
-        {{if .CanApply}}
-        <button class="job-card__bookmark {{if .IsSaved}}is-saved{{end}}" title="Save job" aria-label="Save job" hx-post="/jobs/{{.Job.ID}}/save" hx-swap="outerHTML">
+        <button class="job-card__bookmark {{if .IsSaved}}is-saved{{end}}" title="Save Job" aria-label="Save Job" hx-post="/jobs/{{.Job.ID}}/save" hx-swap="outerHTML">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="{{if .IsSaved}}currentColor{{else}}none{{end}}" stroke="currentColor" stroke-width="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
           </svg>
         </button>
-        {{end}}
-        <button class="modal-close" onclick="this.closest('.modal-wrapper')?.remove()" title="Close" aria-label="Close">
+        <button class="modal-close" onclick="_closeJobModal()" title="Close" aria-label="Close">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -119,59 +118,25 @@
 
       <!-- Description Section -->
       <div class="modal-section">
-        <h3 class="modal-section-heading">About this role</h3>
         <p class="modal-section-content">{{.Job.Description}}</p>
       </div>
 
-      <!-- Must Have Skills -->
-      {{if .Job.MustHaveSkills}}
+      <!-- Skills: green = must have, default = nice to have -->
+      {{if or .Job.MustHaveSkills .Job.NiceToHaveSkills}}
       <div class="modal-section">
-        <h3 class="modal-section-heading">Must have</h3>
-        <div class="modal-skills-container">{{range .Job.MustHaveSkills}}<span class="badge">{{.}}</span>{{end}}</div>
-      </div>
-      {{end}}
-
-      <!-- Nice to Have Skills -->
-      {{if .Job.NiceToHaveSkills}}
-      <div class="modal-section">
-        <h3 class="modal-section-heading">Nice to have</h3>
-        <div class="modal-skills-container">{{range .Job.NiceToHaveSkills}}<span class="badge">{{.}}</span>{{end}}</div>
+        <p class="modal-section-heading">
+          All green skill badges indicate that the skill is mandatory for the candidate.
+        </p>
+        <div class="modal-skills-container">
+          {{range .Job.MustHaveSkills}}<span class="badge badge--green">{{.}}</span>{{end}}
+          {{range .Job.NiceToHaveSkills}}<span class="badge">{{.}}</span>{{end}}
+        </div>
       </div>
       {{end}}
     </div>
 
     <!-- Application Section -->
-    <div class="modal-footer">
-      {{if .ApplySent}}
-      <div class="alert alert-success mb-4">
-        <div>
-          <strong class="text-white">Application sent.</strong>
-          <p class="text-with-margin">The recruiter at {{.Job.CompanyName}} will review it soon. You can track its status from your dashboard.</p>
-        </div>
-      </div>
-      {{else if .HasApplied}}
-      <div class="alert mb-4">
-        <p class="m-0">You've already applied to this role. Check your dashboard for status updates.</p>
-      </div>
-      {{else if .CanApply}} {{if .ApplyError}}
-      <div class="alert alert--warning mb-4">{{.ApplyError}}</div>
-      {{end}}
-      <form method="POST" action="/jobs/{{.Job.ID}}/apply" hx-post="/jobs/{{.Job.ID}}/apply" hx-swap="outerHTML">
-        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
-        <div class="field">
-          <label for="cover_note">Cover note (optional)</label>
-          <textarea id="cover_note" name="cover_note" rows="3" placeholder="A short note on why you're a fit..."></textarea>
-        </div>
-        <button type="submit" class="btn btn--primary btn-full-width">Apply to this job</button>
-      </form>
-      {{else if .CurrentUser}}
-      <div class="alert mb-4">
-        <p class="m-0">Apply button is only available for candidate accounts.</p>
-      </div>
-      {{else}}
-      <button hx-get="/login?next=/jobs/{{.Job.ID}}" hx-target="body" hx-swap="beforeend" class="btn btn--primary btn-full-width btn-ghost-reset">Log in to apply</button>
-      {{end}}
-    </div>
+    {{template "job-apply-section" .}}
   </div>
 </div>
 {{end}}

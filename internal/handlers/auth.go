@@ -78,13 +78,19 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) LoginPage(w http.ResponseWriter, r *http.Request) {
-	// Only allow HTMX modal requests to this endpoint
-	if r.Header.Get("HX-Request") != "true" {
-		h.NotFoundPage(w, r)
+	data := authPageData{BasePageData: newBasePageData(r, "login"), NextURL: r.URL.Query().Get("next")}
+
+	// HTMX requests (clicking "Sign in" in the nav) get the modal fragment.
+	// Everything else — RequireAuth's redirect when an anonymous user hits a
+	// protected page, a direct/bookmarked visit to /login, browser
+	// back/forward, a shared link — is a normal browser navigation and must
+	// get a real page, or the user hits a dead end.
+	if r.Header.Get("HX-Request") == "true" {
+		h.Render.RenderBlock(w, "login-modal.html", "login-modal", data)
 		return
 	}
 
-	h.Render.RenderBlock(w, "login-modal.html", "login-modal", authPageData{BasePageData: newBasePageData(r, "login"), NextURL: r.URL.Query().Get("next")})
+	h.Render.Render(w, http.StatusOK, "login.html", data)
 }
 
 func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
