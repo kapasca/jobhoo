@@ -91,6 +91,15 @@ func seedAdmin(ctx context.Context, pool *pgxpool.Pool) error {
 // companies, jobs, applications, etc. via foreign keys, so this alone is
 // enough to fully reset demo state.
 func clearDemoData(ctx context.Context, pool *pgxpool.Pool) error {
+	// Null out approved_by on demo companies before deleting the admin user
+	// that set it — otherwise the FK on companies.approved_by fires first.
+	if _, err := pool.Exec(ctx, `
+		UPDATE companies SET approved_by = NULL
+		WHERE owner_id IN (SELECT id FROM users WHERE email LIKE '%' || $1)
+		   OR approved_by IN (SELECT id FROM users WHERE email LIKE '%' || $1)
+	`, demoEmailDomain); err != nil {
+		return err
+	}
 	_, err := pool.Exec(ctx, `DELETE FROM users WHERE email LIKE '%' || $1`, demoEmailDomain)
 	return err
 }

@@ -25,7 +25,8 @@ type companySetupData struct {
 	Industry    string
 	Description string
 	LogoURL     string
-	IsEdit      bool // true when this is the "edit profile" form, not first-time setup
+	IsEdit      bool
+	Incomplete  bool // true when redirected here because profile is incomplete
 }
 
 func (h *Handlers) CompanySetupPage(w http.ResponseWriter, r *http.Request) {
@@ -34,8 +35,10 @@ func (h *Handlers) CompanySetupPage(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) CompanySetup(w http.ResponseWriter, r *http.Request) {
 	user := middleware.CurrentUser(r)
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+
+	r.Body = http.MaxBytesReader(w, r.Body, logoMaxBytes+4096)
+	if err := r.ParseMultipartForm(logoMaxBytes); err != nil {
+		http.Error(w, "request too large", http.StatusRequestEntityTooLarge)
 		return
 	}
 
@@ -53,7 +56,14 @@ func (h *Handlers) CompanySetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := h.Companies.Create(r.Context(), user.ID, data.Name, data.Website, data.Description, data.Industry); err != nil {
+	logoURL, err := handleLogoUpload(r)
+	if err != nil {
+		data.Error = err.Error()
+		h.Render.Render(w, http.StatusBadRequest, "company-setup.html", data)
+		return
+	}
+
+	if _, err := h.Companies.Create(r.Context(), user.ID, data.Name, data.Website, data.Description, data.Industry, logoURL); err != nil {
 		data.Error = "Something went wrong creating your company. Please try again."
 		h.Render.Render(w, http.StatusBadRequest, "company-setup.html", data)
 		return
@@ -75,14 +85,25 @@ func (h *Handlers) CompanyProfilePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.Render.Render(w, http.StatusOK, "company-setup.html", companySetupData{
-		BasePageData: newBasePageData(r, "dashboard"),
+		BasePageData: newBasePageData(r, "profile"),
 		Name:         company.Name,
 		Website:      company.Website,
 		Industry:     company.Industry,
 		Description:  company.Description,
 		LogoURL:      company.LogoURL,
 		IsEdit:       true,
+		Incomplete:   r.URL.Query().Get("incomplete") == "1",
 	})
+}
+
+// CompanyPublicRedirect sends the recruiter straight to their company’s
+// public listing page without needing to know their own company ID.
+func (h *Handlers) CompanyPublicRedirect(w http.ResponseWriter, r *http.Request) {
+	company, ok := h.requireCompany(w, r)
+	if !ok {
+		return
+	}
+	http.Redirect(w, r, "/companies/"+company.ID, http.StatusSeeOther)
 }
 
 const (
@@ -231,7 +252,30 @@ func (h *Handlers) requireApprovedCompany(w http.ResponseWriter, r *http.Request
 		http.Redirect(w, r, "/dashboard/recruiter", http.StatusSeeOther)
 		return nil, false
 	}
+	if !company.IsProfileComplete() {
+		http.Redirect(w, r, "/company/profile?incomplete=1", http.StatusSeeOther)
+		return nil, false
+	}
 	return company, true
+}
+
+// CompanyResubmit lets a recruiter with a rejected company resubmit for
+// admin review after fixing their profile. Blacklisted companies are
+// blocked — they cannot resubmit.
+func (h *Handlers) CompanyResubmit(w http.ResponseWriter, r *http.Request) {
+	company, ok := h.requireCompany(w, r)
+	if !ok {
+		return
+	}
+	if company.Status != models.CompanyRejected {
+		http.Redirect(w, r, "/dashboard/recruiter", http.StatusSeeOther)
+		return
+	}
+	if err := h.Companies.Resubmit(r.Context(), company.ID); err != nil {
+		http.Error(w, "could not resubmit company", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/dashboard/recruiter", http.StatusSeeOther)
 }
 
 // CompanyPublicDetail is the public company profile page — no auth

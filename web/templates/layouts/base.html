@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/static/css/tokens.css">
   <link rel="stylesheet" href="/static/css/components.css">
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="/static/js/confirm.js"></script>
   <link rel="icon" href="/static/img/jobhoo-icon.png">
 </head>
 <body hx-headers='{"X-CSRF-Token": "{{.CSRFToken}}"}'>
@@ -19,16 +20,20 @@
         <img src="/static/img/jobhoo-logo-full.png" alt="JOBHOO">
       </a>
       <nav class="jh-nav__links">
-        <a href="/jobs" class="jh-nav__link {{if eq .ActiveNav "jobs"}}is-active{{end}}">Browse Jobs</a>
-        {{if not .CurrentUser}}
-          <a href="/post-job" class="jh-nav__link {{if eq .ActiveNav "post"}}is-active{{end}}">Post a Job</a>
-        {{else if eq .CurrentUser.Role "recruiter"}}
-          <a href="/post-job" class="jh-nav__link {{if eq .ActiveNav "post"}}is-active{{end}}">Post a Job</a>
-        {{else if eq .CurrentUser.Role "candidate"}}
-          <a href="/profile" class="jh-nav__link {{if eq .ActiveNav "profile"}}is-active{{end}}">{{.CurrentUser.FullName}}</a>
-        {{end}}
-        {{if .CurrentUser}}
-          <a href="{{.DashboardPath}}" class="jh-nav__link {{if eq .ActiveNav "dashboard"}}is-active{{end}}">Dashboard</a>
+        {{if and .CurrentUser (eq .CurrentUser.Role "recruiter")}}
+          <a href="/dashboard/recruiter" class="jh-nav__link {{if eq .ActiveNav "dashboard"}}is-active{{end}}">Job Management</a>
+          <a href="/company/public" class="jh-nav__link">Public Page</a>
+          <a href="/company/profile" class="jh-nav__link {{if eq .ActiveNav "profile"}}is-active{{end}}">My Profile</a>
+        {{else}}
+          <a href="/jobs" class="jh-nav__link {{if eq .ActiveNav "jobs"}}is-active{{end}}">Browse Jobs</a>
+          {{if not .CurrentUser}}
+            <a href="/post-job" class="jh-nav__link {{if eq .ActiveNav "post"}}is-active{{end}}">Post a Job</a>
+          {{else if eq .CurrentUser.Role "candidate"}}
+            <a href="/profile" class="jh-nav__link {{if eq .ActiveNav "profile"}}is-active{{end}}">{{.CurrentUser.FullName}}</a>
+          {{end}}
+          {{if .CurrentUser}}
+            <a href="{{.DashboardPath}}" class="jh-nav__link {{if eq .ActiveNav "dashboard"}}is-active{{end}}">Dashboard</a>
+          {{end}}
         {{end}}
       </nav>
       <div class="jh-nav__actions">
@@ -66,18 +71,22 @@
       </div>
 
       <nav class="jh-mobile-menu__nav">
-        <a href="/jobs" class="jh-mobile-menu__link">Browse Jobs</a>
-        {{if not .CurrentUser}}
-          <a href="/post-job" class="jh-mobile-menu__link">Post a Job</a>
-        {{else if eq .CurrentUser.Role "recruiter"}}
-          <a href="/post-job" class="jh-mobile-menu__link">Post a Job</a>
-        {{else if eq .CurrentUser.Role "candidate"}}
-          <a href="/profile" class="jh-mobile-menu__link">My Profile</a>
+        {{if and .CurrentUser (eq .CurrentUser.Role "recruiter")}}
+          <a href="/dashboard/recruiter" class="jh-mobile-menu__link">Job Management</a>
+          <a href="/company/public" class="jh-mobile-menu__link">Public Page</a>
+          <a href="/company/profile" class="jh-mobile-menu__link">My Profile</a>
+        {{else}}
+          <a href="/jobs" class="jh-mobile-menu__link">Browse Jobs</a>
+          {{if not .CurrentUser}}
+            <a href="/post-job" class="jh-mobile-menu__link">Post a Job</a>
+          {{else if eq .CurrentUser.Role "candidate"}}
+            <a href="/profile" class="jh-mobile-menu__link">My Profile</a>
+          {{end}}
+          {{if .CurrentUser}}
+            <a href="{{.DashboardPath}}" class="jh-mobile-menu__link">Dashboard</a>
+          {{end}}
+          <a href="/companies" class="jh-mobile-menu__link">Explore Companies</a>
         {{end}}
-        {{if .CurrentUser}}
-          <a href="{{.DashboardPath}}" class="jh-mobile-menu__link">Dashboard</a>
-        {{end}}
-        <a href="/companies" class="jh-mobile-menu__link">Explore Companies</a>
       </nav>
 
       <div class="jh-mobile-menu__actions">

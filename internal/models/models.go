@@ -26,9 +26,10 @@ type User struct {
 type CompanyStatus string
 
 const (
-	CompanyPending  CompanyStatus = "pending"
-	CompanyApproved CompanyStatus = "approved"
-	CompanyRejected CompanyStatus = "rejected"
+	CompanyPending     CompanyStatus = "pending"
+	CompanyApproved    CompanyStatus = "approved"
+	CompanyRejected    CompanyStatus = "rejected"
+	CompanyBlacklisted CompanyStatus = "blacklisted"
 )
 
 type Company struct {
@@ -44,6 +45,12 @@ type Company struct {
 	ApprovedBy      string
 	RejectionReason string
 	CreatedAt       time.Time
+}
+
+// IsProfileComplete reports whether the company has filled in the fields
+// required before job posting is permitted (industry + description).
+func (c Company) IsProfileComplete() bool {
+	return c.Industry != "" && c.Description != ""
 }
 
 type EmploymentType string

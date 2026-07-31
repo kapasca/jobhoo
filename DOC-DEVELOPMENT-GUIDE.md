@@ -192,9 +192,14 @@ Halaman harus menampilkan:
 
 ### Demo Accounts
 
-**Recruiter (ATS access):**
-- Email: `recruiter1@jobhoo.demo` sampai `recruiter10@jobhoo.demo`
+**Admin:**
+- Email: `admin@jobhoo.demo`
 - Password: `demo-password-123`
+
+**Recruiter (10 akun):**
+- Email: `recruiter1@jobhoo.demo` s/d `recruiter10@jobhoo.demo`
+- Password: `demo-password-123`
+- `recruiter10` sengaja dibiarkan status company-nya **pending** untuk testing approval queue
 
 **Candidate:**
 - Signup baru lewat `/signup`
@@ -219,27 +224,34 @@ docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@d
 ## Features Checklist
 
 ### Candidate Features ✅
-- ✅ Browse & cari lowongan (search, filter kategori, pagination)
-- ✅ Lihat detail lowongan lengkap
+- ✅ Browse & cari lowongan (search, filter kategori, filter lokasi/negara, pagination)
+- ✅ Lihat detail lowongan lengkap (termasuk salary dengan pemisah ribuan + mata uang)
 - ✅ Apply ke lowongan dengan cover note
 - ✅ Simpan/bookmark lowongan
-- ✅ Edit profil (headline, resume text, skills, location)
+- ✅ Edit profil (headline, resume file upload, resume text, skills chip-input, location)
+- ✅ **Resume wajib** diupload saat registrasi atau melengkapi profil
 - ✅ AI: saran perbaikan resume
 - ✅ AI: rekomendasi lowongan berdasarkan skill
 - ✅ Dashboard: riwayat lamaran + status, lowongan tersimpan
 
 ### Recruiter Features ✅
-- ✅ Setup profil company
-- ✅ Post lowongan baru
-- ✅ Dashboard: daftar lowongan + jumlah pelamar per lowongan
+- ✅ Registrasi company, menunggu persetujuan admin sebelum bisa posting
+- ✅ Upload logo company (live preview sebelum simpan)
+- ✅ Wajib lengkapi profil company (industry + description) sebelum bisa posting job
+- ✅ Post lowongan baru (dengan chip-input skill, scheduling opens_at/closes_at, HTML description)
+- ✅ Kategori lowongan bebas: pilih dari 5 bawaan atau ketik custom
+- ✅ Lokasi: country + state/province (9 negara ASEAN + Oceania), auto-fill currency
+- ✅ Salary dengan currency sesuai negara (IDR, SGD, MYR, dll.)
+- ✅ Dashboard (Job Management): daftar job + status + tanggal buka/tutup + jumlah pelamar
+- ✅ Action dropdown per job: Pipeline, Edit, Close/Reopen, Archive
 - ✅ ATS Board Kanban: Applied → Screening → Interview → Offer → Hired
-- ✅ Ubah stage pelamar drag-drop
-- ✅ Collapsed "Rejected" section
 - ✅ AI: ranking kandidat otomatis (saran saja, tidak mengubah stage)
-- ✅ Lihat skill & cover note tiap kandidat di kartu
+- ✅ Company public page (auto-redirect dari menu "Public Page" di nav)
 
 ### Admin Features ✅
-- ✅ Dashboard: total user, kandidat, recruiter, company, lowongan, aplikasi
+- ✅ Dashboard: statistik platform (total user, company, job, aplikasi)
+- ✅ Company Approval Queue: approve/reject company baru dengan alasan penolakan
+- ✅ Badge jumlah pending di tombol approval
 
 ### Security ✅
 - ✅ Signup/login/logout dengan bcrypt password hashing
@@ -248,12 +260,15 @@ docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@d
 - ✅ CSRF protection di semua form
 - ✅ Recruiter tidak bisa akses pipeline company lain (ownership check)
 - ✅ Token session di-hash sebelum simpan DB
+- ✅ File upload: MIME type validation dari header file (bukan ekstensi)
+- ✅ HTML descriptions: sanitized via bluemonday (allowlist tag)
 
 ### Data & Infrastructure ✅
-- ✅ PostgreSQL dengan schema terstruktur (migrations)
-- ✅ Seeder demo data (10 company, 100 job, reproducible)
+- ✅ PostgreSQL dengan schema terstruktur (migrations 0001–0009)
+- ✅ Seeder demo data (1 admin, 10 company, 100 job ASEAN lokasi)
 - ✅ Docker + Docker Compose
 - ✅ Multi-stage Dockerfile (build di golang, run di alpine)
+- ✅ Docker bind-mount untuk uploaded files (`web/static/uploads/`) agar persisten di host
 
 ---
 
@@ -286,21 +301,21 @@ Banyak platform membuat kandidat "menghilang" setelah apply. Dashboard kandidat 
 ```bash
 cp .env.example .env
 docker compose up --build              # Build & start app + Postgres
-docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed    # Seed demo data
+docker compose run --rm app ./jobhoo-seed    # Seed demo data
 ```
 
 Open: http://localhost:8070
 
 **Reseed tanpa recreate DB:**
 ```bash
-docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed
+docker compose run --rm app ./jobhoo-seed
 ```
 
 **Wipe DB penuh:**
 ```bash
 docker compose down -v
 docker compose up --build
-docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed
+docker compose run --rm app ./jobhoo-seed
 ```
 
 ### Without Docker (Requires Local Postgres)
@@ -455,29 +470,20 @@ Docker Desktop requires WSL 2 backend
 
 ## Known Gaps Before Production
 
-### No File Upload
-Resumes adalah plain text di textarea, bukan PDF/DOCX upload. Butuh object storage decision (S3-compatible) yang tidak saya buat unilateral.
+### No Email
+Tidak ada email verification, password reset, atau notifikasi saat stage lamaran berubah.
 
 ### No Rate Limiting
-Login/signup/apply tidak ada rate limiting. Perlu ditambah sebelum public launch untuk blunt credential-stuffing dan spam.
+Login/signup/apply tidak ada rate limiting. Perlu ditambah sebelum public launch untuk mencegah credential-stuffing dan spam.
 
 ### CSRF Baseline Only
-Standard double-submit-cookie, bukan per-session token. Reasonable next hardening step tapi bukan hole.
+Standard double-submit-cookie, bukan per-session token.
 
-### No Public Company Directory
-Route `/companies` belum diimplementasikan (dihapus dari nav karena belum dibuat).
+### File Storage Ephemeral in Production
+Di dev, uploaded files disimpan di `web/static/uploads/` via Docker bind-mount. Di production, perlu migrasi ke object storage (S3-compatible) — lokasi path sudah di-abstract, tinggal swap handler.
 
-### No Email
-Tidak ada email verification, password reset, atau notifications saat stage lamaran berubah.
-
-### Accessibility
-Keyboard focus & semantic markup sudah dari design system, tapi belum ada full screen-reader pass.
-
-### Go Build Verification Limited
-Tidak bisa jalankan full `go build`/`go vet` di sandbox terbatas. Yang diverifikasi:
-- `gofmt -e` syntax-check: zero errors
-- `internal/models`, `internal/ai`, `internal/config` (stdlib-only) compile cleanly
-- Setiap method handler dipanggil cross-check keberadaannya di repository
+### No Accessibility Pass
+Keyboard focus & semantic markup sudah dari design system, tapi belum ada full screen-reader audit.
 - Semua 13 page template di-parse & execute dengan mock data shaped seperti struct asli
 
 **Sebelum deploy, jalankan di machine dengan internet normal:**

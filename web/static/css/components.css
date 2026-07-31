@@ -1172,6 +1172,25 @@ tr:last-child td { border-bottom: none; }
 }
 .company-detail__logo img { width: 100%; height: 100%; object-fit: cover; }
 
+/* Full-width logo preview panel on the company profile edit form */
+.logo-preview-box {
+  width: 100%;
+  border: 1px solid var(--jh-border);
+  border-radius: var(--jh-radius-md);
+  background: var(--jh-surface-inset);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--jh-space-5);
+  margin-bottom: var(--jh-space-3);
+}
+.logo-preview-box img {
+  max-height: 120px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: var(--jh-radius-sm);
+}
+
 .featured-company-card__info {
   display: flex;
   flex-direction: column;
@@ -1195,6 +1214,32 @@ tr:last-child td { border-bottom: none; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* --- Programmatic Confirmation Dialog (jhConfirm) --- */
+.jh-confirm-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+.jh-confirm-box {
+  background: var(--jh-surface-card);
+  border: 1px solid var(--jh-border-strong);
+  border-radius: var(--jh-radius-lg);
+  padding: var(--jh-space-6);
+  max-width: 440px; width: 90%;
+  box-shadow: var(--jh-shadow-md);
+  animation: modalSlideIn 0.18s ease;
+}
+.jh-confirm-title {
+  font-size: var(--jh-text-lg); font-weight: 700;
+  color: var(--jh-white); margin: 0 0 var(--jh-space-3);
+}
+.jh-confirm-msg {
+  color: var(--jh-ink-300); margin: 0 0 var(--jh-space-5);
+  line-height: var(--jh-leading-normal); white-space: pre-wrap;
+}
+.jh-confirm-actions { display: flex; gap: var(--jh-space-3); justify-content: flex-end; }
 
 /* --- Modal / Dialog Styles --- */
 .modal-wrapper {

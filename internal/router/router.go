@@ -66,6 +66,8 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Post("/company/setup", h.CompanySetup)
 		r.Get("/company/profile", h.CompanyProfilePage)
 		r.Post("/company/profile", h.CompanyProfileUpdate)
+		r.Get("/company/public", h.CompanyPublicRedirect)
+		r.Post("/company/resubmit", h.CompanyResubmit)
 		r.Get("/post-job", h.PostJobPage)
 		r.Post("/post-job", h.PostJob)
 		r.Get("/recruiter/jobs/{id}/edit", h.EditJobPage)
@@ -85,6 +87,7 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Get("/admin/approvals", h.CompanyApprovalQueue)
 		r.Post("/admin/approvals/{id}/approve", h.ApproveCompany)
 		r.Post("/admin/approvals/{id}/reject", h.RejectCompany)
+		r.Post("/admin/approvals/{id}/blacklist", h.BlacklistCompany)
 	})
 
 	r.Get("/companies", h.CompaniesDirectory)

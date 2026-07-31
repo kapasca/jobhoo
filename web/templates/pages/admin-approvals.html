@@ -17,30 +17,67 @@
     <div class="mt-6 d-flex flex-col gap-4">
       {{range .Companies}}
         <div class="card card--pad-lg">
-          <div class="d-flex justify-between items-baseline">
-            <div>
-              <p class="text-white font-bold m-0">{{.Name}}</p>
-              {{if .Industry}}<p class="font-xs text-with-margin">{{.Industry}}</p>{{end}}
-              {{if .Website}}<a href="{{.Website}}" target="_blank" rel="noopener" class="font-xs">{{.Website}}</a>{{end}}
-            </div>
-            <span class="badge">Registered {{.CreatedAt.Format "Jan 2, 2006"}}</span>
-          </div>
-          {{if .Description}}<p class="mt-2">{{.Description}}</p>{{end}}
 
-          <div class="d-flex mt-4 gap-3">
-            <form method="POST" action="/admin/approvals/{{.ID}}/approve">
-              <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-              <button type="submit" class="btn btn--primary btn--sm">Approve</button>
-            </form>
-            <details class="flex-1">
-              <summary class="btn btn--secondary btn--sm">Reject</summary>
-              <form method="POST" action="/admin/approvals/{{.ID}}/reject" class="mt-2">
-                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-                <input type="text" name="reason" placeholder="Reason (shown to the recruiter)" class="mb-2">
-                <button type="submit" class="btn btn--secondary btn--sm">Confirm reject</button>
-              </form>
-            </details>
+          <!-- Header: logo + company name + registration date -->
+          <div class="d-flex gap-4 items-start mb-4">
+            <div class="company-detail__logo" style="flex-shrink:0;">
+              <img src="{{if .LogoURL}}{{.LogoURL}}{{else}}/static/img/jobhoo-icon.png{{end}}" alt="{{.Name}} logo">
+            </div>
+            <div class="flex-1">
+              <div class="d-flex justify-between items-baseline">
+                <p class="text-white font-bold m-0 font-xl">{{.Name}}</p>
+                <span class="badge font-xs">Registered {{.CreatedAt.Format "2 Jan 2006"}}</span>
+              </div>
+              {{if .Industry}}<p class="font-sm m-0 mt-1">{{.Industry}}</p>{{end}}
+              {{if .Website}}<a href="{{.Website}}" target="_blank" rel="noopener" class="font-xs link-primary">{{.Website}}</a>{{end}}
+            </div>
           </div>
+
+          <!-- Recruiter info -->
+          <div class="alert mb-4 py-3 px-4">
+            <div>
+              <p class="m-0 font-sm"><strong class="text-white">Registered by:</strong> {{.OwnerName}} &mdash; <a href="mailto:{{.OwnerEmail}}" class="link-primary">{{.OwnerEmail}}</a></p>
+            </div>
+          </div>
+
+          <!-- Description -->
+          {{if .Description}}
+            <p class="mt-0 mb-4">{{.Description}}</p>
+          {{else}}
+            <p class="font-sm mb-4" style="color:var(--jh-ink-500);font-style:italic;">No description provided.</p>
+          {{end}}
+
+          <!-- Profile completeness checklist -->
+          <div class="d-flex flex-wrap gap-2 mb-4">
+            <span class="badge {{if .Industry}}badge--green{{else}}badge--red{{end}}">{{if .Industry}}✓{{else}}✗{{end}} Industry</span>
+            <span class="badge {{if .Description}}badge--green{{else}}badge--red{{end}}">{{if .Description}}✓{{else}}✗{{end}} Description</span>
+            <span class="badge {{if .LogoURL}}badge--green{{else}}badge--red{{end}}">{{if .LogoURL}}✓{{else}}✗{{end}} Logo</span>
+            <span class="badge {{if .Website}}badge--green{{else}}badge--red{{end}}">{{if .Website}}✓{{else}}✗{{end}} Website</span>
+          </div>
+
+          <!-- Hidden forms — submitted programmatically after JS confirmation -->
+          <form id="frm-approve-{{.ID}}" method="POST" action="/admin/approvals/{{.ID}}/approve" class="d-none">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+          </form>
+          <form id="frm-reject-{{.ID}}" method="POST" action="/admin/approvals/{{.ID}}/reject" class="d-none">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <input type="hidden" name="reason" id="rsn-reject-{{.ID}}">
+          </form>
+          <form id="frm-blacklist-{{.ID}}" method="POST" action="/admin/approvals/{{.ID}}/blacklist" class="d-none">
+            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <input type="hidden" name="reason" id="rsn-blacklist-{{.ID}}">
+          </form>
+
+          <!-- Actions -->
+          <div class="d-flex mt-2 gap-3">
+            <button type="button" class="btn btn--primary btn--sm"
+                    onclick="doApprove('{{.ID}}','{{js .Name}}')">Approve</button>
+            <button type="button" class="btn btn--secondary btn--sm"
+                    onclick="doReject('{{.ID}}','{{js .Name}}')">Reject</button>
+            <button type="button" class="btn btn--secondary btn--sm"
+                    onclick="doBlacklist('{{.ID}}','{{js .Name}}')">Blacklist</button>
+          </div>
+
         </div>
       {{end}}
     </div>
@@ -51,4 +88,45 @@
     </div>
   {{end}}
 </section>
+<script>
+async function doApprove(id, name) {
+  var r = await jhConfirm({
+    title: 'Approve "' + name + '"?',
+    message: 'Perusahaan ini akan disetujui dan rekruternya dapat mulai memposting lowongan pekerjaan.',
+    confirmText: 'Ya, Approve',
+    confirmClass: 'btn--primary',
+  });
+  if (r.ok) document.getElementById('frm-approve-' + id).submit();
+}
+
+async function doReject(id, name) {
+  var r = await jhConfirm({
+    title: 'Reject "' + name + '"?',
+    message: 'Rekruter akan diberi tahu alasan penolakan.\nMereka masih bisa memperbaiki profil dan mengajukan ulang.',
+    inputLabel: 'Alasan penolakan (ditampilkan ke rekruter)',
+    inputPlaceholder: 'Contoh: Deskripsi perusahaan tidak memadai',
+    confirmText: 'Ya, Reject',
+    confirmClass: 'btn--secondary',
+  });
+  if (r.ok) {
+    document.getElementById('rsn-reject-' + id).value = r.value;
+    document.getElementById('frm-reject-' + id).submit();
+  }
+}
+
+async function doBlacklist(id, name) {
+  var r = await jhConfirm({
+    title: 'Blacklist "' + name + '"?',
+    message: 'Tindakan ini bersifat PERMANEN.\nRekruter tidak akan bisa mengajukan ulang pendaftaran setelah di-blacklist.',
+    inputLabel: 'Alasan blacklist (ditampilkan ke rekruter)',
+    inputPlaceholder: 'Contoh: Terbukti melanggar ketentuan layanan',
+    confirmText: 'Ya, Blacklist Permanen',
+    confirmClass: 'btn--secondary',
+  });
+  if (r.ok) {
+    document.getElementById('rsn-blacklist-' + id).value = r.value;
+    document.getElementById('frm-blacklist-' + id).submit();
+  }
+}
+</script>
 {{end}}

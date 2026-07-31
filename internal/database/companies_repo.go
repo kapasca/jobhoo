@@ -65,11 +65,11 @@ func (r *CompaniesRepo) GetByID(ctx context.Context, id string) (*models.Company
 // Create inserts a new company in 'pending' status (the database default) —
 // it cannot post jobs until an admin approves it. See requireApprovedCompany
 // in the handlers package for where this is enforced.
-func (r *CompaniesRepo) Create(ctx context.Context, ownerID, name, website, description, industry string) (*models.Company, error) {
+func (r *CompaniesRepo) Create(ctx context.Context, ownerID, name, website, description, industry, logoURL string) (*models.Company, error) {
 	c, err := scanCompany(r.pool.QueryRow(ctx, `
-		INSERT INTO companies (owner_id, name, website, description, industry)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING `+companySelectColumns, ownerID, name, website, description, industry))
+		INSERT INTO companies (owner_id, name, website, description, industry, logo_url)
+		VALUES ($1, $2, $3, $4, $5, NULLIF($6,''))
+		RETURNING `+companySelectColumns, ownerID, name, website, description, industry, logoURL))
 	if err != nil {
 		return nil, err
 	}
@@ -131,6 +131,48 @@ func (r *CompaniesRepo) ListAll(ctx context.Context) ([]CompanyWithJobCount, err
 	return companies, rows.Err()
 }
 
+// CompanyWithOwner extends Company with the registering recruiter's details
+// for the admin approval queue.
+type CompanyWithOwner struct {
+	models.Company
+	OwnerName  string
+	OwnerEmail string
+}
+
+// ListPendingWithOwner returns pending companies joined with their owner’s
+// name and email, oldest-first.
+func (r *CompaniesRepo) ListPendingWithOwner(ctx context.Context) ([]CompanyWithOwner, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT c.id, c.owner_id, c.name, coalesce(c.logo_url,''), coalesce(c.website,''),
+		       coalesce(c.description,''), coalesce(c.industry,''), c.status, c.approved_at,
+		       coalesce(c.approved_by::text,''), coalesce(c.rejection_reason,''), c.created_at,
+		       u.full_name, u.email
+		FROM companies c
+		JOIN users u ON u.id = c.owner_id
+		WHERE c.status = 'pending'
+		ORDER BY c.created_at ASC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []CompanyWithOwner
+	for rows.Next() {
+		var co CompanyWithOwner
+		if err := rows.Scan(
+			&co.ID, &co.OwnerID, &co.Name, &co.LogoURL, &co.Website,
+			&co.Description, &co.Industry, &co.Status, &co.ApprovedAt,
+			&co.ApprovedBy, &co.RejectionReason, &co.CreatedAt,
+			&co.OwnerName, &co.OwnerEmail,
+		); err != nil {
+			return nil, err
+		}
+		out = append(out, co)
+	}
+	return out, rows.Err()
+}
+
 // ListPending returns companies awaiting admin review, oldest first (so the
 // longest-waiting applicant is reviewed first).
 func (r *CompaniesRepo) ListPending(ctx context.Context) ([]models.Company, error) {
@@ -170,5 +212,25 @@ func (r *CompaniesRepo) Reject(ctx context.Context, companyID, adminUserID, reas
 		UPDATE companies SET status = 'rejected', approved_at = now(), approved_by = $1, rejection_reason = $2
 		WHERE id = $3
 	`, adminUserID, reason, companyID)
+	return err
+}
+
+// Blacklist permanently blocks a company; its recruiter cannot re-apply.
+func (r *CompaniesRepo) Blacklist(ctx context.Context, companyID, adminUserID, reason string) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE companies SET status = 'blacklisted', approved_at = now(), approved_by = $1, rejection_reason = $2
+		WHERE id = $3
+	`, adminUserID, reason, companyID)
+	return err
+}
+
+// Resubmit resets a rejected company back to pending so the recruiter can
+// request approval again. Only works on rejected companies — blacklisted
+// companies cannot resubmit.
+func (r *CompaniesRepo) Resubmit(ctx context.Context, companyID string) error {
+	_, err := r.pool.Exec(ctx, `
+		UPDATE companies SET status = 'pending', approved_at = NULL, approved_by = NULL, rejection_reason = NULL
+		WHERE id = $1 AND status = 'rejected'
+	`, companyID)
 	return err
 }
