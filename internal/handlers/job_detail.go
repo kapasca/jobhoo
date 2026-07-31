@@ -136,8 +136,8 @@ func (h *Handlers) SaveJob(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Write([]byte(`<button class="job-card__bookmark ` + activeClass + `" title="` + label + `" aria-label="` + label + `"
-		hx-post="/jobs/` + id + `/save" hx-swap="outerHTML">
-		<svg width="20" height="20" viewBox="0 0 24 24" fill="` + fill + `" stroke="currentColor" stroke-width="2">
+		hx-post="/jobs/` + id + `/save" hx-target="this" hx-swap="outerHTML" onclick="event.stopPropagation();">
+		<svg width="25" height="25" viewBox="0 0 24 24" fill="` + fill + `" stroke="currentColor" stroke-width="2">
 			<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
 		</svg>
 	</button>`))

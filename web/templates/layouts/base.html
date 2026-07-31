@@ -109,6 +109,42 @@
     document.addEventListener('htmx:beforeHistoryUpdate', function() {
       document.body.dataset.preModalUrl = window.location.href;
     });
+
+    // Push job detail URL when a card GET completes (manual, replaces hx-push-url)
+    document.addEventListener('htmx:afterRequest', function(evt) {
+      var elt = evt.detail.elt;
+      if (!elt || !evt.detail.successful) return;
+      if (!elt.classList.contains('job-card')) return;
+      var hxGet = elt.getAttribute('hx-get');
+      if (hxGet) {
+        document.body.dataset.preModalUrl = window.location.href;
+        history.pushState(null, '', hxGet);
+      }
+    });
+
+    // Sync all bookmark buttons for the same job BEFORE the swap removes the element.
+    // htmx:beforeSwap fires while elt is still attached and can bubble to document;
+    // htmx:afterRequest would fire after outerHTML detaches the element (never bubbles).
+    document.addEventListener('htmx:beforeSwap', function(evt) {
+      var elt = evt.detail.elt;
+      if (!elt || !elt.classList.contains('job-card__bookmark')) return;
+      var isSaved = !!(evt.detail.serverResponse && evt.detail.serverResponse.includes('is-saved'));
+      var hxPost  = elt.getAttribute('hx-post') || '';
+      var m = hxPost.match(/\/jobs\/([^/]+)\/save/);
+      if (!m) return;
+      var fill  = isSaved ? 'currentColor' : 'none';
+      var label = isSaved ? 'Saved' : 'Save Job';
+      document.querySelectorAll('.job-card__bookmark').forEach(function(btn) {
+        if (btn === elt) return; // skip self — it will be replaced by the swap
+        var p = btn.getAttribute('hx-post') || '';
+        if (!p.includes('/jobs/' + m[1] + '/save')) return;
+        btn.classList.toggle('is-saved', isSaved);
+        btn.setAttribute('title', label);
+        btn.setAttribute('aria-label', label);
+        var svg = btn.querySelector('svg');
+        if (svg) svg.setAttribute('fill', fill);
+      });
+    });
     (function() {
       const hamburger = document.getElementById('jh-hamburger');
       const menu = document.getElementById('jh-mobile-menu');
