@@ -14,12 +14,14 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
+	"github.com/jobhoo/jobhoo/internal/auth"
 	"github.com/jobhoo/jobhoo/internal/config"
 	"github.com/jobhoo/jobhoo/internal/database"
 )
@@ -50,6 +52,11 @@ func main() {
 		log.Fatalf("clear error: %v", err)
 	}
 
+	log.Println("creating admin account...")
+	if err := seedAdmin(ctx, pool); err != nil {
+		log.Fatalf("admin seed error: %v", err)
+	}
+
 	log.Printf("creating %d recruiter accounts + companies...", numCompanies)
 	companyIDs, recruiterIDs, err := seedCompanies(ctx, pool)
 	if err != nil {
@@ -61,7 +68,22 @@ func main() {
 		log.Fatalf("job seed error: %v", err)
 	}
 
-	log.Println("done: 10 companies and 100 jobs across 5 categories seeded.")
+	log.Println("done: 1 admin, 10 companies (1 left pending for the approval queue), and 100 jobs across 5 categories seeded.")
+}
+
+// seedAdmin creates a demo admin account. There's no signup path for the
+// admin role by design (see internal/handlers/auth.go) — an admin account
+// can only come from seeding or a direct database operation.
+func seedAdmin(ctx context.Context, pool *pgxpool.Pool) error {
+	passwordHash, err := auth.HashPassword("demo-password-123")
+	if err != nil {
+		return fmt.Errorf("hashing admin password: %w", err)
+	}
+	_, err = pool.Exec(ctx, `
+		INSERT INTO users (email, password_hash, role, full_name)
+		VALUES ($1, $2, 'admin', 'JOBHOO Admin')
+	`, "admin"+demoEmailDomain, passwordHash)
+	return err
 }
 
 // clearDemoData removes every row created by a previous seed run, identified

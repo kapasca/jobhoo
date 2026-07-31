@@ -78,14 +78,27 @@
               <span class="job-card__meta-text">{{.Job.Location}}</span>
             </div>
 
-            {{if .Job.SalaryMin}}
+            {{if or .Job.SalaryMin .Job.SalaryMax}}
             <!-- Salary -->
             <div class="job-card__meta-item">
               <svg class="job-card__meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="1" />
                 <path d="M12 1v6m0 6v4m4.22-15.22l-4.24 4.24m-5.96 5.96l-4.24 4.24M1 12h6m6 0h4m-15.22 4.22l4.24-4.24m5.96-5.96l4.24-4.24" />
               </svg>
-              <span class="job-card__meta-text">{{.Job.SalaryCurrency}} {{.Job.SalaryMin}}</span>
+              <span class="job-card__meta-text">
+                {{if and .Job.SalaryMin .Job.SalaryMax}}{{fmtSalary .Job.SalaryMin .Job.SalaryCurrency}} &ndash; {{fmtSalary .Job.SalaryMax .Job.SalaryCurrency}}
+                {{else if .Job.SalaryMin}}Start from {{fmtSalary .Job.SalaryMin .Job.SalaryCurrency}}
+                {{else}}Up to {{fmtSalary .Job.SalaryMax .Job.SalaryCurrency}}{{end}}
+              </span>
+            </div>
+            {{else}}
+            <!-- Salary: Negotiable -->
+            <div class="job-card__meta-item">
+              <svg class="job-card__meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="1" />
+                <path d="M12 1v6m0 6v4m4.22-15.22l-4.24 4.24m-5.96 5.96l-4.24 4.24M1 12h6m6 0h4m-15.22 4.22l4.24-4.24m5.96-5.96l4.24-4.24" />
+              </svg>
+              <span class="job-card__meta-text">Negotiable</span>
             </div>
             {{end}}
           </div>
@@ -94,7 +107,7 @@
 
       <!-- Description Section -->
       <div class="modal-section">
-        <p class="modal-section-content">{{.Job.Description}}</p>
+        <div class="modal-section-content">{{.Job.Description | safeHTML}}</div>
       </div>
 
       <!-- Skills: green = must have, default = nice to have -->

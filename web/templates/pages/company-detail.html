@@ -1,0 +1,33 @@
+{{define "title"}}{{.Company.Name}} — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container container-padding-full" style="max-width:900px;">
+  <div class="card card--pad-lg mb-6">
+    <div class="d-flex" style="gap:var(--jh-space-5);align-items:flex-start;">
+      <div class="featured-company-card__logo" style="width:96px;height:96px;flex-shrink:0;">
+        <img src="{{if .Company.LogoURL}}{{.Company.LogoURL}}{{else}}/static/img/jobhoo-icon.png{{end}}" alt="{{.Company.Name}} logo">
+      </div>
+      <div>
+        <h1 class="m-0">{{.Company.Name}}</h1>
+        {{if .Company.Industry}}<p class="font-sm text-with-margin">{{.Company.Industry}}</p>{{end}}
+        {{if .Company.Website}}<a href="{{.Company.Website}}" target="_blank" rel="noopener" class="font-sm">{{.Company.Website}}</a>{{end}}
+      </div>
+    </div>
+    {{if .Company.Description}}
+      <div class="mt-4" style="line-height:var(--jh-leading-relaxed);">{{.Company.Description | safeHTML}}</div>
+    {{end}}
+  </div>
+
+  <h2 class="font-xl mb-4">Open roles at {{.Company.Name}} ({{len .Jobs}})</h2>
+  {{if .Jobs}}
+    <div class="grid">
+      {{range .Jobs}}{{template "job-card" .}}{{end}}
+    </div>
+  {{else}}
+    <div class="empty-state">
+      <h3>No open roles right now</h3>
+      <p>Check back later — {{.Company.Name}} isn't hiring at the moment.</p>
+    </div>
+  {{end}}
+</section>
+{{end}}

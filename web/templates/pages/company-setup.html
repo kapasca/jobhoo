@@ -1,16 +1,21 @@
-{{define "title"}}Set up your company — JOBHOO{{end}}
+{{define "title"}}{{if .IsEdit}}Edit Company Profile{{else}}Set up your company{{end}} — JOBHOO{{end}}
 
 {{define "content"}}
 <section class="container container-max-md container-padding-auth">
   <div class="card card--pad-lg">
-    <h2>Set up your company</h2>
-    <p class="mb-5">One quick step before you post your first job.</p>
+    {{if .IsEdit}}
+      <h2>Edit company profile</h2>
+      <p class="mb-5">This is what candidates and the public see on your company page.</p>
+    {{else}}
+      <h2>Set up your company</h2>
+      <p class="mb-5">One quick step before you post your first job. Your company will need admin approval before jobs go live.</p>
+    {{end}}
 
     {{if .Error}}
       <div class="alert alert--warning mb-4">{{.Error}}</div>
     {{end}}
 
-    <form method="POST" action="/company/setup">
+    <form method="POST" action="{{if .IsEdit}}/company/profile{{else}}/company/setup{{end}}" {{if .IsEdit}}enctype="multipart/form-data"{{end}}>
       <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
       <div class="field">
         <label for="name">Company name</label>
@@ -24,11 +29,20 @@
         <label for="website">Website</label>
         <input type="url" id="website" name="website" value="{{.Website}}" placeholder="https://example.com">
       </div>
+      {{if .IsEdit}}
+      <div class="field">
+        <label for="logo_file">Logo</label>
+        <div class="field__input-group">
+          <input type="file" id="logo_file" name="logo_file" accept="image/jpeg,image/png,image/gif,image/webp">
+          <span class="field__hint">JPEG, PNG, GIF, or WebP — max 2 MB.{{if .LogoURL}} Current logo: <a href="{{.LogoURL}}" target="_blank" rel="noopener">view</a>.{{end}}</span>
+        </div>
+      </div>
+      {{end}}
       <div class="field">
         <label for="description">Short description</label>
         <textarea id="description" name="description" rows="3" placeholder="What does your company do?">{{.Description}}</textarea>
       </div>
-      <button type="submit" class="btn btn--primary btn--block">Continue</button>
+      <button type="submit" class="btn btn--primary btn--block">{{if .IsEdit}}Save Changes{{else}}Continue{{end}}</button>
     </form>
   </div>
 </section>

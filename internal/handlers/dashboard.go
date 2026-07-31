@@ -39,12 +39,13 @@ func (h *Handlers) CandidateDashboard(w http.ResponseWriter, r *http.Request) {
 
 type adminDashboardData struct {
 	BasePageData
-	TotalUsers        int
-	TotalCandidates   int
-	TotalRecruiters   int
-	TotalCompanies    int
-	TotalJobs         int
-	TotalApplications int
+	TotalUsers          int
+	TotalCandidates     int
+	TotalRecruiters     int
+	TotalCompanies      int
+	TotalJobs           int
+	TotalApplications   int
+	PendingCompanyCount int
 }
 
 func (h *Handlers) AdminDashboard(w http.ResponseWriter, r *http.Request) {
@@ -54,12 +55,13 @@ func (h *Handlers) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.Render.Render(w, http.StatusOK, "admin-dashboard.html", adminDashboardData{
-		BasePageData:      newBasePageData(r, "dashboard"),
-		TotalUsers:        stats.TotalUsers,
-		TotalCandidates:   stats.TotalCandidates,
-		TotalRecruiters:   stats.TotalRecruiters,
-		TotalCompanies:    stats.TotalCompanies,
-		TotalJobs:         stats.TotalJobs,
-		TotalApplications: stats.TotalApplications,
+		BasePageData:        newBasePageData(r, "dashboard"),
+		TotalUsers:          stats.TotalUsers,
+		TotalCandidates:     stats.TotalCandidates,
+		TotalRecruiters:     stats.TotalRecruiters,
+		TotalCompanies:      stats.TotalCompanies,
+		TotalJobs:           stats.TotalJobs,
+		TotalApplications:   stats.TotalApplications,
+		PendingCompanyCount: stats.PendingCompanyCount,
 	})
 }

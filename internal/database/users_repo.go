@@ -74,12 +74,13 @@ func (r *UsersRepo) GetByID(ctx context.Context, id string) (*models.User, error
 }
 
 type PlatformStats struct {
-	TotalUsers        int
-	TotalCandidates   int
-	TotalRecruiters   int
-	TotalCompanies    int
-	TotalJobs         int
-	TotalApplications int
+	TotalUsers          int
+	TotalCandidates     int
+	TotalRecruiters     int
+	TotalCompanies      int
+	TotalJobs           int
+	TotalApplications   int
+	PendingCompanyCount int
 }
 
 // PlatformStats gives the admin dashboard a single-query snapshot of
@@ -94,7 +95,9 @@ func (r *UsersRepo) PlatformStats(ctx context.Context) (PlatformStats, error) {
 			(SELECT count(*) FROM users WHERE role = 'recruiter'),
 			(SELECT count(*) FROM companies),
 			(SELECT count(*) FROM jobs),
-			(SELECT count(*) FROM applications)
-	`).Scan(&s.TotalUsers, &s.TotalCandidates, &s.TotalRecruiters, &s.TotalCompanies, &s.TotalJobs, &s.TotalApplications)
+			(SELECT count(*) FROM applications),
+			(SELECT count(*) FROM companies WHERE status = 'pending')
+	`).Scan(&s.TotalUsers, &s.TotalCandidates, &s.TotalRecruiters, &s.TotalCompanies,
+		&s.TotalJobs, &s.TotalApplications, &s.PendingCompanyCount)
 	return s, err
 }

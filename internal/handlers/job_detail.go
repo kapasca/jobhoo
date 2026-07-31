@@ -125,7 +125,7 @@ func (h *Handlers) SaveJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	label := "Save job"
+	label := "Save Job"
 	activeClass := ""
 	fill := "none"
 	if saved {

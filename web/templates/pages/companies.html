@@ -8,7 +8,7 @@
   {{if .Companies}}
     <div class="companies-grid">
       {{range .Companies}}
-        <div class="featured-company-card">
+        <a href="/companies/{{.ID}}" class="featured-company-card">
           <div class="featured-company-card__logo">
             <img src="{{if .LogoURL}}{{.LogoURL}}{{else}}/static/img/jobhoo-icon.png{{end}}" alt="{{.Name}} logo">
           </div>
@@ -17,16 +17,13 @@
           <span class="badge {{if gt .OpenJobCount 0}}badge--orange{{end}}">
             {{.OpenJobCount}} open role{{if ne .OpenJobCount 1}}s{{end}}
           </span>
-          {{if gt .OpenJobCount 0}}
-            <a href="/jobs?q={{.Name}}" class="btn btn--secondary btn--sm mt-2">View openings</a>
-          {{end}}
-        </div>
+        </a>
       {{end}}
     </div>
   {{else}}
     <div class="empty-state">
       <h3>No companies yet</h3>
-      <p>Companies will show up here once recruiters set up their profile.</p>
+      <p>Companies will show up here once recruiters set up their profile and get approved.</p>
     </div>
   {{end}}
 </section>

@@ -23,15 +23,27 @@ type User struct {
 	CreatedAt    time.Time
 }
 
+type CompanyStatus string
+
+const (
+	CompanyPending  CompanyStatus = "pending"
+	CompanyApproved CompanyStatus = "approved"
+	CompanyRejected CompanyStatus = "rejected"
+)
+
 type Company struct {
-	ID          string
-	OwnerID     string
-	Name        string
-	LogoURL     string
-	Website     string
-	Description string
-	Industry    string
-	CreatedAt   time.Time
+	ID              string
+	OwnerID         string
+	Name            string
+	LogoURL         string
+	Website         string
+	Description     string
+	Industry        string
+	Status          CompanyStatus
+	ApprovedAt      *time.Time
+	ApprovedBy      string
+	RejectionReason string
+	CreatedAt       time.Time
 }
 
 type EmploymentType string
@@ -94,16 +106,14 @@ const (
 type JobCategory string
 
 const (
-	CategoryEngineeringProduct JobCategory = "engineering_product"
-	CategoryDesignCreative     JobCategory = "design_creative"
-	CategorySalesMarketing     JobCategory = "sales_marketing"
-	CategoryDataAnalytics      JobCategory = "data_analytics"
-	CategoryOperationsSupport  JobCategory = "operations_support"
+	CategoryEngineeringProduct JobCategory = "Engineering & Product"
+	CategoryDesignCreative     JobCategory = "Design & Creative"
+	CategorySalesMarketing     JobCategory = "Sales & Marketing"
+	CategoryDataAnalytics      JobCategory = "Data & Analytics"
+	CategoryOperationsSupport  JobCategory = "Operations & Support"
 )
 
-// JobCategories lists every category in display order, with a human label
-// for use in filter chips / nav. Kept here (not in the DB) so the display
-// label and canonical order are versioned with the code, not the data.
+// JobCategories lists every standard category in display order.
 var JobCategories = []struct {
 	Value JobCategory
 	Label string
@@ -115,12 +125,9 @@ var JobCategories = []struct {
 	{CategoryOperationsSupport, "Operations & Support"},
 }
 
+// Label returns the human-readable category name; for custom categories it
+// just returns the stored string as-is.
 func (c JobCategory) Label() string {
-	for _, entry := range JobCategories {
-		if entry.Value == c {
-			return entry.Label
-		}
-	}
 	return string(c)
 }
 
@@ -132,7 +139,8 @@ type Job struct {
 	CreatedBy        string
 	Title            string
 	Description      string
-	Location         string
+	Country          string
+	State            string
 	EmploymentType   EmploymentType
 	WorkArrangement  WorkArrangement
 	Category         JobCategory
@@ -143,8 +151,29 @@ type Job struct {
 	NiceToHaveSkills []string
 	Seniority        string
 	Status           JobStatus
+	OpensAt          *time.Time // if set, hidden from public listing until this time
+	ClosesAt         *time.Time // if set, hidden from public listing after this time
 	PublishedAt      *time.Time
 	CreatedAt        time.Time
+}
+
+// IsScheduled reports whether the job has an opens_at in the future — used
+// by the recruiter dashboard to show "Scheduled" instead of "Published".
+func (j Job) IsScheduled() bool {
+	return j.OpensAt != nil && j.OpensAt.After(time.Now())
+}
+
+// Location returns a formatted display string combining state and country.
+func (j Job) Location() string {
+	if j.State == "" || j.State == j.Country {
+		return j.Country
+	}
+	return j.State + ", " + j.Country
+}
+
+// IsExpired reports whether the job's closes_at has passed.
+func (j Job) IsExpired() bool {
+	return j.ClosesAt != nil && j.ClosesAt.Before(time.Now())
 }
 
 // PostedAgo returns a short human string like "3d ago" for job cards.

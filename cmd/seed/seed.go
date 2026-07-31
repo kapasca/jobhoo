@@ -39,11 +39,25 @@ func seedCompanies(ctx context.Context, pool *pgxpool.Pool) (companyIDs []string
 		}
 
 		var companyID string
+		// Leave the very last demo company 'pending' so there's always
+		// something in the admin approval queue to test against; every
+		// other demo company is auto-approved so the existing demo
+		// recruiter accounts keep working exactly as they did before the
+		// approval workflow existed.
+		status := "approved"
+		if i == numCompanies-1 {
+			status = "pending"
+		}
+		var approvedAt *time.Time
+		if status == "approved" {
+			t := time.Now()
+			approvedAt = &t
+		}
 		err = pool.QueryRow(ctx, `
-			INSERT INTO companies (owner_id, name, industry, description)
-			VALUES ($1, $2, $3, $4)
+			INSERT INTO companies (owner_id, name, industry, description, status, approved_at)
+			VALUES ($1, $2, $3, $4, $5, $6)
 			RETURNING id
-		`, recruiterID, c.Name, c.Industry, fmt.Sprintf("%s is hiring across %s.", c.Name, c.Industry)).Scan(&companyID)
+		`, recruiterID, c.Name, c.Industry, fmt.Sprintf("%s is hiring across %s.", c.Name, c.Industry), status, approvedAt).Scan(&companyID)
 		if err != nil {
 			return nil, nil, fmt.Errorf("inserting company %s: %w", c.Name, err)
 		}
@@ -73,9 +87,9 @@ func seedJobs(ctx context.Context, pool *pgxpool.Pool, rng *rand.Rand, companyID
 			seniority := seniorities[rng.Intn(len(seniorities))]
 			fullTitle := fmt.Sprintf("%s %s", seniority, title)
 
-			location := locations[rng.Intn(len(locations))]
+			location := seedLocations[rng.Intn(len(seedLocations))]
 			workArrangement := "onsite"
-			if location == "Remote" {
+			if rng.Intn(4) == 0 {
 				workArrangement = "remote"
 			} else if rng.Intn(3) == 0 {
 				workArrangement = "hybrid"
@@ -103,15 +117,15 @@ func seedJobs(ctx context.Context, pool *pgxpool.Pool, rng *rand.Rand, companyID
 
 			_, err := pool.Exec(ctx, `
 				INSERT INTO jobs (
-					company_id, created_by, title, description, location, employment_type,
-					work_arrangement, category, salary_min, salary_max, must_have_skills,
-					nice_to_have_skills, seniority, status, published_at
+					company_id, created_by, title, description, country, state, employment_type,
+					work_arrangement, category, salary_min, salary_max, salary_currency,
+					must_have_skills, nice_to_have_skills, seniority, status, published_at
 				) VALUES (
-					$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'published', $14
+					$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'published', $16
 				)
-			`, companyID, recruiterID, fullTitle, description, location, employmentType,
-				workArrangement, string(cat.Value), salaryMin, salaryMax, mustHave,
-				niceToHave, seniority, publishedAt,
+			`, companyID, recruiterID, fullTitle, description, location.Country, location.State, employmentType,
+				workArrangement, string(cat.Value), salaryMin, salaryMax, countryCurrency(location.Country),
+				mustHave, niceToHave, seniority, publishedAt,
 			)
 			if err != nil {
 				return fmt.Errorf("inserting job %q: %w", fullTitle, err)
@@ -133,4 +147,17 @@ func pickSkills(rng *rand.Rand, pool []string, n int) []string {
 		out = append(out, pool[idx])
 	}
 	return out
+}
+
+var seedCurrencies = map[string]string{
+	"Indonesia": "IDR", "Singapore": "SGD", "Malaysia": "MYR",
+	"Thailand": "THB", "Vietnam": "VND", "Philippines": "PHP",
+	"Timor-Leste": "USD", "Australia": "AUD", "New Zealand": "NZD",
+}
+
+func countryCurrency(country string) string {
+	if c, ok := seedCurrencies[country]; ok {
+		return c
+	}
+	return "USD"
 }

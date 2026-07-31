@@ -7,8 +7,29 @@
       <h1 class="mb-0">{{.Company.Name}}</h1>
       <p class="m-0">Manage your open roles and applicant pipeline.</p>
     </div>
-    <a href="/post-job" class="btn btn--primary">+ Post a Job</a>
+    <div class="d-flex" style="gap:var(--jh-space-2);">
+      <a href="/company/profile" class="btn btn--secondary">Edit Profile</a>
+      {{if eq (print .Company.Status) "approved"}}
+        <a href="/post-job" class="btn btn--primary">+ Post a Job</a>
+      {{end}}
+    </div>
   </div>
+
+  {{if eq (print .Company.Status) "pending"}}
+    <div class="alert alert--warning mb-6">
+      <div>
+        <strong class="text-white">Your company is awaiting admin approval.</strong>
+        <p class="text-with-margin">You can browse this dashboard and edit your profile now, but job posting unlocks once an admin reviews {{.Company.Name}}. This is usually quick.</p>
+      </div>
+    </div>
+  {{else if eq (print .Company.Status) "rejected"}}
+    <div class="alert alert--warning mb-6">
+      <div>
+        <strong class="text-white">Your company was not approved.</strong>
+        <p class="text-with-margin">{{if .Company.RejectionReason}}Reason: {{.Company.RejectionReason}}{{end}} Update your company profile and reach out to support if you believe this was a mistake.</p>
+      </div>
+    </div>
+  {{end}}
 
   {{if .Jobs}}
     <div class="mt-6 table-responsive">
@@ -16,22 +37,59 @@
         <thead>
           <tr>
             <th align="left">Job</th>
+            <th align="center">Open</th>
+            <th align="center">Close</th>
             <th align="center">Status</th>
-            <th align="center">Category</th>
             <th align="center">Applicants</th>
-            <th align="center">Posted</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
           {{range .Jobs}}
           <tr>
-            <td class="text-white font-semibold">{{.Title}}</td>
-            <td align="center"><span class="badge">{{.Status}}</span></td>
-            <td align="center"><span class="badge badge--orange">{{.Category.Label}}</span></td>
+            <td>
+              <span class="text-white font-semibold">{{.Title}}</span><br>
+              <span class="font-xs text-muted">{{.Category.Label}}</span>
+            </td>
+            <td align="center" style="white-space:nowrap;">{{fmtDate .PublishedAt}}</td>
+            <td align="center" style="white-space:nowrap;">{{fmtDate .ClosesAt}}</td>
+            <td align="center">
+              {{if eq (print .Status) "published"}}
+                {{if .IsScheduled}}<span class="badge badge--gray">Scheduled</span>
+                {{else if .IsExpired}}<span class="badge badge--gray">Expired</span>
+                {{else}}<span class="badge badge--green">Published</span>{{end}}
+              {{else if eq (print .Status) "closed"}}<span class="badge badge--gray">Closed</span>
+              {{else if eq (print .Status) "archived"}}<span class="badge badge--gray">Archived</span>
+              {{else}}<span class="badge">{{.Status}}</span>{{end}}
+            </td>
             <td align="center">{{.ApplicantCount}}</td>
-            <td align="center">{{.PostedAgo}}</td>
-            <td align="right"><a href="/recruiter/jobs/{{.ID}}/applicants" class="btn btn--secondary btn--sm">View pipeline</a></td>
+            <td align="right">
+              <details class="action-menu">
+                <summary class="btn btn--secondary btn--sm">Actions ▾</summary>
+                <div class="action-menu__list">
+                  <a href="/recruiter/jobs/{{.ID}}/applicants">Pipeline</a>
+                  <a href="/recruiter/jobs/{{.ID}}/edit">Edit/Re-open</a>
+                  <div class="action-menu__divider"></div>
+                  {{if eq (print .Status) "published"}}
+                    <form method="POST" action="/recruiter/jobs/{{.ID}}/close">
+                      <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                      <button type="submit">Close</button>
+                    </form>
+                  {{else if eq (print .Status) "closed"}}
+                    <form method="POST" action="/recruiter/jobs/{{.ID}}/reopen">
+                      <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                      <button type="submit">Reopen</button>
+                    </form>
+                  {{end}}
+                  {{if ne (print .Status) "archived"}}
+                    <form method="POST" action="/recruiter/jobs/{{.ID}}/archive" onsubmit="return confirm('Archive this job?');">
+                      <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                      <button type="submit">Archive</button>
+                    </form>
+                  {{end}}
+                </div>
+              </details>
+            </td>
           </tr>
           {{end}}
         </tbody>
@@ -40,8 +98,12 @@
   {{else}}
     <div class="empty-state">
       <h3>No jobs posted yet</h3>
-      <p>Post your first job to start receiving applicants.</p>
-      <a href="/post-job" class="btn btn--primary recruiter-post-button">Post a job</a>
+      {{if eq (print .Company.Status) "approved"}}
+        <p>Post your first job to start receiving applicants.</p>
+        <a href="/post-job" class="btn btn--primary recruiter-post-button">Post a job</a>
+      {{else}}
+        <p>Once your company is approved, you'll be able to post your first job here.</p>
+      {{end}}
     </div>
   {{end}}
 </section>

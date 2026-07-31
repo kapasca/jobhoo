@@ -137,7 +137,7 @@ func (h *Handlers) renderJobsPage(w http.ResponseWriter, r *http.Request, page s
 		filterQuery.Set("category", category)
 	}
 	if location != "" {
-		filterQuery.Set("location", location)
+		filterQuery.Set("location", location) // matches country or state substring
 	}
 	if sort != "" {
 		filterQuery.Set("sort", sort)

@@ -374,11 +374,25 @@ a  { color: inherit; text-decoration: none; }
     color: white;
     padding: var(--jh-space-1) var(--jh-space-4);
 }
+.badge--red {
+    background-color: #5b0404;
+    color: white;
+    padding: var(--jh-space-1) var(--jh-space-4);
+}
+.badge--gray {
+    background-color: var(--jh-surface-inset);
+    color: var(--jh-ink-500);
+    padding: var(--jh-space-1) var(--jh-space-4);
+    border: 1px solid var(--jh-border);
+}
 
 /* --- Forms --- */
 .field { display: flex; flex-direction: column; gap: var(--jh-space-2); margin-bottom: var(--jh-space-4); align-items: flex-start; }
 .field label { font-size: var(--jh-text-sm); font-weight: 600; color: var(--jh-white); }
+.field__optional { font-weight: 400; color: var(--jh-ink-500); }
 .field__hint { font-size: var(--jh-text-xs); color: var(--jh-ink-500); }
+/* Wraps an input/select/textarea together with its hint text */
+.field__input-group { display: flex; flex-direction: column; gap: var(--jh-space-1); width: 100%; }
 input, select, textarea {
   font-family: var(--jh-font);
   font-size: var(--jh-text-base);
@@ -390,6 +404,10 @@ input, select, textarea {
   width: 100%;
 }
 input::placeholder, textarea::placeholder { color: var(--jh-ink-500); }
+/* Force the browser's date/time picker icon to inherit our light text color */
+input[type="date"], input[type="datetime-local"], input[type="time"], input[type="month"] {
+  color-scheme: dark;
+}
 input:focus, select:focus, textarea:focus {
   border-color: var(--jh-orange-500);
   box-shadow: var(--jh-shadow-glow-orange);
@@ -446,6 +464,31 @@ th {
 }
 td { padding: var(--jh-space-4); border-bottom: 1px solid var(--jh-border); font-size: var(--jh-text-sm); }
 tr:last-child td { border-bottom: none; }
+
+/* --- Action dropdown menu (recruiter dashboard job list) --- */
+.action-menu { position: relative; display: inline-block; }
+.action-menu > summary { list-style: none; cursor: pointer; }
+.action-menu > summary::-webkit-details-marker { display: none; }
+.action-menu__list {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 50;
+  min-width: 148px;
+  background: var(--jh-navy-600);
+  border: 1px solid var(--jh-border-strong);
+  border-radius: var(--jh-radius-sm);
+  padding: var(--jh-space-1) 0;
+  box-shadow: var(--jh-shadow-md);
+}
+.action-menu__list a,
+.action-menu__list button {
+  display: block; width: 100%; text-align: left;
+  padding: var(--jh-space-2) var(--jh-space-4);
+  font-size: var(--jh-text-sm); color: var(--jh-ink-200);
+  background: none; border: none; cursor: pointer;
+  white-space: nowrap; text-decoration: none; font-family: var(--jh-font);
+}
+.action-menu__list a:hover,
+.action-menu__list button:hover { background: var(--jh-border); color: var(--jh-white); }
+.action-menu__divider { height: 1px; background: var(--jh-border); margin: var(--jh-space-1) 0; }
 
 /* --- Alerts / Toasts --- */
 .alert {
@@ -1010,6 +1053,9 @@ tr:last-child td { border-bottom: none; }
   background: var(--jh-surface-inset);
   border: 1px solid var(--jh-border);
   border-radius: var(--jh-radius-md);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
   transition: all var(--jh-duration-fast) var(--jh-ease);
 }
 .featured-company-card:hover {
@@ -1551,8 +1597,20 @@ tr:last-child td { border-bottom: none; }
   grid-template-columns: 1fr 1fr;
 }
 
+.grid-3-col {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 .grid-auto-fit-160 {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+/* Self-contained grid for the company directory (explicit display:grid,
+   doesn't rely on the base .grid). Referenced by companies.html. */
+.companies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--jh-space-5);
 }
 
 /* Text with icon spacing */
@@ -2143,6 +2201,7 @@ tr:last-child td { border-bottom: none; }
 
   /* --- Forms --- */
   .grid-2-col { grid-template-columns: 1fr; }
+  .grid-3-col { grid-template-columns: 1fr; }
 
   /* --- Flex wrapping helpers --- */
   .d-flex.justify-between { flex-wrap: wrap; gap: var(--jh-space-3); }

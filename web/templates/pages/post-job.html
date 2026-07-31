@@ -1,86 +1,173 @@
-{{define "title"}}Post a Job — JOBHOO{{end}}
+{{define "title"}}{{if .IsEdit}}Edit Job{{else}}Post a Job{{end}} — JOBHOO{{end}}
 
 {{define "content"}}
 <section class="container container-max-lg container-padding-full">
-  <h1>Post a job</h1>
+  <h1>{{if .IsEdit}}Edit Job{{else}}Post a Job{{end}}</h1>
 
   {{if .Error}}
     <div class="alert alert--warning mb-4">{{.Error}}</div>
   {{end}}
 
-  <form method="POST" action="/post-job" class="card card--pad-lg">
+  <form method="POST" action="{{if .IsEdit}}/recruiter/jobs/{{.JobID}}/edit{{else}}/post-job{{end}}" class="card card--pad-lg">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
     <div class="field">
       <label for="title">Job title</label>
-      <input type="text" id="title" name="title" placeholder="Senior Backend Engineer" required autofocus>
+      <input type="text" id="title" name="title" value="{{.Title}}" placeholder="Senior Backend Engineer" required autofocus>
     </div>
 
-    <div class="field">
-      <label for="category">Category</label>
-      <select id="category" name="category" class="dropdown" required>
-        {{range .Categories}}<option value="{{.Value}}">{{.Label}}</option>{{end}}
-      </select>
+    <div class="d-grid grid-2-col gap-4">
+      <div class="field">
+        <label for="category">Category</label>
+        <div class="field__input-group">
+          <input list="category-list" id="category" name="category"
+                 value="{{.Category}}" placeholder="e.g. Engineering &amp; Product, Finance…" required>
+          <datalist id="category-list">
+            {{range .Categories}}<option value="{{.Value}}">{{end}}
+          </datalist>
+        </div>
+      </div>
+      <div class="field">
+        <label for="seniority">Seniority <span class="field__optional">(opt.)</span></label>
+        <div class="field__input-group">
+          <input type="text" id="seniority" name="seniority" value="{{if ne .Seniority "General"}}{{.Seniority}}{{end}}" placeholder="Mid, Senior, Lead...">
+        </div>
+      </div>
     </div>
 
     <div class="d-grid grid-2-col gap-4">
       <div class="field">
         <label for="employment_type">Employment type</label>
         <select id="employment_type" name="employment_type" class="dropdown">
-          <option value="full_time">Full-time</option>
-          <option value="part_time">Part-time</option>
-          <option value="contract">Contract</option>
-          <option value="internship">Internship</option>
-          <option value="freelance">Freelance</option>
+          <option value="full_time" {{if eq .EmploymentType "full_time"}}selected{{end}}>Full-time</option>
+          <option value="part_time" {{if eq .EmploymentType "part_time"}}selected{{end}}>Part-time</option>
+          <option value="contract" {{if eq .EmploymentType "contract"}}selected{{end}}>Contract</option>
+          <option value="internship" {{if eq .EmploymentType "internship"}}selected{{end}}>Internship</option>
+          <option value="freelance" {{if eq .EmploymentType "freelance"}}selected{{end}}>Freelance</option>
         </select>
       </div>
       <div class="field">
         <label for="work_arrangement">Work arrangement</label>
         <select id="work_arrangement" name="work_arrangement" class="dropdown">
-          <option value="onsite">Onsite</option>
-          <option value="hybrid">Hybrid</option>
-          <option value="remote">Remote</option>
+          <option value="onsite" {{if eq .WorkArrangement "onsite"}}selected{{end}}>Onsite</option>
+          <option value="hybrid" {{if eq .WorkArrangement "hybrid"}}selected{{end}}>Hybrid</option>
+          <option value="remote" {{if eq .WorkArrangement "remote"}}selected{{end}}>Remote</option>
         </select>
       </div>
     </div>
 
     <div class="d-grid grid-2-col gap-4">
       <div class="field">
-        <label for="location">Location</label>
-        <input type="text" id="location" name="location" placeholder="San Francisco, CA or Remote">
+        <label for="country">Country</label>
+        <select id="country" name="country" class="dropdown" required>
+          <option value="">Select a country…</option>
+          {{range .Countries}}<option value="{{.Name}}" {{if eq $.Country .Name}}selected{{end}}>{{.Name}}</option>{{end}}
+        </select>
       </div>
       <div class="field">
-        <label for="seniority">Seniority</label>
-        <input type="text" id="seniority" name="seniority" placeholder="Mid, Senior, Lead...">
+        <label for="state">Province / State / Region</label>
+        <select id="state" name="state" class="dropdown" required>
+          <option value="">Select country first…</option>
+        </select>
+      </div>
+    </div>
+    <script>
+    (function() {
+      var _states = {
+        {{range .Countries}}"{{.Name}}":[{{range .States}}"{{js .}}",{{end}}],
+        {{end}}
+      };
+      var _cityOnly = {
+        {{range .Countries}}{{if .CityOnly}}"{{.Name}}":true,{{end}}{{end}}
+      };
+      var _initState = {{if .State}}"{{js .State}}"{{else}}null{{end}};
+
+      var _currencies = {
+        {{range .Countries}}"{{.Name}}":"{{.Currency}}",
+        {{end}}
+      };
+
+      function populateStates(country, preselect) {
+        var states = _states[country] || [];
+        var sel = document.getElementById('state');
+        sel.innerHTML = '';
+        if (!states.length) { sel.appendChild(new Option('—', '')); return; }
+        states.forEach(function(s) { sel.appendChild(new Option(s, s)); });
+        sel.disabled = !!_cityOnly[country];
+        if (preselect) { sel.value = preselect; }
+        else if (_cityOnly[country]) { sel.value = states[0]; }
+      }
+
+      document.getElementById('country').addEventListener('change', function() {
+        populateStates(this.value, null);
+        var cur = _currencies[this.value];
+        if (cur) document.getElementById('salary_currency').value = cur;
+      });
+
+      var initCountry = document.getElementById('country').value;
+      if (initCountry) populateStates(initCountry, _initState);
+    })();
+    </script>
+
+    <div class="d-grid grid-3-col gap-4">
+      <div class="field">
+        <label for="salary_currency">Currency</label>
+        <select id="salary_currency" name="salary_currency" class="dropdown">
+          <option value="IDR" {{if eq .Currency "IDR"}}selected{{end}}>IDR — Rp</option>
+          <option value="SGD" {{if eq .Currency "SGD"}}selected{{end}}>SGD — S$</option>
+          <option value="MYR" {{if eq .Currency "MYR"}}selected{{end}}>MYR — RM</option>
+          <option value="THB" {{if eq .Currency "THB"}}selected{{end}}>THB — ฿</option>
+          <option value="VND" {{if eq .Currency "VND"}}selected{{end}}>VND — ₫</option>
+          <option value="PHP" {{if eq .Currency "PHP"}}selected{{end}}>PHP — ₱</option>
+          <option value="USD" {{if eq .Currency "USD"}}selected{{end}}>USD — $</option>
+          <option value="AUD" {{if eq .Currency "AUD"}}selected{{end}}>AUD — A$</option>
+          <option value="NZD" {{if eq .Currency "NZD"}}selected{{end}}>NZD — NZ$</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="salary_min">Salary min <span class="field__optional">(opt.)</span></label>
+        <input type="number" id="salary_min" name="salary_min" value="{{.SalaryMin}}" placeholder="5000000">
+      </div>
+      <div class="field">
+        <label for="salary_max">Salary max <span class="field__optional">(opt.)</span></label>
+        <input type="number" id="salary_max" name="salary_max" value="{{.SalaryMax}}" placeholder="8000000">
       </div>
     </div>
 
     <div class="d-grid grid-2-col gap-4">
       <div class="field">
-        <label for="salary_min">Salary min (optional)</label>
-        <input type="number" id="salary_min" name="salary_min" placeholder="120000">
+        <label for="opens_at">Opens at <span class="field__optional">(opt.)</span></label>
+        <div class="field__input-group">
+          <input type="datetime-local" id="opens_at" name="opens_at" value="{{.OpensAt}}">
+          <span class="field__hint">Leave blank to make this job visible to candidates immediately.</span>
+        </div>
       </div>
       <div class="field">
-        <label for="salary_max">Salary max (optional)</label>
-        <input type="number" id="salary_max" name="salary_max" placeholder="160000">
+        <label for="closes_at">Closes at <span class="field__optional">(opt.)</span></label>
+        <div class="field__input-group">
+          <input type="datetime-local" id="closes_at" name="closes_at" value="{{.ClosesAt}}">
+          <span class="field__hint">Job automatically stops appearing to candidates after this time.</span>
+        </div>
       </div>
     </div>
 
     <div class="field">
       <label for="description">Description</label>
-      <textarea id="description" name="description" rows="6" placeholder="Responsibilities, what success looks like, team context..." required></textarea>
+      <textarea id="description" name="description" rows="6" placeholder="Responsibilities, what success looks like, team context..." required>{{.Description}}</textarea>
     </div>
 
     <div class="field">
       <label for="must_have_skills">Must-have skills</label>
-      <input type="text" id="must_have_skills" name="must_have_skills" placeholder="Go, PostgreSQL, Distributed Systems">
-      <span class="field__hint">Comma-separated. Used for search matching and AI candidate ranking.</span>
+      <div class="field__input-group">
+        <input type="text" id="must_have_skills" name="must_have_skills" value="{{.MustHaveSkills}}" placeholder="Go, PostgreSQL, Distributed Systems">
+        <span class="field__hint">Comma-separated. Used for search matching and AI candidate ranking.</span>
+      </div>
     </div>
     <div class="field">
-      <label for="nice_to_have_skills">Nice-to-have skills</label>
-      <input type="text" id="nice_to_have_skills" name="nice_to_have_skills" placeholder="Kubernetes, gRPC">
+      <label for="nice_to_have_skills">Nice-to-have skills <span class="field__optional">(opt.)</span></label>
+      <input type="text" id="nice_to_have_skills" name="nice_to_have_skills" value="{{.NiceToHaveSkills}}" placeholder="Kubernetes, gRPC">
     </div>
 
-    <button type="submit" class="btn btn--primary btn--block">Publish job</button>
+    <button type="submit" class="btn btn--primary btn--block">{{if .IsEdit}}Save Changes{{else}}Publish Job{{end}}</button>
   </form>
 </section>
 {{end}}

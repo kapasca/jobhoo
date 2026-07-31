@@ -94,10 +94,10 @@
           </div>
         </div>
 
-        <!-- Location Filter (free text — matches the job's actual location string) -->
+        <!-- Location Filter (matches country or state) -->
         <div class="jobs__filter-group">
           <label class="jobs__filter-label">Location</label>
-          <input type="search" name="location" value="{{.Location}}" placeholder="e.g. Seattle, or Remote"
+          <input type="search" name="location" value="{{.Location}}" placeholder="e.g. Indonesia, Bali, Singapore"
                  class="jobs__search-input"
                  hx-get="/jobs/search" hx-trigger="keyup changed delay:400ms" hx-target="#job-results" hx-include="#job-filters" hx-push-url="/jobs">
         </div>

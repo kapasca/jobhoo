@@ -67,9 +67,26 @@ var companyNames = []struct {
 	{"Cobalt Media", "Media"},
 }
 
-var locations = []string{
-	"San Francisco, CA", "New York, NY", "Austin, TX", "Seattle, WA",
-	"Chicago, IL", "Boston, MA", "Denver, CO", "Remote",
+type seedLocation struct {
+	Country string
+	State   string
+}
+
+var seedLocations = []seedLocation{
+	{"Indonesia", "DKI Jakarta"},
+	{"Indonesia", "Jawa Barat"},
+	{"Indonesia", "Jawa Timur"},
+	{"Indonesia", "Bali"},
+	{"Indonesia", "Jawa Tengah"},
+	{"Indonesia", "Sumatera Utara"},
+	{"Singapore", "Singapore"},
+	{"Malaysia", "Kuala Lumpur"},
+	{"Malaysia", "Selangor"},
+	{"Australia", "New South Wales"},
+	{"Australia", "Victoria"},
+	{"Thailand", "Bangkok"},
+	{"Vietnam", "Hà Nội"},
+	{"Vietnam", "TP. Hồ Chí Minh"},
 }
 
 var seniorities = []string{"Junior", "Mid", "Senior", "Lead"}

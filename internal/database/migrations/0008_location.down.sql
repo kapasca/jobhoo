@@ -1,0 +1,5 @@
+ALTER TABLE jobs
+    ADD COLUMN location TEXT;
+
+ALTER TABLE jobs DROP COLUMN country;
+ALTER TABLE jobs DROP COLUMN state;

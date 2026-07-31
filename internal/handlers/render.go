@@ -5,8 +5,41 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"strconv"
+	"time"
 	"unicode/utf8"
+
+	"github.com/microcosm-cc/bluemonday"
 )
+
+// descriptionPolicy allows basic formatting tags used in job/company descriptions.
+var descriptionPolicy = func() *bluemonday.Policy {
+	p := bluemonday.NewPolicy()
+	p.AllowElements("p", "br", "strong", "em", "b", "i", "u", "ul", "ol", "li", "h3", "h4", "h5", "blockquote", "pre", "code")
+	p.AllowAttrs("href").OnElements("a")
+	p.AllowStandardURLs()
+	p.RequireNoFollowOnLinks(true)
+	return p
+}()
+
+// currencySymbols maps ISO 4217 codes to display symbols.
+var currencySymbols = map[string]string{
+	"IDR": "Rp", "SGD": "S$", "MYR": "RM", "THB": "฿",
+	"VND": "₫", "PHP": "₱", "USD": "$", "AUD": "A$", "NZD": "NZ$",
+}
+
+// thousandsSep formats n as an integer string with comma separators.
+func thousandsSep(n int) string {
+	s := strconv.Itoa(n)
+	out := make([]byte, 0, len(s)+(len(s)-1)/3)
+	for i, c := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			out = append(out, ',')
+		}
+		out = append(out, byte(c))
+	}
+	return string(out)
+}
 
 var templateFuncs = template.FuncMap{
 	// truncate cuts s to at most n runes and appends "..." if it was longer.
@@ -16,6 +49,29 @@ var templateFuncs = template.FuncMap{
 		}
 		runes := []rune(s)
 		return string(runes[:n]) + "..."
+	},
+	// safeHTML sanitizes s and returns trusted HTML safe to render unescaped.
+	"safeHTML": func(s string) template.HTML {
+		return template.HTML(descriptionPolicy.Sanitize(s))
+	},
+	// fmtDate formats a nullable time pointer as "2 Jan 2006" or "—" if nil.
+	"fmtDate": func(t *time.Time) string {
+		if t == nil {
+			return "—"
+		}
+		return t.Format("2 Jan 2006")
+	},
+	// fmtSalary formats a nullable salary integer with currency symbol and
+	// thousands separators (e.g. *5000000, "IDR" → "Rp 5,000,000").
+	"fmtSalary": func(amount *int, currency string) string {
+		if amount == nil {
+			return ""
+		}
+		sym, ok := currencySymbols[currency]
+		if !ok {
+			sym = currency
+		}
+		return fmt.Sprintf("%s %s", sym, thousandsSep(*amount))
 	},
 }
 

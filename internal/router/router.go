@@ -64,8 +64,15 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Get("/dashboard/recruiter", h.RecruiterDashboard)
 		r.Get("/company/setup", h.CompanySetupPage)
 		r.Post("/company/setup", h.CompanySetup)
+		r.Get("/company/profile", h.CompanyProfilePage)
+		r.Post("/company/profile", h.CompanyProfileUpdate)
 		r.Get("/post-job", h.PostJobPage)
 		r.Post("/post-job", h.PostJob)
+		r.Get("/recruiter/jobs/{id}/edit", h.EditJobPage)
+		r.Post("/recruiter/jobs/{id}/edit", h.EditJob)
+		r.Post("/recruiter/jobs/{id}/close", h.CloseJob)
+		r.Post("/recruiter/jobs/{id}/archive", h.ArchiveJob)
+		r.Post("/recruiter/jobs/{id}/reopen", h.ReopenJob)
 		r.Get("/recruiter/jobs/{id}/applicants", h.ATSBoard)
 		r.Post("/recruiter/jobs/{id}/rank", h.RankCandidates)
 		r.Post("/ats/applications/{id}/stage", h.UpdateApplicationStage)
@@ -75,9 +82,13 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 	r.Group(func(r chi.Router) {
 		r.Use(jhmw.RequireAuth, jhmw.RequireRole(models.RoleAdmin))
 		r.Get("/dashboard/admin", h.AdminDashboard)
+		r.Get("/admin/approvals", h.CompanyApprovalQueue)
+		r.Post("/admin/approvals/{id}/approve", h.ApproveCompany)
+		r.Post("/admin/approvals/{id}/reject", h.RejectCompany)
 	})
 
 	r.Get("/companies", h.CompaniesDirectory)
+	r.Get("/companies/{id}", h.CompanyPublicDetail)
 
 	r.NotFound(h.NotFoundPage)
 

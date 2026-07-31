@@ -2,7 +2,12 @@
 
 {{define "content"}}
 <section class="container container-padding-full">
-  <h1>Platform overview</h1>
+  <div class="d-flex justify-between items-baseline mb-4">
+    <h1 class="m-0">Platform overview</h1>
+    <a href="/admin/approvals" class="btn btn--primary">
+      Company Approvals {{if gt .PendingCompanyCount 0}}<span class="badge badge--orange" style="margin-left:8px;">{{.PendingCompanyCount}}</span>{{end}}
+    </a>
+  </div>
   <div class="grid grid-auto-fit-160">
     <div class="card">
       <p class="stat-card-value">{{.TotalUsers}}</p>
