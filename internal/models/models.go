@@ -158,6 +158,7 @@ type Job struct {
 	NiceToHaveSkills []string
 	Seniority        string
 	Status           JobStatus
+	IsSaved          bool       // true when the current user has bookmarked this job
 	OpensAt          *time.Time // if set, hidden from public listing until this time
 	ClosesAt         *time.Time // if set, hidden from public listing after this time
 	PublishedAt      *time.Time

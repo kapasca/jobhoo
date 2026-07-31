@@ -13,6 +13,22 @@ import (
 
 const jobsPerPage = 30
 
+// markSaved sets IsSaved=true on any job the current candidate has bookmarked.
+// No-ops for non-candidates and unauthenticated users.
+func (h *Handlers) markSaved(r *http.Request, jobs []models.Job) {
+	user := middleware.CurrentUser(r)
+	if user == nil || user.Role != models.RoleCandidate || len(jobs) == 0 {
+		return
+	}
+	savedIDs, err := h.SavedJobs.GetSavedJobIDs(r.Context(), user.ID)
+	if err != nil {
+		return
+	}
+	for i := range jobs {
+		jobs[i].IsSaved = savedIDs[jobs[i].ID]
+	}
+}
+
 // BasePageData carries the fields every page needs for shared chrome (nav
 // login state, active nav highlighting). Every page-specific data struct
 // embeds this so base.html can rely on it being present everywhere.
@@ -51,6 +67,7 @@ func (h *Handlers) Home(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not load jobs", http.StatusInternalServerError)
 		return
 	}
+	h.markSaved(r, result.Jobs)
 	log.Printf("Home handler: loaded %d jobs (total: %d)", len(result.Jobs), result.Total)
 	h.Render.Render(w, http.StatusOK, "home.html", pageData{BasePageData: newBasePageData(r, "home"), Jobs: result.Jobs})
 }
@@ -126,6 +143,7 @@ func (h *Handlers) renderJobsPage(w http.ResponseWriter, r *http.Request, page s
 		totalPages = 1
 	}
 
+	h.markSaved(r, result.Jobs)
 	arrangementSet := toSet(arrangements)
 	employmentSet := toSet(employments)
 

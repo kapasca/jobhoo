@@ -551,6 +551,7 @@ tr:last-child td { border-bottom: none; }
   padding: var(--jh-space-4); border-radius: var(--jh-radius-md);
   border: 1px solid var(--jh-border); background: var(--jh-surface-card);
   font-size: var(--jh-text-sm); color: var(--jh-ink-300);
+  justify-content: space-between;
 }
 .alert--warning { border-color: var(--jh-orange-500); background: rgba(var(--jh-orange-rgb), 0.08); }
 
@@ -1241,6 +1242,17 @@ tr:last-child td { border-bottom: none; }
 }
 .jh-confirm-actions { display: flex; gap: var(--jh-space-3); justify-content: flex-end; }
 
+.admin-approval-section {
+  display: flex;
+  gap: var(--jh-space-4);
+  padding: var(--jh-space-5);
+  background: var(--jh-darker-transparent);
+  border: 1px solid var(--jh-border);
+  border-radius: var(--jh-radius-lg);
+  justify-content: space-between;
+  align-items: center;
+}
+
 /* --- Modal / Dialog Styles --- */
 .modal-wrapper {
   position: fixed;
@@ -1655,7 +1667,7 @@ tr:last-child td { border-bottom: none; }
 .modal-section-heading {
   font-size: var(--jh-text-xs);
   color: var(--jh-ink-500);
-  margin-bottom: var(--jh-space-3);
+  margin-bottom: var(--jh-space-2);
 }
 
 .modal-section-heading::before {
@@ -1672,9 +1684,13 @@ tr:last-child td { border-bottom: none; }
 }
 
 .modal-skills-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--jh-space-2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--jh-space-1);
+    padding: var(--jh-space-2);
+    background-color: var(--jh-bg);
+    border: 1px solid var(--jh-border);
+    border-radius: var(--jh-radius-lg);
 }
 
 .modal-section {

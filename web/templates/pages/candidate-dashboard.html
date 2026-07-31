@@ -32,15 +32,15 @@
     <div class="table-responsive">
     <table class="mb-7">
       <thead>
-        <tr><th>Job</th><th>Company</th><th>Status</th><th>Applied</th></tr>
+        <tr><th align="left">Job</th><th align="left">Company</th><th align="center">Status</th><th align="center">Applied</th></tr>
       </thead>
       <tbody>
         {{range .Applications}}
         <tr>
           <td><a href="/jobs/{{.JobID}}" class="text-white font-semibold">{{.JobTitle}}</a></td>
           <td>{{.CompanyName}}</td>
-          <td><span class="badge {{if eq .Stage "hired"}}badge--orange{{end}}">{{.Stage.Label}}</span></td>
-          <td>{{.CreatedAt.Format "Jan 2, 2006"}}</td>
+          <td align="center"><span class="badge {{if eq .Stage "hired"}}badge--orange{{end}}">{{.Stage.Label}}</span></td>
+          <td align="center">{{.CreatedAt.Format "Jan 2, 2006"}}</td>
         </tr>
         {{end}}
       </tbody>

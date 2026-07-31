@@ -15,6 +15,25 @@ func NewSavedJobsRepo(pool *pgxpool.Pool) *SavedJobsRepo {
 	return &SavedJobsRepo{pool: pool}
 }
 
+// GetSavedJobIDs returns a set of job IDs saved by the candidate — used to
+// mark bookmark icons on job list pages without N extra queries.
+func (r *SavedJobsRepo) GetSavedJobIDs(ctx context.Context, candidateID string) (map[string]bool, error) {
+	rows, err := r.pool.Query(ctx, `SELECT job_id FROM saved_jobs WHERE candidate_id = $1`, candidateID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]bool{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out[id] = true
+	}
+	return out, rows.Err()
+}
+
 func (r *SavedJobsRepo) IsSaved(ctx context.Context, candidateID, jobID string) (bool, error) {
 	var exists bool
 	err := r.pool.QueryRow(ctx, `

@@ -19,7 +19,7 @@
         <div class="card card--pad-lg">
 
           <!-- Header: logo + company name + registration date -->
-          <div class="d-flex gap-4 items-start mb-4">
+          <div class="d-flex gap-4 items-center mb-4">
             <div class="company-detail__logo" style="flex-shrink:0;">
               <img src="{{if .LogoURL}}{{.LogoURL}}{{else}}/static/img/jobhoo-icon.png{{end}}" alt="{{.Name}} logo">
             </div>
@@ -33,13 +33,6 @@
             </div>
           </div>
 
-          <!-- Recruiter info -->
-          <div class="alert mb-4 py-3 px-4">
-            <div>
-              <p class="m-0 font-sm"><strong class="text-white">Registered by:</strong> {{.OwnerName}} &mdash; <a href="mailto:{{.OwnerEmail}}" class="link-primary">{{.OwnerEmail}}</a></p>
-            </div>
-          </div>
-
           <!-- Description -->
           {{if .Description}}
             <p class="mt-0 mb-4">{{.Description}}</p>
@@ -48,34 +41,45 @@
           {{end}}
 
           <!-- Profile completeness checklist -->
-          <div class="d-flex flex-wrap gap-2 mb-4">
+          <p class="modal-section-heading mt-5 mb-0">
+            RED badges: missing information; GREEN badges: information provided.
+          </p>
+          <div class="modal-skills-container mb-5">
             <span class="badge {{if .Industry}}badge--green{{else}}badge--red{{end}}">{{if .Industry}}✓{{else}}✗{{end}} Industry</span>
             <span class="badge {{if .Description}}badge--green{{else}}badge--red{{end}}">{{if .Description}}✓{{else}}✗{{end}} Description</span>
             <span class="badge {{if .LogoURL}}badge--green{{else}}badge--red{{end}}">{{if .LogoURL}}✓{{else}}✗{{end}} Logo</span>
             <span class="badge {{if .Website}}badge--green{{else}}badge--red{{end}}">{{if .Website}}✓{{else}}✗{{end}} Website</span>
           </div>
-
-          <!-- Hidden forms — submitted programmatically after JS confirmation -->
-          <form id="frm-approve-{{.ID}}" method="POST" action="/admin/approvals/{{.ID}}/approve" class="d-none">
-            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-          </form>
-          <form id="frm-reject-{{.ID}}" method="POST" action="/admin/approvals/{{.ID}}/reject" class="d-none">
-            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-            <input type="hidden" name="reason" id="rsn-reject-{{.ID}}">
-          </form>
-          <form id="frm-blacklist-{{.ID}}" method="POST" action="/admin/approvals/{{.ID}}/blacklist" class="d-none">
-            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-            <input type="hidden" name="reason" id="rsn-blacklist-{{.ID}}">
-          </form>
-
-          <!-- Actions -->
-          <div class="d-flex mt-2 gap-3">
-            <button type="button" class="btn btn--primary btn--sm"
+          
+          <!-- Recruiter info -->
+          <div class="alert admin-approval-section mb-4 py-3 px-4">
+            <div>
+              <p class="m-0 font-sm text-white"><span class="text-muted font-xs">Registered by:<br /></span> {{.OwnerName}}<span class="ps-2 pe-2">|</span><a href="mailto:{{.OwnerEmail}}" class="link-primary">{{.OwnerEmail}}</a></p>
+            </div>
+            <div>
+              <!-- Actions -->
+              <div class="d-flex gap-3">
+                <button type="button" class="btn btn--primary btn--sm"
                     onclick="doApprove('{{.ID}}','{{js .Name}}')">Approve</button>
-            <button type="button" class="btn btn--secondary btn--sm"
+                <button type="button" class="btn btn--secondary btn--sm"
                     onclick="doReject('{{.ID}}','{{js .Name}}')">Reject</button>
-            <button type="button" class="btn btn--secondary btn--sm"
+                <button type="button" class="btn btn--secondary btn--sm"
                     onclick="doBlacklist('{{.ID}}','{{js .Name}}')">Blacklist</button>
+              </div>
+
+              <!-- Hidden forms — submitted programmatically after JS confirmation -->
+              <form id="frm-approve-{{.ID}}" method="POST" action="/admin/approvals/{{.ID}}/approve" class="d-none">
+                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+              </form>
+              <form id="frm-reject-{{.ID}}" method="POST" action="/admin/approvals/{{.ID}}/reject" class="d-none">
+                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                <input type="hidden" name="reason" id="rsn-reject-{{.ID}}">
+              </form>
+              <form id="frm-blacklist-{{.ID}}" method="POST" action="/admin/approvals/{{.ID}}/blacklist" class="d-none">
+                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                <input type="hidden" name="reason" id="rsn-blacklist-{{.ID}}">
+              </form>
+            </div>
           </div>
 
         </div>

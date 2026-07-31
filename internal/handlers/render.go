@@ -50,6 +50,8 @@ var templateFuncs = template.FuncMap{
 		runes := []rune(s)
 		return string(runes[:n]) + "..."
 	},
+	"add": func(a, b int) int { return a + b },
+	"sub": func(a, b int) int { return a - b },
 	// safeHTML sanitizes s and returns trusted HTML safe to render unescaped.
 	"safeHTML": func(s string) template.HTML {
 		return template.HTML(descriptionPolicy.Sanitize(s))

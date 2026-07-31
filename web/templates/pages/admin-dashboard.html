@@ -42,4 +42,99 @@
     </div>
   </div>
 </section>
+
+<section class="container container-padding-full pt-0">
+  <h2 class="mb-5">Registration Log</h2>
+
+  <!-- Company registrations -->
+  <h3 class="font-xl mb-3">Companies</h3>
+  {{if .CompanyLogs}}
+  <div class="table-responsive mb-7">
+    <table>
+      <thead>
+        <tr>
+          <th align="left">Company</th>
+          <th align="left">Recruiter</th>
+          <th align="left">Email</th>
+          <th align="center">Status</th>
+          <th align="center">Registered</th>
+          <th align="center">Reviewed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .CompanyLogs}}
+        <tr>
+          <td class="text-white font-semibold">{{.Name}}{{if .Industry}}<br><span class="font-xs text-muted">{{.Industry}}</span>{{end}}</td>
+          <td>{{.OwnerName}}</td>
+          <td><a href="mailto:{{.OwnerEmail}}" class="font-xs link-primary">{{.OwnerEmail}}</a></td>
+          <td align="center">
+            {{if eq (print .Status) "approved"}}<span class="badge badge--green">Approved</span>
+            {{else if eq (print .Status) "rejected"}}<span class="badge badge--red">Rejected</span>
+            {{else if eq (print .Status) "blacklisted"}}<span class="badge badge--red">Blacklisted</span>
+            {{else}}<span class="badge badge--gray">Pending</span>{{end}}
+          </td>
+          <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
+          <td align="center" class="nowrap font-xs">
+            {{if .ApprovedAt}}{{.ApprovedAt.Format "2 Jan 2006 15:04"}}{{else}}<span class="text-muted">—</span>{{end}}
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <p class="text-muted mb-7">No company registrations yet.</p>
+  {{end}}
+  {{if gt .CompanyTotalPages 1}}
+  <div class="pagination__wrapper mb-7">
+    {{if gt .CompanyPage 1}}
+      <a href="?cp={{sub .CompanyPage 1}}&kp={{.CandidatePage}}" class="btn btn--secondary btn--sm">← Prev</a>
+    {{end}}
+    <span class="pagination__info">Page {{.CompanyPage}} of {{.CompanyTotalPages}}</span>
+    {{if lt .CompanyPage .CompanyTotalPages}}
+      <a href="?cp={{add .CompanyPage 1}}&kp={{.CandidatePage}}" class="btn btn--secondary btn--sm">Next →</a>
+    {{end}}
+  </div>
+  {{end}}
+
+  <!-- Candidate registrations -->
+  <h3 class="font-xl mb-3">Candidates</h3>
+  {{if .CandidateLogs}}
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th align="left">Name</th>
+          <th align="left">Email</th>
+          <th align="center">Registered</th>
+          <th align="center">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .CandidateLogs}}
+        <tr>
+          <td class="text-white font-semibold">{{.FullName}}</td>
+          <td><a href="mailto:{{.Email}}" class="font-xs link-primary">{{.Email}}</a></td>
+          <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
+          <td align="center"><span class="badge badge--green">Active</span></td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <p class="text-muted">No candidate registrations yet.</p>
+  {{end}}
+  {{if gt .CandidateTotalPages 1}}
+  <div class="pagination__wrapper">
+    {{if gt .CandidatePage 1}}
+      <a href="?cp={{.CompanyPage}}&kp={{sub .CandidatePage 1}}" class="btn btn--secondary btn--sm">← Prev</a>
+    {{end}}
+    <span class="pagination__info">Page {{.CandidatePage}} of {{.CandidateTotalPages}}</span>
+    {{if lt .CandidatePage .CandidateTotalPages}}
+      <a href="?cp={{.CompanyPage}}&kp={{add .CandidatePage 1}}" class="btn btn--secondary btn--sm">Next →</a>
+    {{end}}
+  </div>
+  {{end}}
+</section>
 {{end}}

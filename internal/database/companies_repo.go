@@ -138,7 +138,43 @@ type CompanyWithOwner struct {
 	OwnerName  string
 	OwnerEmail string
 }
+// ListAllRegistrations returns one page of companies (any status) with owner
+// info and the total count, newest first, for the admin registration log.
+func (r *CompaniesRepo) ListAllRegistrations(ctx context.Context, limit, offset int) ([]CompanyWithOwner, int, error) {
+	var total int
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM companies`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT c.id, c.owner_id, c.name, coalesce(c.logo_url,''), coalesce(c.website,''),
+		       coalesce(c.description,''), coalesce(c.industry,''), c.status, c.approved_at,
+		       coalesce(c.approved_by::text,''), coalesce(c.rejection_reason,''), c.created_at,
+		       u.full_name, u.email
+		FROM companies c
+		JOIN users u ON u.id = c.owner_id
+		ORDER BY c.created_at DESC
+		LIMIT $1 OFFSET $2
+	`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
 
+	var out []CompanyWithOwner
+	for rows.Next() {
+		var co CompanyWithOwner
+		if err := rows.Scan(
+			&co.ID, &co.OwnerID, &co.Name, &co.LogoURL, &co.Website,
+			&co.Description, &co.Industry, &co.Status, &co.ApprovedAt,
+			&co.ApprovedBy, &co.RejectionReason, &co.CreatedAt,
+			&co.OwnerName, &co.OwnerEmail,
+		); err != nil {
+			return nil, 0, err
+		}
+		out = append(out, co)
+	}
+	return out, total, rows.Err()
+}
 // ListPendingWithOwner returns pending companies joined with their owner’s
 // name and email, oldest-first.
 func (r *CompaniesRepo) ListPendingWithOwner(ctx context.Context) ([]CompanyWithOwner, error) {

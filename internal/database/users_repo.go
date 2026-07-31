@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -71,6 +72,42 @@ func (r *UsersRepo) GetByID(ctx context.Context, id string) (*models.User, error
 		return nil, err
 	}
 	return &u, nil
+}
+
+// CandidateRegistration is a lightweight row for the admin registration log.
+type CandidateRegistration struct {
+	ID        string
+	FullName  string
+	Email     string
+	CreatedAt time.Time
+}
+
+// ListCandidateRegistrations returns one page of candidate accounts and the total count.
+func (r *UsersRepo) ListCandidateRegistrations(ctx context.Context, limit, offset int) ([]CandidateRegistration, int, error) {
+	var total int
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE role = 'candidate'`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, full_name, email, created_at
+		FROM users WHERE role = 'candidate'
+		ORDER BY created_at DESC
+		LIMIT $1 OFFSET $2
+	`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var out []CandidateRegistration
+	for rows.Next() {
+		var c CandidateRegistration
+		if err := rows.Scan(&c.ID, &c.FullName, &c.Email, &c.CreatedAt); err != nil {
+			return nil, 0, err
+		}
+		out = append(out, c)
+	}
+	return out, total, rows.Err()
 }
 
 type PlatformStats struct {
