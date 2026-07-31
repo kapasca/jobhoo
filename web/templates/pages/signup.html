@@ -19,7 +19,7 @@
             <input type="radio" name="role" value="candidate" {{if ne .Role "recruiter"}}checked{{end}} class="signup-role-input"> Candidate
           </label>
           <label class="filter-chip signup-role-label {{if eq .Role "recruiter"}}is-active{{end}}" id="role-recruiter-label">
-            <input type="radio" name="role" value="recruiter" {{if eq .Role "recruiter"}}checked{{end}} class="signup-role-input"> Recruiter / Company
+            <input type="radio" name="role" value="recruiter" {{if eq .Role "recruiter"}}checked{{end}} class="signup-role-input"> Recruiter
           </label>
         </div>
       </div>
@@ -39,13 +39,13 @@
         </div>
       </div>
       <div class="field" id="resume-section" {{if eq .Role "recruiter"}}style="display:none"{{end}}>
-        <label>Resume</label>
+        <label>Resume / Curriculum Vitae (CV)</label>
         <div class="field__input-group">
           <input type="file" name="resume_file" accept=".pdf,.docx,.txt">
           <span class="field__hint">Required for candidates — PDF, DOCX, or TXT, max 5 MB.</span>
         </div>
       </div>
-      <button type="submit" class="btn btn--primary btn--block">Create account</button>
+      <button type="submit" class="btn btn--primary btn--block mt-4">Create account</button>
     </form>
 
     <p class="signup-footer-link">

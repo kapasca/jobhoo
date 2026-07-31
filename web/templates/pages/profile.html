@@ -52,12 +52,12 @@
         </div>
       {{else}}
         <div class="alert mb-2 py-3 px-4">
-          <p class="m-0 font-sm">Current file: <a href="{{.ResumeFileURL}}" target="_blank" rel="noopener" class="link-primary">Download</a> &nbsp;·&nbsp; Upload a new file below to replace it (old file is kept on the server).</p>
+          <p class="m-0 font-sm"><a href="{{.ResumeFileURL}}" target="_blank" rel="noopener" class="link-primary">Download My Active Resume</a> &nbsp;·&nbsp; Upload a new file below to replace it.</p>
         </div>
       {{end}}
       <div class="field__input-group">
         <input type="file" id="resume_file" name="resume_file" accept=".pdf,.docx,.txt">
-        <span class="field__hint">PDF, DOCX, or TXT — max 5 MB. Uploading a new file will not delete the previous one.</span>
+        <span class="field__hint">PDF, DOCX, or TXT — max 5 MB.</span>
       </div>
     </div>
 
@@ -68,7 +68,7 @@
         <span class="field__hint">Plain text — used by AI for matching and improvement suggestions.</span>
       </div>
     </div>
-    <button type="submit" class="btn btn--primary btn--block">Save profile</button>
+    <button type="submit" class="btn btn--primary btn--block mt-4">Save profile</button>
   </form>
 
   <div class="card card--pad-lg">

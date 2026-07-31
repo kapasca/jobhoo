@@ -437,6 +437,32 @@ input::placeholder, textarea::placeholder { color: var(--jh-ink-500); }
 input[type="date"], input[type="datetime-local"], input[type="time"], input[type="month"] {
   color-scheme: dark;
 }
+/* Custom file upload button — replaces the browser's grey "Choose File" default */
+input[type="file"] {
+  padding: 0;
+  cursor: pointer;
+  color: var(--jh-ink-300);
+  font-size: var(--jh-text-sm);
+}
+input[type="file"]::file-selector-button,
+input[type="file"]::-webkit-file-upload-button {
+  background: var(--jh-orange-500);
+  color: var(--jh-white);
+  border: none;
+  border-right: 1px solid var(--jh-orange-600);
+  border-radius: var(--jh-radius-sm) 0 0 var(--jh-radius-sm);
+  padding: 0.7rem 1rem;
+  font-family: var(--jh-font);
+  font-size: var(--jh-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: var(--jh-space-3);
+  transition: background var(--jh-duration-fast) var(--jh-ease);
+}
+input[type="file"]::file-selector-button:hover,
+input[type="file"]::-webkit-file-upload-button:hover {
+  background: var(--jh-orange-400);
+}
 input:focus, select:focus, textarea:focus {
   border-color: var(--jh-orange-500);
   box-shadow: var(--jh-shadow-glow-orange);
