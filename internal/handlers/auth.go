@@ -28,8 +28,9 @@ func (h *Handlers) SignupPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+	r.Body = http.MaxBytesReader(w, r.Body, resumeMaxBytes+4096)
+	if err := r.ParseMultipartForm(resumeMaxBytes); err != nil {
+		http.Error(w, "request too large", http.StatusRequestEntityTooLarge)
 		return
 	}
 
@@ -49,6 +50,15 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 		data.Error = "All fields are required."
 		h.Render.Render(w, http.StatusBadRequest, "signup.html", data)
 		return
+	}
+
+	// Candidates must supply a resume at registration.
+	if role == models.RoleCandidate {
+		if _, _, err := r.FormFile("resume_file"); err == http.ErrMissingFile {
+			data.Error = "Please upload your resume to complete registration as a candidate."
+			h.Render.Render(w, http.StatusBadRequest, "signup.html", data)
+			return
+		}
 	}
 
 	hash, err := auth.HashPassword(password)
@@ -72,6 +82,18 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 	if err := h.startSession(w, r, user.ID); err != nil {
 		http.Error(w, "could not start session", http.StatusInternalServerError)
 		return
+	}
+
+	// Persist the resume file if one was uploaded during candidate signup.
+	// Validation already confirmed a file exists at this point.
+	if role == models.RoleCandidate {
+		if resumeURL, err := handleResumeUpload(r); err != nil {
+			// File exists but type/size is invalid — user is created but resume not saved.
+			// This is acceptable; they can upload from profile page.
+			_ = h.Profiles.Upsert(r.Context(), user.ID, "", "", "", "", nil)
+		} else if resumeURL != "" {
+			_ = h.Profiles.Upsert(r.Context(), user.ID, "", "", resumeURL, "", nil)
+		}
 	}
 
 	http.Redirect(w, r, dashboardPathForRole(user.Role), http.StatusSeeOther)

@@ -1,9 +1,17 @@
 {{define "title"}}Explore Companies — JOBHOO{{end}}
 
 {{define "content"}}
-<section class="container container-padding-full">
-  <h1>Explore Companies</h1>
-  <p>Teams currently hiring on JOBHOO, sorted by how many roles they have open right now.</p>
+<div class="page-header">
+  <div class="container">
+    <div class="page-header__inner">
+      <div>
+        <h1 class="page-header__title">Explore Companies</h1>
+        <p class="page-header__subtitle">Teams currently hiring on JOBHOO, sorted by open roles.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<section class="container container-padding-full pt-0">
 
   {{if .Companies}}
     <div class="companies-grid">

@@ -44,7 +44,10 @@ func (r *ApplicationsRepo) Create(ctx context.Context, jobID, candidateID, cover
 func (r *ApplicationsRepo) ListByCandidate(ctx context.Context, candidateID string) ([]models.Application, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT a.id, a.job_id, a.candidate_id, a.stage, coalesce(a.cover_note,''), a.created_at, a.updated_at,
-		       j.title, c.name, j.location
+		       j.title, c.name,
+		       CASE WHEN coalesce(j.state,'') != '' AND coalesce(j.state,'') != coalesce(j.country,'')
+		            THEN j.state || ', ' || j.country
+		            ELSE coalesce(j.country, '') END
 		FROM applications a
 		JOIN jobs j ON j.id = a.job_id
 		JOIN companies c ON c.id = j.company_id

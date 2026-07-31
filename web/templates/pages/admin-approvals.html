@@ -1,12 +1,20 @@
 {{define "title"}}Company Approvals — JOBHOO{{end}}
 
 {{define "content"}}
-<section class="container container-padding-full">
-  <h1>Company Approvals</h1>
-  <p>Review new companies before they can post jobs on JOBHOO.</p>
+<div class="page-header">
+  <div class="container">
+    <div class="page-header__inner">
+      <div>
+        <h1 class="page-header__title">Company Approvals</h1>
+        <p class="page-header__subtitle">Review new companies before they can post jobs on JOBHOO.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<section class="container container-padding-full pt-0">
 
   {{if .Companies}}
-    <div class="mt-6" style="display:flex;flex-direction:column;gap:var(--jh-space-4);">
+    <div class="mt-6 d-flex flex-col gap-4">
       {{range .Companies}}
         <div class="card card--pad-lg">
           <div class="d-flex justify-between items-baseline">
@@ -15,17 +23,17 @@
               {{if .Industry}}<p class="font-xs text-with-margin">{{.Industry}}</p>{{end}}
               {{if .Website}}<a href="{{.Website}}" target="_blank" rel="noopener" class="font-xs">{{.Website}}</a>{{end}}
             </div>
-            <span class="badge">Applied {{.CreatedAt.Format "Jan 2, 2006"}}</span>
+            <span class="badge">Registered {{.CreatedAt.Format "Jan 2, 2006"}}</span>
           </div>
           {{if .Description}}<p class="mt-2">{{.Description}}</p>{{end}}
 
-          <div class="d-flex mt-4" style="gap:var(--jh-space-3);">
+          <div class="d-flex mt-4 gap-3">
             <form method="POST" action="/admin/approvals/{{.ID}}/approve">
               <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
               <button type="submit" class="btn btn--primary btn--sm">Approve</button>
             </form>
-            <details style="flex:1;">
-              <summary class="btn btn--secondary btn--sm" style="display:inline-flex;cursor:pointer;">Reject</summary>
+            <details class="flex-1">
+              <summary class="btn btn--secondary btn--sm">Reject</summary>
               <form method="POST" action="/admin/approvals/{{.ID}}/reject" class="mt-2">
                 <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
                 <input type="text" name="reason" placeholder="Reason (shown to the recruiter)" class="mb-2">

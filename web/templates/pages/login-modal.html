@@ -37,7 +37,7 @@
         <div class="alert alert--warning login-modal-error">{{.Error}}</div>
       {{end}}
 
-      <form method="POST" action="/login" hx-post="/login" hx-swap="outerHTML">
+      <form method="POST" action="/login" hx-post="/login" hx-target="closest .modal-wrapper" hx-swap="outerHTML">
         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
         <input type="hidden" name="next" value="{{.NextURL}}">
 

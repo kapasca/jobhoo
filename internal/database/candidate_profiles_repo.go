@@ -33,19 +33,19 @@ func (r *CandidateProfilesRepo) GetByUserID(ctx context.Context, userID string) 
 	return &p, nil
 }
 
-// Upsert creates or updates a candidate's profile in one call, since the
-// candidate/profile relationship is 1:1 and the form always submits the
-// full profile.
-func (r *CandidateProfilesRepo) Upsert(ctx context.Context, userID, headline, resumeText, location string, skills []string) error {
+// Upsert creates or updates a candidate's profile. If resumeFileURL is empty
+// the existing stored URL is preserved (old files are never deleted).
+func (r *CandidateProfilesRepo) Upsert(ctx context.Context, userID, headline, resumeText, resumeFileURL, location string, skills []string) error {
 	_, err := r.pool.Exec(ctx, `
-		INSERT INTO candidate_profiles (user_id, headline, resume_text, location, skills, updated_at)
-		VALUES ($1, $2, $3, $4, $5, now())
+		INSERT INTO candidate_profiles (user_id, headline, resume_text, resume_file_url, location, skills, updated_at)
+		VALUES ($1, $2, $3, NULLIF($4,''), $5, $6, now())
 		ON CONFLICT (user_id) DO UPDATE SET
 			headline = EXCLUDED.headline,
 			resume_text = EXCLUDED.resume_text,
+			resume_file_url = CASE WHEN $4 = '' THEN candidate_profiles.resume_file_url ELSE NULLIF($4,'') END,
 			location = EXCLUDED.location,
 			skills = EXCLUDED.skills,
 			updated_at = now()
-	`, userID, headline, resumeText, location, skills)
+	`, userID, headline, resumeText, resumeFileURL, location, skills)
 	return err
 }

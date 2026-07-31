@@ -156,18 +156,31 @@
     </div>
 
     <div class="field">
-      <label for="must_have_skills">Must-have skills</label>
+      <label>Must-have skills</label>
       <div class="field__input-group">
-        <input type="text" id="must_have_skills" name="must_have_skills" value="{{.MustHaveSkills}}" placeholder="Go, PostgreSQL, Distributed Systems">
-        <span class="field__hint">Comma-separated. Used for search matching and AI candidate ranking.</span>
+        <div class="chip-input" id="must-chips">
+          <input type="text" class="chip-input__text" placeholder="Type a skill, press comma or Enter">
+        </div>
+        <input type="hidden" name="must_have_skills" id="must-hidden" value="{{.MustHaveSkills}}">
+        <span class="field__hint">Used for search matching and AI candidate ranking.</span>
       </div>
     </div>
     <div class="field">
-      <label for="nice_to_have_skills">Nice-to-have skills <span class="field__optional">(opt.)</span></label>
-      <input type="text" id="nice_to_have_skills" name="nice_to_have_skills" value="{{.NiceToHaveSkills}}" placeholder="Kubernetes, gRPC">
+      <label>Nice-to-have skills <span class="field__optional">(optional)</span></label>
+      <div class="field__input-group">
+        <div class="chip-input" id="nice-chips">
+          <input type="text" class="chip-input__text" placeholder="Type a skill, press comma or Enter">
+        </div>
+        <input type="hidden" name="nice_to_have_skills" id="nice-hidden" value="{{.NiceToHaveSkills}}">
+      </div>
     </div>
 
     <button type="submit" class="btn btn--primary btn--block">{{if .IsEdit}}Save Changes{{else}}Publish Job{{end}}</button>
   </form>
 </section>
+<script src="/static/js/chips.js"></script>
+<script>
+  initChips('must-chips', 'must-hidden');
+  initChips('nice-chips', 'nice-hidden');
+</script>
 {{end}}

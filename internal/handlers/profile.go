@@ -1,8 +1,14 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/jobhoo/jobhoo/internal/ai"
@@ -11,14 +17,78 @@ import (
 	"github.com/jobhoo/jobhoo/internal/models"
 )
 
+const (
+	resumeUploadsDir = "web/static/uploads/resumes"
+	resumeURLPrefix  = "/static/uploads/resumes/"
+	resumeMaxBytes   = 5 << 20 // 5 MB
+)
+
 type profileData struct {
 	BasePageData
-	Headline    string
-	ResumeText  string
-	Location    string
-	Skills      string // comma-joined for the textarea
-	Saved       bool
-	Suggestions []string
+	Headline      string
+	ResumeText    string
+	ResumeFileURL string
+	Location      string
+	Skills        string // comma-joined for the textarea
+	Saved         bool
+	Error         string
+	Suggestions   []string
+}
+
+// handleResumeUpload saves the uploaded "resume_file" field, validating type
+// (PDF, DOCX, TXT) and returning the public URL path. Returns "" if no file.
+func handleResumeUpload(r *http.Request) (string, error) {
+	file, header, err := r.FormFile("resume_file")
+	if err == http.ErrMissingFile {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("reading upload: %w", err)
+	}
+	defer file.Close()
+
+	buf := make([]byte, 512)
+	n, err := file.Read(buf)
+	if err != nil && err != io.EOF {
+		return "", fmt.Errorf("reading file header: %w", err)
+	}
+	mimeType := http.DetectContentType(buf[:n])
+	origExt := strings.ToLower(filepath.Ext(header.Filename))
+
+	var outExt string
+	switch {
+	case mimeType == "application/pdf":
+		outExt = ".pdf"
+	case mimeType == "text/plain":
+		outExt = ".txt"
+	case origExt == ".docx" && (mimeType == "application/zip" || mimeType == "application/octet-stream"):
+		outExt = ".docx"
+	default:
+		return "", fmt.Errorf("unsupported file type — please upload a PDF, DOCX, or TXT file")
+	}
+
+	var rnd [16]byte
+	if _, err := rand.Read(rnd[:]); err != nil {
+		return "", fmt.Errorf("generating filename: %w", err)
+	}
+	filename := hex.EncodeToString(rnd[:]) + outExt
+
+	if err := os.MkdirAll(resumeUploadsDir, 0o755); err != nil {
+		return "", fmt.Errorf("creating upload directory: %w", err)
+	}
+	dst, err := os.Create(filepath.Join(resumeUploadsDir, filename))
+	if err != nil {
+		return "", fmt.Errorf("saving file: %w", err)
+	}
+	defer dst.Close()
+
+	if _, err := dst.Write(buf[:n]); err != nil {
+		return "", fmt.Errorf("writing file: %w", err)
+	}
+	if _, err := io.Copy(dst, file); err != nil {
+		return "", fmt.Errorf("writing file: %w", err)
+	}
+	return resumeURLPrefix + filename, nil
 }
 
 func (h *Handlers) ProfilePage(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +103,7 @@ func (h *Handlers) ProfilePage(w http.ResponseWriter, r *http.Request) {
 	if profile != nil {
 		data.Headline = profile.Headline
 		data.ResumeText = profile.ResumeText
+		data.ResumeFileURL = profile.ResumeFileURL
 		data.Location = profile.Location
 		data.Skills = strings.Join(profile.Skills, ", ")
 	}
@@ -42,8 +113,10 @@ func (h *Handlers) ProfilePage(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	user := middleware.CurrentUser(r)
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
+
+	r.Body = http.MaxBytesReader(w, r.Body, resumeMaxBytes+4096)
+	if err := r.ParseMultipartForm(resumeMaxBytes); err != nil {
+		http.Error(w, "request too large", http.StatusRequestEntityTooLarge)
 		return
 	}
 
@@ -55,8 +128,23 @@ func (h *Handlers) ProfileUpdate(w http.ResponseWriter, r *http.Request) {
 		Skills:       r.FormValue("skills"),
 	}
 
+	// Preserve existing file URL — only replaced when a new file is uploaded.
+	if existing, err := h.Profiles.GetByUserID(r.Context(), user.ID); err == nil {
+		data.ResumeFileURL = existing.ResumeFileURL
+	}
+
+	uploadedURL, err := handleResumeUpload(r)
+	if err != nil {
+		data.Error = err.Error()
+		h.Render.Render(w, http.StatusBadRequest, "profile.html", data)
+		return
+	}
+	if uploadedURL != "" {
+		data.ResumeFileURL = uploadedURL
+	}
+
 	skills := splitSkills(data.Skills)
-	if err := h.Profiles.Upsert(r.Context(), user.ID, data.Headline, data.ResumeText, data.Location, skills); err != nil {
+	if err := h.Profiles.Upsert(r.Context(), user.ID, data.Headline, data.ResumeText, data.ResumeFileURL, data.Location, skills); err != nil {
 		http.Error(w, "could not save profile", http.StatusInternalServerError)
 		return
 	}
