@@ -20,6 +20,7 @@ type User struct {
 	Role         UserRole
 	FullName     string
 	AvatarURL    string
+	IsFrozen     bool
 	CreatedAt    time.Time
 }
 
@@ -159,6 +160,7 @@ type Job struct {
 	Seniority        string
 	Status           JobStatus
 	IsSaved          bool       // true when the current user has bookmarked this job
+	IsFrozen         bool       // true when an admin has frozen this job
 	OpensAt          *time.Time // if set, hidden from public listing until this time
 	ClosesAt         *time.Time // if set, hidden from public listing after this time
 	PublishedAt      *time.Time

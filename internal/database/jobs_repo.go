@@ -19,7 +19,7 @@ func NewJobsRepo(pool *pgxpool.Pool) *JobsRepo {
 const jobSelectColumns = `
 	j.id, j.title, j.description, j.country, j.state, j.employment_type, j.work_arrangement,
 	j.category, j.salary_min, j.salary_max, j.salary_currency, j.must_have_skills,
-	j.nice_to_have_skills, j.seniority, j.status, j.opens_at, j.closes_at,
+	j.nice_to_have_skills, j.seniority, j.status, j.is_frozen, j.opens_at, j.closes_at,
 	j.published_at, j.created_at, c.id, c.name, c.logo_url
 `
 
@@ -279,12 +279,63 @@ type rowScanner interface {
 	Scan(dest ...any) error
 }
 
+// AdminJobRow is a lightweight row for the admin job management table.
+type AdminJobRow struct {
+	ID          string
+	Title       string
+	CompanyName string
+	Country     string
+	State       string
+	Status      models.JobStatus
+	IsFrozen    bool
+	PublishedAt *time.Time
+}
+
+// ListAllForAdmin returns non-archived jobs for admin review, newest first.
+func (r *JobsRepo) ListAllForAdmin(ctx context.Context, limit, offset int) ([]AdminJobRow, int, error) {
+	var total int
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM jobs WHERE status != 'archived'`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT j.id, j.title, c.name, coalesce(j.country,''), coalesce(j.state,''),
+		       j.status, j.is_frozen, j.published_at
+		FROM jobs j JOIN companies c ON c.id = j.company_id
+		WHERE j.status != 'archived'
+		ORDER BY j.created_at DESC LIMIT $1 OFFSET $2
+	`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	var out []AdminJobRow
+	for rows.Next() {
+		var j AdminJobRow
+		if err := rows.Scan(&j.ID, &j.Title, &j.CompanyName, &j.Country, &j.State,
+			&j.Status, &j.IsFrozen, &j.PublishedAt); err != nil {
+			return nil, 0, err
+		}
+		out = append(out, j)
+	}
+	return out, total, rows.Err()
+}
+
+func (r *JobsRepo) FreezeJob(ctx context.Context, id string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE jobs SET is_frozen = TRUE WHERE id = $1`, id)
+	return err
+}
+
+func (r *JobsRepo) UnfreezeJob(ctx context.Context, id string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE jobs SET is_frozen = FALSE WHERE id = $1`, id)
+	return err
+}
+
 func scanJob(row rowScanner) (models.Job, error) {
 	var j models.Job
 	err := row.Scan(
 		&j.ID, &j.Title, &j.Description, &j.Country, &j.State, &j.EmploymentType, &j.WorkArrangement,
 		&j.Category, &j.SalaryMin, &j.SalaryMax, &j.SalaryCurrency, &j.MustHaveSkills,
-		&j.NiceToHaveSkills, &j.Seniority, &j.Status, &j.OpensAt, &j.ClosesAt, &j.PublishedAt,
+		&j.NiceToHaveSkills, &j.Seniority, &j.Status, &j.IsFrozen, &j.OpensAt, &j.ClosesAt, &j.PublishedAt,
 		&j.CreatedAt, &j.CompanyID, &j.CompanyName, &j.CompanyLogoURL,
 	)
 	return j, err

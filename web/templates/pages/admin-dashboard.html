@@ -14,127 +14,191 @@
     </div>
   </div>
 </div>
-<section class="container container-padding-full">
-  <div class="grid grid-auto-fit-160">
-    <div class="card">
-      <p class="stat-card-value">{{.TotalUsers}}</p>
-      <p class="stat-card-label">Total users</p>
-    </div>
-    <div class="card">
-      <p class="stat-card-value text-orange">{{.TotalCandidates}}</p>
-      <p class="stat-card-label">Candidates</p>
-    </div>
-    <div class="card">
-      <p class="stat-card-value text-orange">{{.TotalRecruiters}}</p>
-      <p class="stat-card-label">Recruiters</p>
-    </div>
-    <div class="card">
-      <p class="stat-card-value">{{.TotalCompanies}}</p>
-      <p class="stat-card-label">Companies</p>
-    </div>
-    <div class="card">
-      <p class="stat-card-value">{{.TotalJobs}}</p>
-      <p class="stat-card-label">Jobs posted</p>
-    </div>
-    <div class="card">
-      <p class="stat-card-value">{{.TotalApplications}}</p>
-      <p class="stat-card-label">Applications</p>
-    </div>
-  </div>
-</section>
 
 <section class="container container-padding-full pt-0">
-  <h2 class="mb-5">Registration Log</h2>
-
-  <!-- Company registrations -->
-  <h3 class="font-xl mb-3">Companies</h3>
-  {{if .CompanyLogs}}
-  <div class="table-responsive mb-7">
-    <table>
-      <thead>
-        <tr>
-          <th align="left">Company</th>
-          <th align="left">Recruiter</th>
-          <th align="left">Email</th>
-          <th align="center">Status</th>
-          <th align="center">Registered</th>
-          <th align="center">Reviewed</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{range .CompanyLogs}}
-        <tr>
-          <td class="text-white font-semibold">{{.Name}}{{if .Industry}}<br><span class="font-xs text-muted">{{.Industry}}</span>{{end}}</td>
-          <td>{{.OwnerName}}</td>
-          <td><a href="mailto:{{.OwnerEmail}}" class="font-xs link-primary">{{.OwnerEmail}}</a></td>
-          <td align="center">
-            {{if eq (print .Status) "approved"}}<span class="badge badge--green">Approved</span>
-            {{else if eq (print .Status) "rejected"}}<span class="badge badge--red">Rejected</span>
-            {{else if eq (print .Status) "blacklisted"}}<span class="badge badge--red">Blacklisted</span>
-            {{else}}<span class="badge badge--gray">Pending</span>{{end}}
-          </td>
-          <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
-          <td align="center" class="nowrap font-xs">
-            {{if .ApprovedAt}}{{.ApprovedAt.Format "2 Jan 2006 15:04"}}{{else}}<span class="text-muted">—</span>{{end}}
-          </td>
-        </tr>
-        {{end}}
-      </tbody>
-    </table>
+  <!-- Stat cards — clickable to load the relevant section below -->
+  <div class="grid grid-auto-fit-160 mb-6">
+    <a href="?tab=users" class="card stat-card {{if eq .ActiveTab "users"}}stat-card--active{{end}}">
+      <p class="stat-card-value">{{.TotalUsers}}</p>
+      <p class="stat-card-label">Total users</p>
+    </a>
+    <a href="?tab=candidates" class="card stat-card {{if eq .ActiveTab "candidates"}}stat-card--active{{end}}">
+      <p class="stat-card-value text-orange">{{.TotalCandidates}}</p>
+      <p class="stat-card-label">Candidates</p>
+    </a>
+    <a href="?tab=recruiters" class="card stat-card {{if eq .ActiveTab "recruiters"}}stat-card--active{{end}}">
+      <p class="stat-card-value text-orange">{{.TotalRecruiters}}</p>
+      <p class="stat-card-label">Recruiters</p>
+    </a>
+    <a href="?tab=companies" class="card stat-card {{if eq .ActiveTab "companies"}}stat-card--active{{end}}">
+      <p class="stat-card-value">{{.TotalCompanies}}</p>
+      <p class="stat-card-label">Companies</p>
+    </a>
+    <a href="?tab=jobs" class="card stat-card {{if eq .ActiveTab "jobs"}}stat-card--active{{end}}">
+      <p class="stat-card-value">{{.TotalJobs}}</p>
+      <p class="stat-card-label">Jobs posted</p>
+    </a>
+    <a href="?tab=applications" class="card stat-card {{if eq .ActiveTab "applications"}}stat-card--active{{end}}">
+      <p class="stat-card-value">{{.TotalApplications}}</p>
+      <p class="stat-card-label">Applications</p>
+    </a>
   </div>
-  {{else}}
-  <p class="text-muted mb-7">No company registrations yet.</p>
-  {{end}}
-  {{if gt .CompanyTotalPages 1}}
-  <div class="pagination__wrapper mb-7">
-    {{if gt .CompanyPage 1}}
-      <a href="?cp={{sub .CompanyPage 1}}&kp={{.CandidatePage}}" class="btn btn--secondary btn--sm">← Prev</a>
-    {{end}}
-    <span class="pagination__info">Page {{.CompanyPage}} of {{.CompanyTotalPages}}</span>
-    {{if lt .CompanyPage .CompanyTotalPages}}
-      <a href="?cp={{add .CompanyPage 1}}&kp={{.CandidatePage}}" class="btn btn--secondary btn--sm">Next →</a>
-    {{end}}
-  </div>
-  {{end}}
 
-  <!-- Candidate registrations -->
-  <h3 class="font-xl mb-3">Candidates</h3>
+  {{if eq .ActiveTab "users"}}
+  <h2 class="mb-4">All Users</h2>
+  {{if .UserLogs}}
+  <div class="table-responsive mb-4"><table>
+    <thead><tr><th align="left">Name</th><th align="left">Email</th><th align="center">Role</th><th align="center">Joined</th><th align="center">Status</th><th></th></tr></thead>
+    <tbody>{{range .UserLogs}}<tr>
+      <td class="text-white font-semibold">{{.FullName}}</td>
+      <td><a href="mailto:{{.Email}}" class="font-xs link-primary">{{.Email}}</a></td>
+      <td align="center"><span class="badge">{{.Role}}</span></td>
+      <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006"}}</td>
+      <td align="center">{{if .IsFrozen}}<span class="badge badge--red">Frozen</span>{{else}}<span class="badge badge--green">Active</span>{{end}}</td>
+      <td align="right">{{if .IsFrozen}}
+        <form method="POST" action="/admin/users/{{.ID}}/unfreeze" id="frm-uf-{{.ID}}"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+          <button type="button" class="btn btn--secondary btn--sm" onclick="adminFreeze('uf','{{.ID}}','{{js .FullName}}')">Unfreeze</button></form>
+      {{else if ne (print .Role) "admin"}}
+        <form method="POST" action="/admin/users/{{.ID}}/freeze" id="frm-fr-{{.ID}}"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+          <button type="button" class="btn btn--secondary btn--sm" onclick="adminFreeze('fr','{{.ID}}','{{js .FullName}}')">Freeze</button></form>
+      {{end}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{if gt .UserTotalPages 1}}<div class="pagination__wrapper mb-4">
+    {{if gt .UserPage 1}}<a href="?tab=users&up={{sub .UserPage 1}}" class="btn btn--secondary btn--sm">← Prev</a>{{end}}
+    <span class="pagination__info">Page {{.UserPage}} of {{.UserTotalPages}}</span>
+    {{if lt .UserPage .UserTotalPages}}<a href="?tab=users&up={{add .UserPage 1}}" class="btn btn--secondary btn--sm">Next →</a>{{end}}
+  </div>{{end}}
+  {{else}}<p class="text-muted">No users yet.</p>{{end}}
+
+  {{else if eq .ActiveTab "candidates"}}
+  <h2 class="mb-4">Candidate Registrations</h2>
   {{if .CandidateLogs}}
-  <div class="table-responsive">
-    <table>
-      <thead>
-        <tr>
-          <th align="left">Name</th>
-          <th align="left">Email</th>
-          <th align="center">Registered</th>
-          <th align="center">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {{range .CandidateLogs}}
-        <tr>
-          <td class="text-white font-semibold">{{.FullName}}</td>
-          <td><a href="mailto:{{.Email}}" class="font-xs link-primary">{{.Email}}</a></td>
-          <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
-          <td align="center"><span class="badge badge--green">Active</span></td>
-        </tr>
-        {{end}}
-      </tbody>
-    </table>
-  </div>
-  {{else}}
-  <p class="text-muted">No candidate registrations yet.</p>
-  {{end}}
-  {{if gt .CandidateTotalPages 1}}
-  <div class="pagination__wrapper">
-    {{if gt .CandidatePage 1}}
-      <a href="?cp={{.CompanyPage}}&kp={{sub .CandidatePage 1}}" class="btn btn--secondary btn--sm">← Prev</a>
-    {{end}}
+  <div class="table-responsive mb-4"><table>
+    <thead><tr><th align="left">Name</th><th align="left">Email</th><th align="center">Registered</th></tr></thead>
+    <tbody>{{range .CandidateLogs}}<tr>
+      <td class="text-white font-semibold">{{.FullName}}</td>
+      <td><a href="mailto:{{.Email}}" class="font-xs link-primary">{{.Email}}</a></td>
+      <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{if gt .CandidateTotalPages 1}}<div class="pagination__wrapper mb-4">
+    {{if gt .CandidatePage 1}}<a href="?tab=candidates&kp={{sub .CandidatePage 1}}" class="btn btn--secondary btn--sm">← Prev</a>{{end}}
     <span class="pagination__info">Page {{.CandidatePage}} of {{.CandidateTotalPages}}</span>
-    {{if lt .CandidatePage .CandidateTotalPages}}
-      <a href="?cp={{.CompanyPage}}&kp={{add .CandidatePage 1}}" class="btn btn--secondary btn--sm">Next →</a>
-    {{end}}
-  </div>
+    {{if lt .CandidatePage .CandidateTotalPages}}<a href="?tab=candidates&kp={{add .CandidatePage 1}}" class="btn btn--secondary btn--sm">Next →</a>{{end}}
+  </div>{{end}}
+  {{else}}<p class="text-muted">No candidates yet.</p>{{end}}
+
+  {{else if eq .ActiveTab "recruiters"}}
+  <h2 class="mb-4">Recruiter Registrations</h2>
+  {{if .RecruiterLogs}}
+  <div class="table-responsive mb-4"><table>
+    <thead><tr><th align="left">Name</th><th align="left">Email</th><th align="center">Registered</th></tr></thead>
+    <tbody>{{range .RecruiterLogs}}<tr>
+      <td class="text-white font-semibold">{{.FullName}}</td>
+      <td><a href="mailto:{{.Email}}" class="font-xs link-primary">{{.Email}}</a></td>
+      <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{if gt .RecruiterTotalPages 1}}<div class="pagination__wrapper mb-4">
+    {{if gt .RecruiterPage 1}}<a href="?tab=recruiters&rp={{sub .RecruiterPage 1}}" class="btn btn--secondary btn--sm">← Prev</a>{{end}}
+    <span class="pagination__info">Page {{.RecruiterPage}} of {{.RecruiterTotalPages}}</span>
+    {{if lt .RecruiterPage .RecruiterTotalPages}}<a href="?tab=recruiters&rp={{add .RecruiterPage 1}}" class="btn btn--secondary btn--sm">Next →</a>{{end}}
+  </div>{{end}}
+  {{else}}<p class="text-muted">No recruiters yet.</p>{{end}}
+
+  {{else if eq .ActiveTab "companies"}}
+  <h2 class="mb-4">Company Registrations</h2>
+  {{if .CompanyLogs}}
+  <div class="table-responsive mb-4"><table>
+    <thead><tr><th align="left">Company</th><th align="left">Recruiter</th><th align="left">Email</th><th align="center">Status</th><th align="center">Registered</th><th align="center">Reviewed</th></tr></thead>
+    <tbody>{{range .CompanyLogs}}<tr>
+      <td class="text-white font-semibold">{{.Name}}{{if .Industry}}<br><span class="font-xs text-muted">{{.Industry}}</span>{{end}}</td>
+      <td>{{.OwnerName}}</td>
+      <td><a href="mailto:{{.OwnerEmail}}" class="font-xs link-primary">{{.OwnerEmail}}</a></td>
+      <td align="center">
+        {{if eq (print .Status) "approved"}}<span class="badge badge--green">Approved</span>
+        {{else if eq (print .Status) "rejected"}}<span class="badge badge--red">Rejected</span>
+        {{else if eq (print .Status) "blacklisted"}}<span class="badge badge--red">Blacklisted</span>
+        {{else}}<span class="badge badge--gray">Pending</span>{{end}}
+      </td>
+      <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
+      <td align="center" class="nowrap font-xs">{{if .ApprovedAt}}{{.ApprovedAt.Format "2 Jan 2006 15:04"}}{{else}}<span class="text-muted">—</span>{{end}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{if gt .CompanyTotalPages 1}}<div class="pagination__wrapper mb-4">
+    {{if gt .CompanyPage 1}}<a href="?tab=companies&cp={{sub .CompanyPage 1}}" class="btn btn--secondary btn--sm">← Prev</a>{{end}}
+    <span class="pagination__info">Page {{.CompanyPage}} of {{.CompanyTotalPages}}</span>
+    {{if lt .CompanyPage .CompanyTotalPages}}<a href="?tab=companies&cp={{add .CompanyPage 1}}" class="btn btn--secondary btn--sm">Next →</a>{{end}}
+  </div>{{end}}
+  {{else}}<p class="text-muted">No companies yet.</p>{{end}}
+
+  {{else if eq .ActiveTab "jobs"}}
+  <h2 class="mb-4">Job Management</h2>
+  {{if .JobLogs}}
+  <div class="table-responsive mb-4"><table>
+    <thead><tr><th align="left">Job</th><th align="left">Company</th><th align="left">Location</th><th align="center">Status</th><th align="center">Published</th><th></th></tr></thead>
+    <tbody>{{range .JobLogs}}<tr>
+      <td class="text-white font-semibold">{{.Title}}</td>
+      <td class="font-sm">{{.CompanyName}}</td>
+      <td class="font-xs text-muted">{{if .State}}{{.State}}, {{end}}{{.Country}}</td>
+      <td align="center">
+        {{if .IsFrozen}}<span class="badge badge--red">Frozen</span>
+        {{else if eq (print .Status) "published"}}<span class="badge badge--green">Published</span>
+        {{else if eq (print .Status) "closed"}}<span class="badge badge--gray">Closed</span>
+        {{else}}<span class="badge">{{.Status}}</span>{{end}}
+      </td>
+      <td align="center" class="nowrap font-xs">{{if .PublishedAt}}{{.PublishedAt.Format "2 Jan 2006"}}{{else}}—{{end}}</td>
+      <td align="right">
+        {{if .IsFrozen}}
+          <form method="POST" action="/admin/jobs/{{.ID}}/unfreeze" id="frm-juf-{{.ID}}"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <button type="button" class="btn btn--secondary btn--sm" onclick="adminFreeze('juf','{{.ID}}','{{js .Title}}')">Unfreeze Job</button></form>
+        {{else}}
+          <form method="POST" action="/admin/jobs/{{.ID}}/freeze" id="frm-jfr-{{.ID}}"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+            <button type="button" class="btn btn--secondary btn--sm" onclick="adminFreeze('jfr','{{.ID}}','{{js .Title}}')">Freeze Job</button></form>
+        {{end}}
+      </td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{if gt .JobTotalPages 1}}<div class="pagination__wrapper mb-4">
+    {{if gt .JobPage 1}}<a href="?tab=jobs&jp={{sub .JobPage 1}}" class="btn btn--secondary btn--sm">← Prev</a>{{end}}
+    <span class="pagination__info">Page {{.JobPage}} of {{.JobTotalPages}}</span>
+    {{if lt .JobPage .JobTotalPages}}<a href="?tab=jobs&jp={{add .JobPage 1}}" class="btn btn--secondary btn--sm">Next →</a>{{end}}
+  </div>{{end}}
+  {{else}}<p class="text-muted">No jobs yet.</p>{{end}}
+
+  {{else if eq .ActiveTab "applications"}}
+  <h2 class="mb-4">Application Log</h2>
+  {{if .AppLogs}}
+  <div class="table-responsive mb-4"><table>
+    <thead><tr><th align="left">Candidate</th><th align="left">Applied to</th><th align="center">Date &amp; Time</th></tr></thead>
+    <tbody>{{range .AppLogs}}<tr>
+      <td><span class="text-white font-semibold">{{.CandidateName}}</span><br><a href="mailto:{{.CandidateEmail}}" class="font-xs link-primary">{{.CandidateEmail}}</a></td>
+      <td><span class="text-white">{{.JobTitle}}</span><br><span class="font-xs text-muted">{{.CompanyName}}</span></td>
+      <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{if gt .AppTotalPages 1}}<div class="pagination__wrapper mb-4">
+    {{if gt .AppPage 1}}<a href="?tab=applications&ap={{sub .AppPage 1}}" class="btn btn--secondary btn--sm">← Prev</a>{{end}}
+    <span class="pagination__info">Page {{.AppPage}} of {{.AppTotalPages}}</span>
+    {{if lt .AppPage .AppTotalPages}}<a href="?tab=applications&ap={{add .AppPage 1}}" class="btn btn--secondary btn--sm">Next →</a>{{end}}
+  </div>{{end}}
+  {{else}}<p class="text-muted">No applications yet.</p>{{end}}
+
   {{end}}
 </section>
+
+<script>
+async function adminFreeze(action, id, name) {
+  var msgs = {
+    'fr':  { title: 'Freeze "' + name + '"?', msg: 'The user will not be able to log in until unfrozen.', btn: 'Yes, Freeze', cls: 'btn--secondary' },
+    'uf':  { title: 'Unfreeze "' + name + '"?', msg: 'The user will be able to log in and use the platform again.', btn: 'Yes, Unfreeze', cls: 'btn--primary' },
+    'jfr': { title: 'Freeze job "' + name + '"?', msg: 'The job will remain visible publicly but Apply will be disabled and recruiters cannot manage it.', btn: 'Yes, Freeze Job', cls: 'btn--secondary' },
+    'juf': { title: 'Unfreeze job "' + name + '"?', msg: 'All job features will be re-enabled.', btn: 'Yes, Unfreeze Job', cls: 'btn--primary' },
+  };
+  var m = msgs[action]; if (!m) return;
+  var r = await jhConfirm({ title: m.title, message: m.msg, confirmText: m.btn, confirmClass: m.cls });
+  if (r.ok) document.getElementById('frm-' + action + '-' + id).submit();
+}
+</script>
 {{end}}

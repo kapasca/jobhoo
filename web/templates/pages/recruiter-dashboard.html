@@ -28,9 +28,9 @@
   {{else if eq (print .Company.Status) "rejected"}}
     <div class="alert alert--warning mb-6">
       <div>
-        <strong class="text-white">Pendaftaran perusahaan Anda ditolak.</strong>
-        <p class="text-with-margin">{{if .Company.RejectionReason}}Alasan: {{.Company.RejectionReason}}{{end}}</p>
-        <p class="text-with-margin">Perbaiki profil perusahaan Anda pada halaman <a href="/company/profile" class="link-primary">My Profile</a>, kemudian ajukan ulang.</p>
+        <strong class="text-white">Your company registration was rejected.</strong>
+        <p class="text-with-margin">{{if .Company.RejectionReason}}Reason: {{.Company.RejectionReason}}{{end}}</p>
+        <p class="text-with-margin">Please update your company profile on the <a href="/company/profile" class="link-primary">My Profile</a> page and resubmit.</p>
       </div>
       <form method="POST" action="/company/resubmit" class="form-inline">
         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
@@ -40,9 +40,9 @@
   {{else if eq (print .Company.Status) "blacklisted"}}  
     <div class="alert alert--warning mb-6">
       <div>
-        <strong class="text-white">Pendaftaran perusahaan Anda ditolak secara permanen.</strong>
-        <p class="text-with-margin">{{if .Company.RejectionReason}}Alasan: {{.Company.RejectionReason}}{{end}}</p>
-        <p class="text-with-margin">Perusahaan ini tidak dapat mengajukan ulang pendaftaran. Hubungi support JOBHOO jika Anda merasa ini adalah kesalahan.</p>
+        <strong class="text-white">Your company registration was permanently rejected.</strong>
+        <p class="text-with-margin">{{if .Company.RejectionReason}}Reason: {{.Company.RejectionReason}}{{end}}</p>
+        <p class="text-with-margin">This company cannot resubmit. Contact JOBHOO support if you believe this is an error.</p>
       </div>
     </div>
   {{else if and (eq (print .Company.Status) "approved") (or (eq .Company.Industry "") (eq .Company.Description ""))}}
@@ -77,7 +77,8 @@
             <td align="center" class="nowrap">{{fmtDate .PublishedAt}}</td>
             <td align="center" class="nowrap">{{fmtDate .ClosesAt}}</td>
             <td align="center">
-              {{if eq (print .Status) "published"}}
+              {{if .IsFrozen}}<span class="badge badge--red">Frozen</span>
+              {{else if eq (print .Status) "published"}}
                 {{if .IsScheduled}}<span class="badge badge--gray">Scheduled</span>
                 {{else if .IsExpired}}<span class="badge badge--gray">Expired</span>
                 {{else}}<span class="badge badge--green">Published</span>{{end}}
@@ -87,6 +88,9 @@
             </td>
             <td align="center">{{.ApplicantCount}}</td>
             <td align="right">
+              {{if .IsFrozen}}
+              <span class="font-xs text-muted">Frozen by admin</span>
+              {{else}}
               <details class="action-menu">
                 <summary class="btn btn--secondary btn--sm">Actions ▾</summary>
                 <div class="action-menu__list">
@@ -119,6 +123,7 @@
                   {{end}}
                 </div>
               </details>
+              {{end}}{{/* end frozen else */}}
             </td>
           </tr>
           {{end}}
@@ -141,25 +146,25 @@
 async function confirmArchive(id) {
   var r = await jhConfirm({
     title: 'Archive job?',
-    message: 'Job yang diarsipkan tidak akan muncul di daftar aktif Anda. Anda tidak bisa me-reopen job yang sudah diarsipkan.',
-    confirmText: 'Ya, Archive',
+    message: 'Archived jobs will no longer appear in your active list. You will not be able to reopen an archived job.',
+    confirmText: 'Yes, Archive',
     confirmClass: 'btn--secondary',
   });
   if (r.ok) document.getElementById('frm-arch-' + id).submit();
 }async function confirmDelete(id, title) {
   var r = await jhConfirm({
-    title: 'Hapus permanen "' + title + '"?',
-    message: 'Job beserta seluruh data pelamarnya akan dihapus secara permanen.\nTindakan ini tidak dapat dibatalkan.',
-    confirmText: 'Ya, Hapus Permanen',
+    title: 'Delete permanently "' + title + '"?',
+    message: 'This will permanently delete the job and all associated applicant data.\nThis action cannot be undone.',
+    confirmText: 'Yes, Delete Permanently',
     confirmClass: 'btn--secondary',
-    cancelText: 'Batal',
+    cancelText: 'Cancel',
   });
   if (r.ok) document.getElementById('frm-del-' + id).submit();
-}async function confirmResubmit() {
+async function confirmResubmit() {
   var r = await jhConfirm({
-    title: 'Ajukan ulang pendaftaran?',
-    message: 'Pastikan Anda sudah memperbaiki profil perusahaan sesuai alasan penolakan sebelumnya.\n\nAdmin akan meninjau ulang pendaftaran Anda.',
-    confirmText: 'Ya, Ajukan Ulang',
+    title: 'Resubmit registration?',
+    message: 'Please ensure you have corrected your company profile according to the previous rejection reasons.\n\nAn admin will review your submission again.',
+    confirmText: 'Yes, Resubmit',
     confirmClass: 'btn--primary',
   });
   if (r.ok) document.querySelector('form[action="/company/resubmit"]').submit();

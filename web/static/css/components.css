@@ -1818,6 +1818,15 @@ tr:last-child td { border-bottom: none; }
   font-size: var(--jh-text-sm);
 }
 
+/* Clickable stat card */
+.stat-card {
+  display: flex; flex-direction: column;
+  text-decoration: none; cursor: pointer;
+  transition: border-color var(--jh-duration-fast) var(--jh-ease);
+}
+.stat-card:hover { border-color: var(--jh-border-strong); }
+.stat-card--active { border-color: var(--jh-orange-500) !important; }
+
 /* ATS Board styling */
 .ats-section-header {
   padding: var(--jh-space-6) 0 var(--jh-space-4);

@@ -100,6 +100,9 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) LoginPage(w http.ResponseWriter, r *http.Request) {
 	data := authPageData{BasePageData: newBasePageData(r, "login"), NextURL: r.URL.Query().Get("next")}
+	if r.URL.Query().Get("reason") == "frozen" {
+		data.Error = "Your session was terminated because your account has been frozen by JOBHOO administrators."
+	}
 
 	// HTMX requests (clicking "Sign in" in the nav) get the modal fragment.
 	// Everything else — RequireAuth's redirect when an anonymous user hits a
@@ -133,6 +136,16 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 			h.Render.RenderBlock(w, "login-modal.html", "login-modal", data)
 		} else {
 			h.Render.Render(w, http.StatusUnauthorized, "login.html", data)
+		}
+		return
+	}
+
+	if user.IsFrozen {
+		data.Error = "Your account has been frozen by the administrator. Please contact JOBHOO support for more information."
+		if r.Header.Get("HX-Request") == "true" {
+			h.Render.RenderBlock(w, "login-modal.html", "login-modal", data)
+		} else {
+			h.Render.Render(w, http.StatusForbidden, "login.html", data)
 		}
 		return
 	}

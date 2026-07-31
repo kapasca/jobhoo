@@ -89,6 +89,10 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Post("/admin/approvals/{id}/approve", h.ApproveCompany)
 		r.Post("/admin/approvals/{id}/reject", h.RejectCompany)
 		r.Post("/admin/approvals/{id}/blacklist", h.BlacklistCompany)
+		r.Post("/admin/users/{id}/freeze", h.FreezeUser)
+		r.Post("/admin/users/{id}/unfreeze", h.UnfreezeUser)
+		r.Post("/admin/jobs/{id}/freeze", h.FreezeJob)
+		r.Post("/admin/jobs/{id}/unfreeze", h.UnfreezeJob)
 	})
 
 	r.Get("/companies", h.CompaniesDirectory)

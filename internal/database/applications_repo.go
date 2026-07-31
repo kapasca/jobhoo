@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -137,4 +138,44 @@ func (r *ApplicationsRepo) CountByJob(ctx context.Context, jobID string) (int, e
 	var count int
 	err := r.pool.QueryRow(ctx, `SELECT count(*) FROM applications WHERE job_id = $1`, jobID).Scan(&count)
 	return count, err
+}
+
+// ApplicationLogRow is a lightweight row for the admin applications log.
+type ApplicationLogRow struct {
+	ID             string
+	CandidateName  string
+	CandidateEmail string
+	JobTitle       string
+	CompanyName    string
+	CreatedAt      time.Time
+}
+
+// ListAllForAdmin returns one page of all applications, newest first.
+func (r *ApplicationsRepo) ListAllForAdmin(ctx context.Context, limit, offset int) ([]ApplicationLogRow, int, error) {
+	var total int
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM applications`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT a.id, u.full_name, u.email, j.title, c.name, a.created_at
+		FROM applications a
+		JOIN users u ON u.id = a.candidate_id
+		JOIN jobs j ON j.id = a.job_id
+		JOIN companies c ON c.id = j.company_id
+		ORDER BY a.created_at DESC LIMIT $1 OFFSET $2
+	`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	var out []ApplicationLogRow
+	for rows.Next() {
+		var row ApplicationLogRow
+		if err := rows.Scan(&row.ID, &row.CandidateName, &row.CandidateEmail,
+			&row.JobTitle, &row.CompanyName, &row.CreatedAt); err != nil {
+			return nil, 0, err
+		}
+		out = append(out, row)
+	}
+	return out, total, rows.Err()
 }

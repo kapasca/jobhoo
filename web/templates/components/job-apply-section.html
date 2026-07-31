@@ -1,7 +1,13 @@
 {{define "job-apply-section"}}
 <div id="job-apply-section" class="modal-footer">
-  {{if .ApplySent}}
-  <div class="alert alert-success mb-4">
+  {{if .Job.IsFrozen}}
+  <div class="alert alert--warning">
+    <div>
+      <strong class="text-white">This job has been frozen by the admin.</strong>
+      <p class="text-with-margin">Please stop all actions related to this job until the freeze is lifted by JOBHOO administrators.</p>
+    </div>
+  </div>
+  {{else if .ApplySent}}
     <div>
       <strong class="text-white">Application sent.</strong>
       <p class="text-with-margin">Your application has been sent to {{.Job.CompanyName}}. The hiring team will review it and reach out if there’s a fit. You can track the status from your dashboard.</p>

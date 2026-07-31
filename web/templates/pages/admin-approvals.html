@@ -5,6 +5,7 @@
   <div class="container">
     <div class="page-header__inner">
       <div>
+        <a href="/dashboard/admin" class="ats-back-link">← Back to Dashboard</a>
         <h1 class="page-header__title">Company Approvals</h1>
         <p class="page-header__subtitle">Review new companies before they can post jobs on JOBHOO.</p>
       </div>
@@ -96,8 +97,8 @@
 async function doApprove(id, name) {
   var r = await jhConfirm({
     title: 'Approve "' + name + '"?',
-    message: 'Perusahaan ini akan disetujui dan rekruternya dapat mulai memposting lowongan pekerjaan.',
-    confirmText: 'Ya, Approve',
+    message: 'This company will be approved and the recruiter will be able to post jobs.',
+    confirmText: 'Yes, Approve',
     confirmClass: 'btn--primary',
   });
   if (r.ok) document.getElementById('frm-approve-' + id).submit();
@@ -106,10 +107,10 @@ async function doApprove(id, name) {
 async function doReject(id, name) {
   var r = await jhConfirm({
     title: 'Reject "' + name + '"?',
-    message: 'Rekruter akan diberi tahu alasan penolakan.\nMereka masih bisa memperbaiki profil dan mengajukan ulang.',
-    inputLabel: 'Alasan penolakan (ditampilkan ke rekruter)',
-    inputPlaceholder: 'Contoh: Deskripsi perusahaan tidak memadai',
-    confirmText: 'Ya, Reject',
+    message: 'The recruiter will be notified of the rejection reason.\nThey may update their profile and resubmit.',
+    inputLabel: 'Rejection reason (shown to recruiter)',
+    inputPlaceholder: 'e.g. Company description is insufficient',
+    confirmText: 'Yes, Reject',
     confirmClass: 'btn--secondary',
   });
   if (r.ok) {
@@ -121,10 +122,10 @@ async function doReject(id, name) {
 async function doBlacklist(id, name) {
   var r = await jhConfirm({
     title: 'Blacklist "' + name + '"?',
-    message: 'Tindakan ini bersifat PERMANEN.\nRekruter tidak akan bisa mengajukan ulang pendaftaran setelah di-blacklist.',
-    inputLabel: 'Alasan blacklist (ditampilkan ke rekruter)',
-    inputPlaceholder: 'Contoh: Terbukti melanggar ketentuan layanan',
-    confirmText: 'Ya, Blacklist Permanen',
+    message: 'This action is PERMANENT.\nThe recruiter will not be able to resubmit after being blacklisted.',
+    inputLabel: 'Blacklist reason (shown to recruiter)',
+    inputPlaceholder: 'e.g. Proven to violate terms of service',
+    confirmText: 'Yes, Blacklist Permanently',
     confirmClass: 'btn--secondary',
   });
   if (r.ok) {

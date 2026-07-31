@@ -23,8 +23,8 @@
               esc(o.inputPlaceholder || '') + '"></div>'
             : '') +
           '<div class="jh-confirm-actions">' +
-            '<button type="button" class="btn btn--ghost btn--sm" data-r="0">' + esc(o.cancelText || 'Batal') + '</button>' +
-            '<button type="button" class="btn ' + esc(o.confirmClass || 'btn--primary') + ' btn--sm" data-r="1">' + esc(o.confirmText || 'Konfirmasi') + '</button>' +
+            '<button type="button" class="btn btn--ghost btn--sm" data-r="0">' + esc(o.cancelText || 'Cancel') + '</button>' +
+            '<button type="button" class="btn ' + esc(o.confirmClass || 'btn--primary') + ' btn--sm" data-r="1">' + esc(o.confirmText || 'Confirm') + '</button>' +
           '</div>' +
         '</div>';
 

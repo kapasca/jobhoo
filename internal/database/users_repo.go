@@ -34,9 +34,9 @@ func (r *UsersRepo) Create(ctx context.Context, email, passwordHash, fullName st
 	err := r.pool.QueryRow(ctx, `
 		INSERT INTO users (email, password_hash, role, full_name)
 		VALUES ($1, $2, $3, $4)
-		RETURNING id, email, password_hash, role, full_name, coalesce(avatar_url, ''), created_at
+		RETURNING id, email, password_hash, role, full_name, coalesce(avatar_url, ''), is_frozen, created_at
 	`, email, passwordHash, role, fullName).Scan(
-		&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.CreatedAt,
+		&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.IsFrozen, &u.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -47,9 +47,9 @@ func (r *UsersRepo) Create(ctx context.Context, email, passwordHash, fullName st
 func (r *UsersRepo) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	var u models.User
 	err := r.pool.QueryRow(ctx, `
-		SELECT id, email, password_hash, role, full_name, coalesce(avatar_url, ''), created_at
+		SELECT id, email, password_hash, role, full_name, coalesce(avatar_url, ''), is_frozen, created_at
 		FROM users WHERE email = $1
-	`, email).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.CreatedAt)
+	`, email).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.IsFrozen, &u.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -62,9 +62,9 @@ func (r *UsersRepo) GetByEmail(ctx context.Context, email string) (*models.User,
 func (r *UsersRepo) GetByID(ctx context.Context, id string) (*models.User, error) {
 	var u models.User
 	err := r.pool.QueryRow(ctx, `
-		SELECT id, email, password_hash, role, full_name, coalesce(avatar_url, ''), created_at
+		SELECT id, email, password_hash, role, full_name, coalesce(avatar_url, ''), is_frozen, created_at
 		FROM users WHERE id = $1
-	`, id).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.CreatedAt)
+	`, id).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.IsFrozen, &u.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -108,6 +108,76 @@ func (r *UsersRepo) ListCandidateRegistrations(ctx context.Context, limit, offse
 		out = append(out, c)
 	}
 	return out, total, rows.Err()
+}
+
+// ListRecruiterRegistrations returns one page of recruiter accounts, newest first.
+func (r *UsersRepo) ListRecruiterRegistrations(ctx context.Context, limit, offset int) ([]CandidateRegistration, int, error) {
+	var total int
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE role = 'recruiter'`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, full_name, email, created_at FROM users WHERE role = 'recruiter'
+		ORDER BY created_at DESC LIMIT $1 OFFSET $2
+	`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	var out []CandidateRegistration
+	for rows.Next() {
+		var c CandidateRegistration
+		if err := rows.Scan(&c.ID, &c.FullName, &c.Email, &c.CreatedAt); err != nil {
+			return nil, 0, err
+		}
+		out = append(out, c)
+	}
+	return out, total, rows.Err()
+}
+
+// UserRow is a lightweight row for the admin user management table.
+type UserRow struct {
+	ID        string
+	FullName  string
+	Email     string
+	Role      models.UserRole
+	IsFrozen  bool
+	CreatedAt time.Time
+}
+
+// ListAllUsers returns one page of all users for the admin panel.
+func (r *UsersRepo) ListAllUsers(ctx context.Context, limit, offset int) ([]UserRow, int, error) {
+	var total int
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM users`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, full_name, email, role, is_frozen, created_at
+		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2
+	`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	var out []UserRow
+	for rows.Next() {
+		var u UserRow
+		if err := rows.Scan(&u.ID, &u.FullName, &u.Email, &u.Role, &u.IsFrozen, &u.CreatedAt); err != nil {
+			return nil, 0, err
+		}
+		out = append(out, u)
+	}
+	return out, total, rows.Err()
+}
+
+func (r *UsersRepo) FreezeUser(ctx context.Context, id string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE users SET is_frozen = TRUE WHERE id = $1 AND role != 'admin'`, id)
+	return err
+}
+
+func (r *UsersRepo) UnfreezeUser(ctx context.Context, id string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE users SET is_frozen = FALSE WHERE id = $1`, id)
+	return err
 }
 
 type PlatformStats struct {

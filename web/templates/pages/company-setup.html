@@ -88,28 +88,28 @@ document.getElementById('company-setup-form').addEventListener('submit', async f
 
   if (missing.length > 0) {
     var r1 = await jhConfirm({
-      title: 'Profil belum lengkap',
-      message: 'Field berikut masih kosong: ' + missing.join(', ') + '.\n\nProfil yang lengkap membantu admin meyakini legitimasi perusahaan Anda dan mempercepat proses persetujuan.',
-      confirmText: 'Lanjutkan tanpa melengkapi',
+      title: 'Profile incomplete',
+      message: 'The following fields are empty: ' + missing.join(', ') + '.\n\nA complete profile helps admins verify your company and speeds up approval.',
+      confirmText: 'Continue without completing',
       confirmClass: 'btn--secondary',
-      cancelText: 'Kembali & lengkapi',
+      cancelText: 'Go back & complete',
     });
     if (!r1.ok) return;
   }
 
   var desc60 = description ? description.substring(0, 60) + (description.length > 60 ? '\u2026' : '') : '(kosong)';
   var r2 = await jhConfirm({
-    title: 'Periksa data sebelum dikirim',
+    title: 'Review submission',
     message:
-      'Nama perusahaan : ' + name + '\n' +
-      'Industry        : ' + (industry    || '(kosong)') + '\n' +
-      'Website         : ' + (website     || '(kosong)') + '\n' +
-      'Deskripsi       : ' + desc60       + '\n' +
-      'Logo            : ' + (logo ? 'Sudah dipilih' : '(tidak ada)') + '\n\n' +
-      'Kirim pendaftaran ini?',
-    confirmText: 'Ya, Kirim',
+      'Company name : ' + name + '\n' +
+      'Industry     : ' + (industry    || '(empty)') + '\n' +
+      'Website      : ' + (website     || '(empty)') + '\n' +
+      'Description  : ' + desc60       + '\n' +
+      'Logo         : ' + (logo ? 'Selected' : '(none)') + '\n\n' +
+      'Submit this registration?',
+    confirmText: 'Yes, Submit',
     confirmClass: 'btn--primary',
-    cancelText: 'Batal',
+    cancelText: 'Cancel',
   });
   if (r2.ok) form.submit();
 });

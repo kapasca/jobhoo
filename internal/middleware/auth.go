@@ -15,13 +15,10 @@ import (
 type ctxKey string
 
 const userCtxKey ctxKey = "jobhoo_current_user"
+const frozenCtxKey ctxKey = "jobhoo_frozen"
 
 const SessionCookieName = "jobhoo_session"
 
-// WithUser is middleware that looks up the session cookie (if present),
-// resolves it to a user, and attaches that user to the request context.
-// It never rejects a request by itself — routes that require a signed-in
-// user use RequireAuth in addition to this.
 func WithUser(sessions *database.SessionsRepo, users *database.UsersRepo) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +31,6 @@ func WithUser(sessions *database.SessionsRepo, users *database.UsersRepo) func(h
 			tokenHash := auth.HashToken(cookie.Value)
 			userID, err := sessions.UserIDForToken(r.Context(), tokenHash)
 			if err != nil {
-				// Invalid/expired session: clear the cookie and continue as anonymous.
 				clearSessionCookie(w)
 				next.ServeHTTP(w, r)
 				return
@@ -43,6 +39,15 @@ func WithUser(sessions *database.SessionsRepo, users *database.UsersRepo) func(h
 			user, err := users.GetByID(r.Context(), userID)
 			if err != nil {
 				next.ServeHTTP(w, r)
+				return
+			}
+
+			if user.IsFrozen {
+				// Invalidate session so the frozen user is fully signed out.
+				_ = sessions.Revoke(r.Context(), tokenHash)
+				clearSessionCookie(w)
+				ctx := context.WithValue(r.Context(), frozenCtxKey, true)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 
@@ -58,6 +63,12 @@ func CurrentUser(r *http.Request) *models.User {
 	return u
 }
 
+// IsFrozenUser reports whether the request was made by a frozen (invalidated) user.
+func IsFrozenUser(r *http.Request) bool {
+	v, _ := r.Context().Value(frozenCtxKey).(bool)
+	return v
+}
+
 // RequireAuth blocks anonymous requests, redirecting browsers to /login.
 // For HTMX requests it sets HX-Redirect instead of a normal 3xx, since an
 // HTMX swap target (e.g. a bookmark button) should never receive a full
@@ -66,6 +77,9 @@ func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if CurrentUser(r) == nil {
 			loginURL := "/login?next=" + r.URL.Path
+			if IsFrozenUser(r) {
+				loginURL = "/login?reason=frozen"
+			}
 			if r.Header.Get("HX-Request") == "true" {
 				w.Header().Set("HX-Redirect", loginURL)
 				w.WriteHeader(http.StatusOK)
