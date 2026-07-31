@@ -553,7 +553,7 @@ tr:last-child td { border-bottom: none; }
   font-size: var(--jh-text-sm); color: var(--jh-ink-300);
   justify-content: space-between;
 }
-.alert--warning { border-color: var(--jh-orange-500); background: rgba(var(--jh-orange-rgb), 0.08); }
+.alert--warning { border-color: var(--jh-orange-500); background: rgba(var(--jh-orange-rgb), 0.08); text-align: center; }
 
 .toast {
   position: fixed; bottom: var(--jh-space-6); right: var(--jh-space-6);
