@@ -75,6 +75,7 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Post("/recruiter/jobs/{id}/close", h.CloseJob)
 		r.Post("/recruiter/jobs/{id}/archive", h.ArchiveJob)
 		r.Post("/recruiter/jobs/{id}/reopen", h.ReopenJob)
+		r.Post("/recruiter/jobs/{id}/delete", h.DeleteJob)
 		r.Get("/recruiter/jobs/{id}/applicants", h.ATSBoard)
 		r.Post("/recruiter/jobs/{id}/rank", h.RankCandidates)
 		r.Post("/ats/applications/{id}/stage", h.UpdateApplicationStage)

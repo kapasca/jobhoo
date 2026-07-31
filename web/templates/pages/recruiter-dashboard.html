@@ -91,7 +91,9 @@
                 <summary class="btn btn--secondary btn--sm">Actions ▾</summary>
                 <div class="action-menu__list">
                   <a href="/recruiter/jobs/{{.ID}}/applicants">Pipeline</a>
-                  <a href="/recruiter/jobs/{{.ID}}/edit">Edit/Re-open</a>
+                  {{if ne (print .Status) "archived"}}
+                    <a href="/recruiter/jobs/{{.ID}}/edit">Edit</a>
+                  {{end}}
                   <div class="action-menu__divider"></div>
                   {{if eq (print .Status) "published"}}
                     <form method="POST" action="/recruiter/jobs/{{.ID}}/close">
@@ -108,6 +110,11 @@
                     <form method="POST" action="/recruiter/jobs/{{.ID}}/archive" id="frm-arch-{{.ID}}">
                       <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
                       <button type="button" onclick="confirmArchive('{{.ID}}')">Archive</button>
+                    </form>
+                  {{else}}
+                    <form method="POST" action="/recruiter/jobs/{{.ID}}/delete" id="frm-del-{{.ID}}">
+                      <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                      <button type="button" onclick="confirmDelete('{{.ID}}', '{{js .Title}}')">Delete Permanently</button>
                     </form>
                   {{end}}
                 </div>
@@ -134,13 +141,21 @@
 async function confirmArchive(id) {
   var r = await jhConfirm({
     title: 'Archive job?',
-    message: 'Job yang diarsipkan tidak akan muncul di daftar aktif Anda.\nAnda tidak bisa me-reopen job yang sudah diarsipkan.',
+    message: 'Job yang diarsipkan tidak akan muncul di daftar aktif Anda. Anda tidak bisa me-reopen job yang sudah diarsipkan.',
     confirmText: 'Ya, Archive',
     confirmClass: 'btn--secondary',
   });
   if (r.ok) document.getElementById('frm-arch-' + id).submit();
-}
-async function confirmResubmit() {
+}async function confirmDelete(id, title) {
+  var r = await jhConfirm({
+    title: 'Hapus permanen "' + title + '"?',
+    message: 'Job beserta seluruh data pelamarnya akan dihapus secara permanen.\nTindakan ini tidak dapat dibatalkan.',
+    confirmText: 'Ya, Hapus Permanen',
+    confirmClass: 'btn--secondary',
+    cancelText: 'Batal',
+  });
+  if (r.ok) document.getElementById('frm-del-' + id).submit();
+}async function confirmResubmit() {
   var r = await jhConfirm({
     title: 'Ajukan ulang pendaftaran?',
     message: 'Pastikan Anda sudah memperbaiki profil perusahaan sesuai alasan penolakan sebelumnya.\n\nAdmin akan meninjau ulang pendaftaran Anda.',

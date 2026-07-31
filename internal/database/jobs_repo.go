@@ -253,6 +253,12 @@ func (r *JobsRepo) UpdateStatus(ctx context.Context, id string, status models.Jo
 	return err
 }
 
+// Delete permanently removes an archived job and its related records (cascade).
+func (r *JobsRepo) Delete(ctx context.Context, id string) error {
+	_, err := r.pool.Exec(ctx, `DELETE FROM jobs WHERE id = $1 AND status = 'archived'`, id)
+	return err
+}
+
 func (r *JobsRepo) GetByID(ctx context.Context, id string) (*models.Job, error) {
 	query := `
 		SELECT ` + jobSelectColumns + `

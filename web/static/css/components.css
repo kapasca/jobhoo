@@ -1977,8 +1977,45 @@ tr:last-child td { border-bottom: none; }
 
 /* ATS Card styling */
 .ats-card {
-  padding: var(--jh-space-4);
+  padding: 0;
+  border: 0;
+  border-radius: var(--jh-radius-sm);
+  border: 3px solid var(--jh-border);
 }
+.ats-card--clickable { cursor: pointer; transition: border-color var(--jh-duration-fast) var(--jh-ease); }
+.ats-card--clickable:hover { border-color: var(--jh-border-strong); }
+.ats-card.is-in-compare { border-color: var(--jh-orange-500); }
+
+/* Comparison notification bar */
+.cmp-bar {
+  position: fixed; bottom: var(--jh-space-6); left: 50%; transform: translateX(-50%);
+  z-index: 80; display: flex; align-items: center; gap: var(--jh-space-3);
+  background: var(--jh-navy-600); border: 1px solid var(--jh-orange-500);
+  border-radius: var(--jh-radius-pill); padding: var(--jh-space-2) var(--jh-space-4);
+  box-shadow: var(--jh-shadow-md); font-size: var(--jh-text-sm); color: var(--jh-ink-200);
+  white-space: nowrap;
+}
+
+/* Comparison and detail table */
+.cmp-table { width: 100%; border-collapse: collapse; }
+.cmp-table th {
+  font-size: var(--jh-text-xs); text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--jh-ink-500); font-weight: 600;
+  padding: var(--jh-space-3) var(--jh-space-4); border-bottom: 2px solid var(--jh-border);
+  text-align: left;
+}
+.cmp-table th:first-child { width: 90px; }
+.cmp-table td {
+  padding: var(--jh-space-3) var(--jh-space-4);
+  border-bottom: 1px solid var(--jh-border);
+  font-size: var(--jh-text-sm); color: var(--jh-ink-300);
+  vertical-align: top;
+}
+.cmp-table td:first-child {
+  font-size: var(--jh-text-xs); text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--jh-ink-500); font-weight: 600; width: 90px;
+}
+.cmp-table tr:last-child td { border-bottom: none; }
 
 .ats-card-name {
   color: var(--jh-white);
@@ -2056,7 +2093,14 @@ tr:last-child td { border-bottom: none; }
 
 .ats-card-select {
   font-size: var(--jh-text-xs);
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 2rem 0.5rem 0.8rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%23a3b8d1' stroke-width='1.5' d='M1 4l5 4 5-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--jh-space-2) center;
+  border: 0;
+  border-radius: 0 0 var(--jh-radius-sm) var(--jh-radius-sm);
 }
 
 .ats-card-cover-note {

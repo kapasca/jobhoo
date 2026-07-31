@@ -26,6 +26,196 @@
   {{end}}
 </section>
 <p class="ats-ai-note">AI ranking is only a suggestion to help prioritize review — it never changes a candidate's stage or hides anyone.</p>
+
+<!-- Compare notification bar (hidden until ≥1 candidate selected) -->
+<div id="_cmp-bar" style="display:none;" class="cmp-bar">
+  <span id="_cmp-bar-text"></span>
+  <button class="btn btn--primary btn--sm" id="_cmp-bar-btn" onclick="_openCompareModal()">View Comparison</button>
+  <button class="btn btn--ghost btn--sm" onclick="_clearCompare()">Clear</button>
+</div>
+
+<script>
+(function () {
+  var _cmpList = []; // max 2 entries
+
+  var stageLabel = {applied:'Applied',screening:'Screening',interview:'Interview',offer:'Offer',hired:'Hired',rejected:'Rejected'};
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function getCandidateData(el) {
+    return {
+      id:        el.dataset.cid,
+      name:      el.dataset.name,
+      email:     el.dataset.email,
+      stage:     el.dataset.stage,
+      cover:     el.dataset.cover,
+      aiScore:   el.dataset.aiScore,
+      aiSummary: el.dataset.aiSummary,
+      applied:   el.dataset.applied,
+      skills:    JSON.parse(el.dataset.skills || '[]'),
+    };
+  }
+
+  function skillsHtml(skills) {
+    if (!skills.length) return '<span class="text-muted font-xs">—</span>';
+    return skills.map(function(s){ return '<span class="badge">' + esc(s) + '</span>'; }).join(' ');
+  }
+
+  /* ── Detail modal ─────────────────────────────────────────────── */
+  window._openCandidateDetail = function(cardEl) {
+    var d = getCandidateData(cardEl);
+    var inCmp    = _cmpList.some(function(c){ return c.id === d.id; });
+    var cmpFull  = _cmpList.length >= 2 && !inCmp;
+    var cmpBtn   = inCmp
+      ? '<button class="btn btn--secondary btn--sm" onclick="_removeCmp(\'' + d.id + '\')">✓ Remove from Comparison</button>'
+      : '<button class="btn btn--primary btn--sm"' + (cmpFull ? ' disabled title="Max 2 candidates"' : '') + ' onclick="_addCmp(\'' + d.id + '\')">Compare</button>';
+
+    var aiHtml = d.aiScore
+      ? '<div class="alert mb-3"><p class="m-0 font-sm"><strong class="text-white">AI fit: ' + esc(d.aiScore) + '%</strong><br><span>' + esc(d.aiSummary) + '</span></p></div>'
+      : '';
+    var coverHtml = d.cover
+      ? '<p class="font-sm mb-0"><em>"' + esc(d.cover) + '"</em></p>'
+      : '';
+
+    var html =
+      '<div class="modal-wrapper" id="_cd-modal">' +
+        '<div class="modal-backdrop" onclick="_closeDetailModal()"></div>' +
+        '<div class="modal" style="max-width:520px;">' +
+          '<div class="job-card__header">' +
+            '<div class="job-card__company-section"><p class="text-white font-bold m-0">' + esc(d.name) + '</p></div>' +
+            '<button class="modal-close" onclick="_closeDetailModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
+          '</div>' +
+          '<div class="modal-content-scroll">' +
+            '<table class="cmp-table mt-2">' +
+              '<tr><td>Email</td><td><a href="mailto:' + esc(d.email) + '" class="link-primary font-sm">' + esc(d.email) + '</a></td></tr>' +
+              '<tr><td>Applied</td><td class="font-sm">' + esc(d.applied) + '</td></tr>' +
+              '<tr><td>Stage</td><td><span class="badge">' + esc(stageLabel[d.stage] || d.stage) + '</span></td></tr>' +
+              (d.aiScore ? '<tr><td>AI Score</td><td><strong class="text-white">' + esc(d.aiScore) + '%</strong></td></tr>' : '') +
+              '<tr><td>Skills</td><td class="d-flex flex-wrap gap-1">' + skillsHtml(d.skills) + '</td></tr>' +
+              (d.cover ? '<tr><td>Cover Note</td><td class="font-sm"><em>"' + esc(d.cover) + '"</em></td></tr>' : '') +
+            '</table>' +
+          '</div>' +
+          '<div class="modal-footer d-flex justify-between items-center">' +
+            '<span class="font-xs text-muted">' + (inCmp ? 'In comparison' : (_cmpList.length >= 2 ? 'Comparison full (2/2)' : _cmpList.length + '/2 selected')) + '</span>' +
+            cmpBtn +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    // Store current data for add/remove callbacks
+    window._cdCurrent = d;
+    document.body.insertAdjacentHTML('beforeend', html);
+    document.body.style.overflow = 'hidden';
+  };
+
+  window._closeDetailModal = function() {
+    var m = document.getElementById('_cd-modal');
+    if (m) m.remove();
+    document.body.style.overflow = '';
+    window._cdCurrent = null;
+  };
+
+  /* ── Compare state ────────────────────────────────────────────── */
+  window._addCmp = function(id) {
+    var d = window._cdCurrent;
+    if (!d || d.id !== id || _cmpList.length >= 2) return;
+    _cmpList.push(d);
+    // highlight card
+    var card = document.querySelector('[data-cid="' + id + '"]');
+    if (card) card.classList.add('is-in-compare');
+    _updateCmpBar();
+    _closeDetailModal();
+    if (_cmpList.length === 2) _openCompareModal();
+  };
+
+  window._removeCmp = function(id) {
+    _cmpList = _cmpList.filter(function(c){ return c.id !== id; });
+    var card = document.querySelector('[data-cid="' + id + '"]');
+    if (card) card.classList.remove('is-in-compare');
+    _updateCmpBar();
+    _closeDetailModal();
+  };
+
+  window._clearCompare = function() {
+    _cmpList.forEach(function(c){
+      var card = document.querySelector('[data-cid="' + c.id + '"]');
+      if (card) card.classList.remove('is-in-compare');
+    });
+    _cmpList = [];
+    _updateCmpBar();
+  };
+
+  function _updateCmpBar() {
+    var bar = document.getElementById('_cmp-bar');
+    var txt = document.getElementById('_cmp-bar-text');
+    var btn = document.getElementById('_cmp-bar-btn');
+    if (_cmpList.length === 0) { bar.style.display = 'none'; return; }
+    bar.style.display = 'flex';
+    txt.textContent = _cmpList.length === 1
+      ? '"' + _cmpList[0].name + '" selected — click Compare on a second candidate'
+      : '"' + _cmpList[0].name + '" vs "' + _cmpList[1].name + '"';
+    btn.style.display = _cmpList.length === 2 ? '' : 'none';
+  }
+
+  /* ── Comparison modal ─────────────────────────────────────────── */
+  window._openCompareModal = function() {
+    if (_cmpList.length < 2) return;
+    var a = _cmpList[0], b = _cmpList[1];
+    function row(label, va, vb) {
+      return '<tr><td>' + label + '</td><td>' + va + '</td><td>' + vb + '</td></tr>';
+    }
+    var html =
+      '<div class="modal-wrapper" id="_cmp-modal">' +
+        '<div class="modal-backdrop" onclick="_closeCmpModal()"></div>' +
+        '<div class="modal" style="max-width:700px;">' +
+          '<div class="job-card__header">' +
+            '<p class="text-white font-bold m-0">Candidate Comparison</p>' +
+            '<button class="modal-close" onclick="_closeCmpModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
+          '</div>' +
+          '<div class="modal-content-scroll">' +
+            '<table class="cmp-table">' +
+              '<thead><tr>' +
+                '<th></th>' +
+                '<th class="text-white">' + esc(a.name) + '</th>' +
+                '<th class="text-white">' + esc(b.name) + '</th>' +
+              '</tr></thead><tbody>' +
+              row('Email',
+                '<a href="mailto:'+esc(a.email)+'" class="link-primary font-sm">'+esc(a.email)+'</a>',
+                '<a href="mailto:'+esc(b.email)+'" class="link-primary font-sm">'+esc(b.email)+'</a>') +
+              row('Applied', esc(a.applied), esc(b.applied)) +
+              row('Stage',
+                '<span class="badge">'+esc(stageLabel[a.stage]||a.stage)+'</span>',
+                '<span class="badge">'+esc(stageLabel[b.stage]||b.stage)+'</span>') +
+              row('AI Score',
+                a.aiScore ? '<strong class="text-white">'+esc(a.aiScore)+'%</strong>' : '<span class="text-muted">—</span>',
+                b.aiScore ? '<strong class="text-white">'+esc(b.aiScore)+'%</strong>' : '<span class="text-muted">—</span>') +
+              row('Skills',
+                '<div class="d-flex flex-wrap gap-1">'+skillsHtml(a.skills)+'</div>',
+                '<div class="d-flex flex-wrap gap-1">'+skillsHtml(b.skills)+'</div>') +
+              row('Cover Note',
+                a.cover ? '<em class="font-sm">"'+esc(a.cover)+'"</em>' : '<span class="text-muted">—</span>',
+                b.cover ? '<em class="font-sm">"'+esc(b.cover)+'"</em>' : '<span class="text-muted">—</span>') +
+            '</tbody></table>' +
+          '</div>' +
+          '<div class="modal-footer d-flex gap-3 justify-between items-center">' +
+            '<button class="btn btn--ghost btn--sm" onclick="_clearCompare();_closeCmpModal()">Clear comparison</button>' +
+            '<button class="btn btn--secondary btn--sm" onclick="_closeCmpModal()">Close</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    document.body.style.overflow = 'hidden';
+  };
+
+  window._closeCmpModal = function() {
+    var m = document.getElementById('_cmp-modal');
+    if (m) m.remove();
+    document.body.style.overflow = '';
+  };
+})();
+</script>
 {{end}}
 
 {{define "ats-columns"}}
@@ -49,26 +239,19 @@
 {{end}}
 
 {{define "ats-card"}}
-<div class="card ats-card">
-  <p class="ats-card-name">{{.CandidateName}}</p>
-  <p class="ats-card-email">{{.CandidateEmail}}</p>
-
-  {{if .CandidateSkills}}
-    <div class="ats-card-skills">
-      {{range .CandidateSkills}}<span class="badge ats-card-skill-badge">{{.}}</span>{{end}}
-    </div>
-  {{end}}
-
-  {{if .HasAIRank}}
-    <div class="alert ats-card-ai-note">
-      <p class="ats-card-ai-score"><strong>AI fit: {{.AIScore}}%</strong> — {{.AISummary}}</p>
-    </div>
-  {{end}}
-
-  {{if .CoverNote}}
-    <p class="ats-card-cover-note">"{{.CoverNote}}"</p>
-  {{end}}
-
+<div class="card ats-card ats-card--clickable"
+     data-cid="{{.ID}}"
+     data-name="{{js .CandidateName}}"
+     data-email="{{js .CandidateEmail}}"
+     data-stage="{{.Stage}}"
+     data-cover="{{js .CoverNote}}"
+     data-ai-score="{{if .HasAIRank}}{{printf "%.0f" .AIScore}}{{end}}"
+     data-ai-summary="{{if .HasAIRank}}{{js .AISummary}}{{end}}"
+     data-applied="{{.CreatedAt.Format "2 Jan 2006"}}"
+     data-skills='[{{range $i, $s := .CandidateSkills}}{{if $i}},{{end}}"{{js $s}}"{{end}}]'
+     onclick="if(!event.target.closest('.ats-card-form')){_openCandidateDetail(this);}">
+  <p class="ats-card-name pt-3 px-3">{{.CandidateName}}</p>
+  <p class="ats-card-email pb-2 px-3">{{.CandidateEmail}}</p>
   <form method="POST" action="/ats/applications/{{.ID}}/stage" class="ats-card-form">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
     <select name="stage" onchange="this.form.submit()" class="ats-card-select">

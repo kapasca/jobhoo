@@ -221,6 +221,22 @@ func (h *Handlers) ReopenJob(w http.ResponseWriter, r *http.Request) {
 	h.setJobStatus(w, r, models.JobPublished)
 }
 
+func (h *Handlers) DeleteJob(w http.ResponseWriter, r *http.Request) {
+	job, ok := h.jobOwnedByRequestingRecruiter(w, r)
+	if !ok {
+		return
+	}
+	if job.Status != models.JobArchived {
+		http.Error(w, "only archived jobs can be deleted", http.StatusBadRequest)
+		return
+	}
+	if err := h.Jobs.Delete(r.Context(), job.ID); err != nil {
+		http.Error(w, "could not delete job", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/dashboard/recruiter", http.StatusSeeOther)
+}
+
 func (h *Handlers) setJobStatus(w http.ResponseWriter, r *http.Request, status models.JobStatus) {
 	job, ok := h.jobOwnedByRequestingRecruiter(w, r)
 	if !ok {
