@@ -14,14 +14,22 @@
 </section>
 
 <section class="container home__latest-section">
-  <div class="grid">
-    {{range .Jobs}}
-      {{template "job-card" .}}
-    {{end}}
-  </div>
-  <div class="home__view-all-container">
-    <a href="/jobs" class="btn btn--primary btn--lg">View All Jobs</a>
-  </div>
+  {{if .Jobs}}
+    <div class="grid">
+      {{range .Jobs}}
+        {{template "job-card" .}}
+      {{end}}
+    </div>
+    <div class="home__view-all-container">
+      <a href="/jobs" class="btn btn--primary btn--lg">View All Jobs</a>
+    </div>
+  {{else}}
+    <div class="empty-state">
+      <h3>No open roles right now</h3>
+      <p>Companies are getting set up — check back soon or be the first to post a job.</p>
+      <a href="/post-job" class="btn btn--primary mt-3">Post a Job</a>
+    </div>
+  {{end}}
 </section>
 
 {{end}}

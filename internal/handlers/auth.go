@@ -88,11 +88,10 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 	// Validation already confirmed a file exists at this point.
 	if role == models.RoleCandidate {
 		if resumeURL, err := handleResumeUpload(r); err != nil {
-			// File exists but type/size is invalid — user is created but resume not saved.
-			// This is acceptable; they can upload from profile page.
-			_ = h.Profiles.Upsert(r.Context(), user.ID, "", "", "", "", nil)
+			// File present but invalid type/size — create profile without URL.
+			_ = h.Profiles.Upsert(r.Context(), user.ID, "", "", "", "", []string{})
 		} else if resumeURL != "" {
-			_ = h.Profiles.Upsert(r.Context(), user.ID, "", "", resumeURL, "", nil)
+			_ = h.Profiles.Upsert(r.Context(), user.ID, "", "", resumeURL, "", []string{})
 		}
 	}
 

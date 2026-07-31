@@ -32,6 +32,8 @@ services:
       AI_PROVIDER: mock
     ports:
       - "8070:8070"
+    volumes:
+      - ./web/static/uploads:/app/web/static/uploads
 
 volumes:
   jobhoo_pgdata:
