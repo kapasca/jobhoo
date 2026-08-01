@@ -48,20 +48,13 @@
   <h2 class="mb-4">All Users</h2>
   {{if .UserLogs}}
   <div class="table-responsive mb-4"><table>
-    <thead><tr><th align="left">Name</th><th align="left">Email</th><th align="center">Role</th><th align="center">Joined</th><th align="center">Status</th><th></th></tr></thead>
-    <tbody>{{range .UserLogs}}<tr>
+    <thead><tr><th align="left">Name</th><th align="left">Email</th><th align="center">Role</th><th align="center">Joined</th><th align="center">Status</th></tr></thead>
+    <tbody>{{range .UserLogs}}<tr class="admin-detail-row" data-type="user" data-id="{{.ID}}" style="cursor: pointer;">
       <td class="text-white font-semibold">{{.FullName}}</td>
-      <td><a href="mailto:{{.Email}}" class="font-xs link-primary">{{.Email}}</a></td>
+      <td><a href="mailto:{{.Email}}" class="font-xs link-primary" onclick="event.stopPropagation();">{{.Email}}</a></td>
       <td align="center"><span class="badge">{{.Role}}</span></td>
       <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006"}}</td>
       <td align="center">{{if .IsFrozen}}<span class="badge badge--red">Frozen</span>{{else}}<span class="badge badge--green">Active</span>{{end}}</td>
-      <td align="right">{{if .IsFrozen}}
-        <form method="POST" action="/admin/users/{{.ID}}/unfreeze" id="frm-uf-{{.ID}}"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-          <button type="button" class="btn btn--secondary btn--sm" onclick="adminFreeze('uf','{{.ID}}','{{js .FullName}}')">Unfreeze</button></form>
-      {{else if ne (print .Role) "admin"}}
-        <form method="POST" action="/admin/users/{{.ID}}/freeze" id="frm-fr-{{.ID}}"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-          <button type="button" class="btn btn--secondary btn--sm" onclick="adminFreeze('fr','{{.ID}}','{{js .FullName}}')">Freeze</button></form>
-      {{end}}</td>
     </tr>{{end}}</tbody>
   </table></div>
   {{if gt .UserTotalPages 1}}<div class="pagination__wrapper mb-4">
@@ -76,9 +69,9 @@
   {{if .CandidateLogs}}
   <div class="table-responsive mb-4"><table>
     <thead><tr><th align="left">Name</th><th align="left">Email</th><th align="center">Registered</th></tr></thead>
-    <tbody>{{range .CandidateLogs}}<tr>
+    <tbody>{{range .CandidateLogs}}<tr class="admin-detail-row" data-type="candidate" data-id="{{.ID}}" style="cursor: pointer;">
       <td class="text-white font-semibold">{{.FullName}}</td>
-      <td><a href="mailto:{{.Email}}" class="font-xs link-primary">{{.Email}}</a></td>
+      <td><a href="mailto:{{.Email}}" class="font-xs link-primary" onclick="event.stopPropagation();">{{.Email}}</a></td>
       <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
     </tr>{{end}}</tbody>
   </table></div>
@@ -94,9 +87,9 @@
   {{if .RecruiterLogs}}
   <div class="table-responsive mb-4"><table>
     <thead><tr><th align="left">Name</th><th align="left">Email</th><th align="center">Registered</th></tr></thead>
-    <tbody>{{range .RecruiterLogs}}<tr>
+    <tbody>{{range .RecruiterLogs}}<tr class="admin-detail-row" data-type="recruiter" data-id="{{.ID}}" style="cursor: pointer;">
       <td class="text-white font-semibold">{{.FullName}}</td>
-      <td><a href="mailto:{{.Email}}" class="font-xs link-primary">{{.Email}}</a></td>
+      <td><a href="mailto:{{.Email}}" class="font-xs link-primary" onclick="event.stopPropagation();">{{.Email}}</a></td>
       <td align="center" class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04"}}</td>
     </tr>{{end}}</tbody>
   </table></div>
@@ -112,10 +105,10 @@
   {{if .CompanyLogs}}
   <div class="table-responsive mb-4"><table>
     <thead><tr><th align="left">Company</th><th align="left">Recruiter</th><th align="left">Email</th><th align="center">Status</th><th align="center">Registered</th><th align="center">Reviewed</th></tr></thead>
-    <tbody>{{range .CompanyLogs}}<tr>
+    <tbody>{{range .CompanyLogs}}<tr class="admin-detail-row" data-type="company" data-id="{{.ID}}" style="cursor: pointer;">
       <td class="text-white font-semibold">{{.Name}}{{if .Industry}}<br><span class="font-xs text-muted">{{.Industry}}</span>{{end}}</td>
       <td>{{.OwnerName}}</td>
-      <td><a href="mailto:{{.OwnerEmail}}" class="font-xs link-primary">{{.OwnerEmail}}</a></td>
+      <td><a href="mailto:{{.OwnerEmail}}" class="font-xs link-primary" onclick="event.stopPropagation();">{{.OwnerEmail}}</a></td>
       <td align="center">
         {{if eq (print .Status) "approved"}}<span class="badge badge--green">Approved</span>
         {{else if eq (print .Status) "rejected"}}<span class="badge badge--red">Rejected</span>
@@ -137,8 +130,8 @@
   <h2 class="mb-4">Job Management</h2>
   {{if .JobLogs}}
   <div class="table-responsive mb-4"><table>
-    <thead><tr><th align="left">Job</th><th align="left">Company</th><th align="left">Location</th><th align="center">Status</th><th align="center">Published</th><th></th></tr></thead>
-    <tbody>{{range .JobLogs}}<tr>
+    <thead><tr><th align="left">Job</th><th align="left">Company</th><th align="left">Location</th><th align="center">Status</th><th align="center">Published</th></tr></thead>
+    <tbody>{{range .JobLogs}}<tr class="admin-detail-row" data-type="job" data-id="{{.ID}}" style="cursor: pointer;">
       <td class="text-white font-semibold">{{.Title}}</td>
       <td class="font-sm">{{.CompanyName}}</td>
       <td class="font-xs text-muted">{{if .State}}{{.State}}, {{end}}{{.Country}}</td>
@@ -149,15 +142,6 @@
         {{else}}<span class="badge">{{.Status}}</span>{{end}}
       </td>
       <td align="center" class="nowrap font-xs">{{if .PublishedAt}}{{.PublishedAt.Format "2 Jan 2006"}}{{else}}—{{end}}</td>
-      <td align="right">
-        {{if .IsFrozen}}
-          <form method="POST" action="/admin/jobs/{{.ID}}/unfreeze" id="frm-juf-{{.ID}}"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-            <button type="button" class="btn btn--secondary btn--sm" onclick="adminFreeze('juf','{{.ID}}','{{js .Title}}')">Unfreeze Job</button></form>
-        {{else}}
-          <form method="POST" action="/admin/jobs/{{.ID}}/freeze" id="frm-jfr-{{.ID}}"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-            <button type="button" class="btn btn--secondary btn--sm" onclick="adminFreeze('jfr','{{.ID}}','{{js .Title}}')">Freeze Job</button></form>
-        {{end}}
-      </td>
     </tr>{{end}}</tbody>
   </table></div>
   {{if gt .JobTotalPages 1}}<div class="pagination__wrapper mb-4">
@@ -188,17 +172,104 @@
   {{end}}
 </section>
 
+<!-- Admin Modal -->
+<div id="admin-modal" class="admin-modal" style="display: none;">
+  <div class="admin-modal-overlay" onclick="closeAdminModal()"></div>
+  <div class="admin-modal-content">
+    <div id="admin-modal-inner"></div>
+  </div>
+</div>
+
 <script>
-async function adminFreeze(action, id, name) {
+// Admin modal detail view handler
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.admin-detail-row').forEach(row => {
+    row.addEventListener('click', function() {
+      const type = this.getAttribute('data-type');
+      const id = this.getAttribute('data-id');
+      openAdminModal(type, id);
+    });
+  });
+});
+
+function openAdminModal(type, id) {
+  const modal = document.getElementById('admin-modal');
+  const inner = document.getElementById('admin-modal-inner');
+  
+  inner.innerHTML = '<div style="padding: 2rem; text-align: center;">Loading...</div>';
+  modal.style.display = 'flex';
+  
+  let url = '';
+  switch(type) {
+    case 'user':
+      url = `/admin/api/users/${id}`;
+      break;
+    case 'candidate':
+      url = `/admin/api/candidates/${id}`;
+      break;
+    case 'recruiter':
+      url = `/admin/api/recruiters/${id}`;
+      break;
+    case 'company':
+      url = `/admin/api/companies/${id}`;
+      break;
+    case 'job':
+      url = `/admin/api/jobs/${id}`;
+      break;
+  }
+  
+  if (url) {
+    fetch(url)
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to load details');
+        return response.text();
+      })
+      .then(html => {
+        inner.innerHTML = html;
+      })
+      .catch(error => {
+        inner.innerHTML = `<div style="padding: 2rem; text-align: center; color: #f87171;">Error loading details: ${error.message}</div>`;
+      });
+  }
+}
+
+function closeAdminModal() {
+  document.getElementById('admin-modal').style.display = 'none';
+  document.getElementById('admin-modal-inner').innerHTML = '';
+}
+
+// Close modal when pressing Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeAdminModal();
+  }
+});
+
+// Handle admin actions (freeze/unfreeze) from modal
+async function handleAdminAction(action, id, name) {
   var msgs = {
     'fr':  { title: 'Freeze "' + name + '"?', msg: 'The user will not be able to log in until unfrozen.', btn: 'Yes, Freeze', cls: 'btn--secondary' },
     'uf':  { title: 'Unfreeze "' + name + '"?', msg: 'The user will be able to log in and use the platform again.', btn: 'Yes, Unfreeze', cls: 'btn--primary' },
     'jfr': { title: 'Freeze job "' + name + '"?', msg: 'The job will remain visible publicly but Apply will be disabled and recruiters cannot manage it.', btn: 'Yes, Freeze Job', cls: 'btn--secondary' },
     'juf': { title: 'Unfreeze job "' + name + '"?', msg: 'All job features will be re-enabled.', btn: 'Yes, Unfreeze Job', cls: 'btn--primary' },
   };
-  var m = msgs[action]; if (!m) return;
+  var m = msgs[action]; 
+  if (!m) return;
+  
   var r = await jhConfirm({ title: m.title, message: m.msg, confirmText: m.btn, confirmClass: m.cls });
-  if (r.ok) document.getElementById('frm-' + action + '-' + id).submit();
+  if (r.ok) {
+    var formId = 'frm-' + action + '-' + id;
+    var form = document.getElementById(formId);
+    if (form) {
+      form.submit();
+      // Close modal after submission
+      setTimeout(() => {
+        closeAdminModal();
+        // Reload page to show updated data
+        location.reload();
+      }, 500);
+    }
+  }
 }
 </script>
 {{end}}

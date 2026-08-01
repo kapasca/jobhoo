@@ -1,0 +1,4 @@
+*.exe              # Ignore Windows executables
+*.out              # Ignore compiled output
+/bin/              # Ignore bin directory
+/dist/             # Ignore dist directory

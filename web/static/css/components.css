@@ -1899,6 +1899,162 @@ tr:last-child td { border-bottom: none; }
   border-radius: var(--jh-radius-sm);
 }
 
+/* ============================================================
+   ADMIN MODAL STYLES — Detail view modal for entities
+   ============================================================ */
+.admin-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.admin-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+}
+
+.admin-modal-content {
+  position: relative;
+  background: var(--color-bg-secondary, var(--jh-surface-card));
+  border: 1px solid var(--color-border, var(--jh-border));
+  border-radius: var(--jh-radius-lg);
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--jh-shadow-lg);
+  width: 90%;
+}
+
+.admin-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.admin-modal-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-modal-content::-webkit-scrollbar-thumb {
+  background: var(--jh-orange-500);
+  border-radius: var(--jh-radius-sm);
+}
+
+.admin-modal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--jh-orange-400);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border, var(--jh-border));
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: var(--jh-text-lg);
+  font-weight: 600;
+  color: var(--jh-white);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-text-muted, var(--jh-ink-300));
+  padding: 0;
+  min-width: auto;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--jh-radius-sm);
+  flex-shrink: 0;
+  transition: all var(--jh-duration-fast) var(--jh-ease);
+}
+
+.modal-close:hover {
+  background: var(--color-border, var(--jh-border));
+  color: var(--jh-white);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--color-text-muted, var(--jh-ink-300));
+  font-size: var(--jh-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detail-value {
+  color: var(--jh-white);
+  line-height: 1.5;
+  font-size: var(--jh-text-sm);
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--color-border, var(--jh-border));
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+/* Admin detail row for clickable effect */
+.admin-detail-row {
+  transition: background var(--jh-duration-fast) var(--jh-ease);
+}
+
+.admin-detail-row:hover {
+  background: rgba(var(--jh-orange-rgb), 0.05);
+}
+
 .ats-columns-wrapper::-webkit-scrollbar-thumb:hover {
   background: var(--jh-orange-400);
 }

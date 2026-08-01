@@ -104,6 +104,12 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Post("/admin/users/{id}/unfreeze", h.UnfreezeUser)
 		r.Post("/admin/jobs/{id}/freeze", h.FreezeJob)
 		r.Post("/admin/jobs/{id}/unfreeze", h.UnfreezeJob)
+		// Admin modal detail routes (API)
+		r.Get("/admin/api/users/{userID}", h.AdminUserDetail)
+		r.Get("/admin/api/candidates/{candidateID}", h.AdminCandidateDetail)
+		r.Get("/admin/api/recruiters/{recruiterID}", h.AdminRecruiterDetail)
+		r.Get("/admin/api/companies/{companyID}", h.AdminCompanyDetail)
+		r.Get("/admin/api/jobs/{jobID}", h.AdminJobDetail)
 	})
 
 	r.Get("/companies", h.CompaniesDirectory)
