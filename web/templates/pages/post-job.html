@@ -27,7 +27,7 @@
         </div>
       </div>
       <div class="field">
-        <label for="seniority">Seniority <span class="field__optional">(opt.)</span></label>
+        <label for="seniority">Seniority <span class="field__optional">(optional)</span></label>
         <div class="field__input-group">
           <input type="text" id="seniority" name="seniority" value="{{if ne .Seniority "General"}}{{.Seniority}}{{end}}" placeholder="Mid, Senior, Lead...">
         </div>
@@ -124,18 +124,18 @@
         </select>
       </div>
       <div class="field">
-        <label for="salary_min">Salary min <span class="field__optional">(opt.)</span></label>
+        <label for="salary_min">Salary min <span class="field__optional">(optional)</span></label>
         <input type="number" id="salary_min" name="salary_min" value="{{.SalaryMin}}" placeholder="5000000">
       </div>
       <div class="field">
-        <label for="salary_max">Salary max <span class="field__optional">(opt.)</span></label>
+        <label for="salary_max">Salary max <span class="field__optional">(optional)</span></label>
         <input type="number" id="salary_max" name="salary_max" value="{{.SalaryMax}}" placeholder="8000000">
       </div>
     </div>
 
     <div class="d-grid grid-2-col gap-4">
       <div class="field">
-        <label for="opens_at">Opens at <span class="field__optional">(opt.)</span></label>
+        <label for="opens_at">Opens at <span class="field__optional">(optional)</span></label>
         <div class="field__input-group">
           <input type="datetime-local" id="opens_at" name="opens_at" value="{{.OpensAt}}">
           <span class="field__hint">Leave blank to make this job visible to candidates immediately.</span>

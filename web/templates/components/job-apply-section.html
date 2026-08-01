@@ -24,7 +24,7 @@
   <form method="POST" action="/jobs/{{.Job.ID}}/apply" hx-post="/jobs/{{.Job.ID}}/apply" hx-target="#job-apply-section" hx-swap="outerHTML">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
     <div class="field">
-      <label for="cover_note">Cover note (opt.)</label>
+      <label for="cover_note">Cover note <span class="field__optional">(optional)</span></label>
       <textarea id="cover_note" name="cover_note" rows="3" placeholder="A short note on why you're a fit..."></textarea>
     </div>
     <button type="submit" class="btn btn--primary btn-full-width">Apply to this job</button>
