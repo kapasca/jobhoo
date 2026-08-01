@@ -273,6 +273,23 @@ func (r *JobsRepo) GetByID(ctx context.Context, id string) (*models.Job, error) 
 	return &j, nil
 }
 
+// GetPublicByID returns a job only if it is currently visible to the public
+// (published, within opens/closes window, and not frozen). Used by public
+// handlers so frozen jobs are treated as not found.
+func (r *JobsRepo) GetPublicByID(ctx context.Context, id string) (*models.Job, error) {
+	query := `
+		SELECT ` + jobSelectColumns + `
+		FROM jobs j
+		JOIN companies c ON c.id = j.company_id
+		WHERE ` + publicVisibilityClause + ` AND j.id = $1
+	`
+	j, err := scanJob(r.pool.QueryRow(ctx, query, id))
+	if err != nil {
+		return nil, err
+	}
+	return &j, nil
+}
+
 // rowScanner covers both pgx.Row (QueryRow) and pgx.Rows (Query), which
 // share a Scan method but no common interface in pgx v5.
 type rowScanner interface {

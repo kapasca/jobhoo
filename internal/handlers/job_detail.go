@@ -61,6 +61,14 @@ func (h *Handlers) ApplyToJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If the job has been frozen by admin, prevent candidates from applying.
+	if job.IsFrozen {
+		data := jobDetailData{BasePageData: newBasePageData(r, "jobs"), Job: *job, CanApply: true}
+		data.ApplyError = "This job is currently frozen and cannot accept applications."
+		h.renderApplySection(w, r, data)
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form", http.StatusBadRequest)
 		return
