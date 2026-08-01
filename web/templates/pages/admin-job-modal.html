@@ -1,0 +1,104 @@
+{{define "admin-job-modal"}}
+<div class="modal-header">
+  <h2 class="modal-title">Job Details</h2>
+  <button type="button" class="modal-close" onclick="closeAdminModal()" aria-label="Close">&times;</button>
+</div>
+<div class="modal-body">
+  <div class="detail-section">
+    <div class="detail-row">
+      <span class="detail-label">Job Title</span>
+      <span class="detail-value text-white font-semibold">{{.Job.Title}}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Company</span>
+      <span class="detail-value text-white font-semibold">{{.Company.Name}}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Recruiter</span>
+      <span class="detail-value">
+        <span class="text-white font-semibold">{{.Owner.FullName}}</span><br>
+        <a href="mailto:{{.Owner.Email}}" class="font-xs link-primary">{{.Owner.Email}}</a>
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Category</span>
+      <span class="detail-value"><span class="badge">{{.Job.Category}}</span></span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Location</span>
+      <span class="detail-value">{{.Job.Location}}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Employment Type</span>
+      <span class="detail-value">{{.Job.EmploymentType.String}}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Work Arrangement</span>
+      <span class="detail-value">{{.Job.WorkArrangement.String}}</span>
+    </div>
+    {{if .Job.SalaryMin}}
+    <div class="detail-row">
+      <span class="detail-label">Salary Range</span>
+      <span class="detail-value">{{.Job.SalaryCurrency}} {{.Job.SalaryMin}} - {{.Job.SalaryMax}}</span>
+    </div>
+    {{end}}
+    {{if .Job.Seniority}}
+    <div class="detail-row">
+      <span class="detail-label">Seniority Level</span>
+      <span class="detail-value">{{.Job.Seniority}}</span>
+    </div>
+    {{end}}
+    <div class="detail-row">
+      <span class="detail-label">Status</span>
+      <span class="detail-value">
+        {{if .Job.IsFrozen}}<span class="badge badge--red">Frozen</span>
+        {{else if eq (print .Job.Status) "published"}}<span class="badge badge--green">Published</span>
+        {{else if eq (print .Job.Status) "closed"}}<span class="badge badge--gray">Closed</span>
+        {{else}}<span class="badge">{{.Job.Status}}</span>{{end}}
+      </span>
+    </div>
+    {{if .Job.PublishedAt}}
+    <div class="detail-row">
+      <span class="detail-label">Published</span>
+      <span class="detail-value">{{.Job.PublishedAt.Format "2 Jan 2006"}}</span>
+    </div>
+    {{end}}
+    <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--color-border);">
+    <div class="detail-row">
+      <span class="detail-label">Description</span>
+      <span class="detail-value" style="white-space: pre-wrap; line-height: 1.6;">{{.Job.Description}}</span>
+    </div>
+    {{if .Job.MustHaveSkills}}
+    <div class="detail-row">
+      <span class="detail-label">Must Have Skills</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        {{range .Job.MustHaveSkills}}<span class="badge badge--primary">{{.}}</span>{{end}}
+      </div>
+    </div>
+    {{end}}
+    {{if .Job.NiceToHaveSkills}}
+    <div class="detail-row">
+      <span class="detail-label">Nice to Have Skills</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+        {{range .Job.NiceToHaveSkills}}<span class="badge">{{.}}</span>{{end}}
+      </div>
+    </div>
+    {{end}}
+  </div>
+</div>
+<div class="modal-footer">
+  {{if .Job.IsFrozen}}
+    <form method="POST" action="/admin/jobs/{{.Job.ID}}/unfreeze" id="frm-juf-{{.Job.ID}}" class="flex gap-2" style="width: 100%;">
+      <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+      <button type="button" class="btn btn--primary flex-1" onclick="handleAdminAction('juf','{{.Job.ID}}','{{js .Job.Title}}')">Unfreeze Job</button>
+      <button type="button" class="btn btn--secondary flex-1" onclick="closeAdminModal()">Close</button>
+    </form>
+  {{else}}
+    <form method="POST" action="/admin/jobs/{{.Job.ID}}/freeze" id="frm-jfr-{{.Job.ID}}" class="flex gap-2" style="width: 100%;">
+      <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+      <button type="button" class="btn btn--secondary flex-1" onclick="handleAdminAction('jfr','{{.Job.ID}}','{{js .Job.Title}}')">Freeze Job</button>
+      <button type="button" class="btn btn--secondary flex-1" onclick="closeAdminModal()">Close</button>
+    </form>
+  {{end}}
+</div>
+{{end}}

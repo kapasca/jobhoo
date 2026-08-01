@@ -1,0 +1,67 @@
+{{define "admin-company-modal"}}
+<div class="modal-header">
+  <h2 class="modal-title">Company Details</h2>
+  <button type="button" class="modal-close" onclick="closeAdminModal()" aria-label="Close">&times;</button>
+</div>
+<div class="modal-body">
+  <div class="detail-section">
+    <div class="detail-row">
+      <span class="detail-label">Company</span>
+      <span class="detail-value text-white font-semibold">{{.Company.Name}}</span>
+    </div>
+    {{if .Company.LogoURL}}
+    <div class="detail-row">
+      <span class="detail-label">Logo</span>
+      <span class="detail-value"><img src="{{.Company.LogoURL}}" alt="{{.Company.Name}}" style="max-width: 150px; max-height: 100px;"></span>
+    </div>
+    {{end}}
+    <div class="detail-row">
+      <span class="detail-label">Owner</span>
+      <span class="detail-value">
+        <span class="text-white font-semibold">{{.Owner.FullName}}</span><br>
+        <a href="mailto:{{.Owner.Email}}" class="font-xs link-primary">{{.Owner.Email}}</a>
+      </span>
+    </div>
+    {{if .Company.Industry}}
+    <div class="detail-row">
+      <span class="detail-label">Industry</span>
+      <span class="detail-value">{{.Company.Industry}}</span>
+    </div>
+    {{end}}
+    {{if .Company.Website}}
+    <div class="detail-row">
+      <span class="detail-label">Website</span>
+      <span class="detail-value"><a href="{{.Company.Website}}" target="_blank" class="link-primary">{{.Company.Website}}</a></span>
+    </div>
+    {{end}}
+    {{if .Company.Description}}
+    <div class="detail-row">
+      <span class="detail-label">Description</span>
+      <span class="detail-value">{{.Company.Description}}</span>
+    </div>
+    {{end}}
+    <div class="detail-row">
+      <span class="detail-label">Status</span>
+      <span class="detail-value">
+        {{if eq (print .Company.Status) "approved"}}<span class="badge badge--green">Approved</span>
+        {{else if eq (print .Company.Status) "rejected"}}<span class="badge badge--red">Rejected</span>
+        {{else if eq (print .Company.Status) "blacklisted"}}<span class="badge badge--red">Blacklisted</span>
+        {{else}}<span class="badge badge--gray">Pending</span>{{end}}
+      </span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Registered</span>
+      <span class="detail-value">{{.Company.CreatedAt.Format "2 Jan 2006 15:04"}}</span>
+    </div>
+    {{if .Company.ApprovedAt}}
+    <div class="detail-row">
+      <span class="detail-label">Approved</span>
+      <span class="detail-value">{{.Company.ApprovedAt.Format "2 Jan 2006 15:04"}}</span>
+    </div>
+    {{end}}
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn--secondary" onclick="closeAdminModal()">Close</button>
+</div>
+{{end}}
