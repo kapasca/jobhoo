@@ -42,17 +42,18 @@ func (s *SMTPSender) Send(to, subject, htmlBody, textBody string) error {
 	msg.WriteString(htmlBody)
 	msg.WriteString("\r\n--BOUNDARY--")
 
-	// TLS connection
-	tlsconfig := &tls.Config{InsecureSkipVerify: true, ServerName: s.host}
-	conn, err := tls.Dial("tcp", addr, tlsconfig)
-	if err != nil {
-		return err
-	}
-	c, err := smtp.NewClient(conn, s.host)
+	// Dial plain connection and then upgrade to TLS with STARTTLS
+	c, err := smtp.Dial(addr)
 	if err != nil {
 		return err
 	}
 	defer c.Quit()
+
+	// Upgrade to TLS
+	tlsconfig := &tls.Config{InsecureSkipVerify: true, ServerName: s.host}
+	if err = c.StartTLS(tlsconfig); err != nil {
+		return err
+	}
 
 	if err = c.Auth(auth); err != nil {
 		return err

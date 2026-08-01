@@ -554,6 +554,7 @@ tr:last-child td { border-bottom: none; }
   justify-content: space-between;
 }
 .alert--warning { border-color: var(--jh-orange-500); background: rgba(var(--jh-orange-rgb), 0.08); text-align: center; }
+.alert--success { border-color: var(--jh-green-500); background: rgba(0, 128, 0, 0.08); text-align: center; color: var(--jh-green-600); }
 
 .toast {
   position: fixed; bottom: var(--jh-space-6); right: var(--jh-space-6);
@@ -1132,7 +1133,6 @@ tr:last-child td { border-bottom: none; }
 .featured-company-card {
   display: flex;
   flex-direction: column;
-  gap: var(--jh-space-2);
   padding: var(--jh-space-3);
   background: var(--jh-surface-inset);
   border: 1px solid var(--jh-border);
@@ -1149,7 +1149,7 @@ tr:last-child td { border-bottom: none; }
 
 .featured-company-card__logo {
   width: 100%;
-  height: 100px;
+  height: 150px;
   border-radius: var(--jh-radius-sm);
   background: var(--jh-navy-700);
   display: flex;
@@ -1160,7 +1160,7 @@ tr:last-child td { border-bottom: none; }
 .featured-company-card__logo img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 /* Fixed-size logo for the public company detail page header */
@@ -1372,7 +1372,6 @@ tr:last-child td { border-bottom: none; }
 }
 
 .modal-footer {
-  flex-shrink: 0;
   padding: var(--jh-space-4);
   border-top: 1px solid var(--jh-border);
   margin-top: var(--jh-space-4);
@@ -2027,11 +2026,6 @@ tr:last-child td { border-bottom: none; }
 .modal-footer {
   padding: 1.5rem;
   border-top: 1px solid var(--color-border, var(--jh-border));
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  flex-shrink: 0;
-  flex-wrap: wrap;
 }
 
 .flex {

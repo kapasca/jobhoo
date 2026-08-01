@@ -56,6 +56,14 @@ func (h *Handlers) CompanySetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := validateWebsite(data.Website); err != nil {
+		data.Error = err.Error()
+		h.Render.Render(w, http.StatusBadRequest, "company-setup.html", data)
+		return
+	}
+
+	data.Website = normalizeWebsiteURL(data.Website)
+
 	logoURL, err := handleLogoUpload(r)
 	if err != nil {
 		data.Error = err.Error()
@@ -173,6 +181,32 @@ func handleLogoUpload(r *http.Request) (string, error) {
 	return logoURLPrefix + filename, nil
 }
 
+// validateWebsite checks if website contains at least one dot (.) as domain separator.
+// Returns nil if valid, or an error message if invalid.
+func validateWebsite(website string) error {
+	if website == "" {
+		// website is optional
+		return nil
+	}
+	if !strings.Contains(website, ".") {
+		return fmt.Errorf("website must contain a valid domain name (with a dot)")
+	}
+	return nil
+}
+
+// normalizeWebsiteURL ensures website URL has a protocol (http:// or https://).
+// If the URL doesn't start with http:// or https://, adds https:// as default.
+// Returns the normalized URL, or empty string if input is empty.
+func normalizeWebsiteURL(website string) string {
+	if website == "" {
+		return ""
+	}
+	if strings.HasPrefix(website, "http://") || strings.HasPrefix(website, "https://") {
+		return website
+	}
+	return "https://" + website
+}
+
 func (h *Handlers) CompanyProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	company, ok := h.requireCompany(w, r)
 	if !ok {
@@ -200,6 +234,14 @@ func (h *Handlers) CompanyProfileUpdate(w http.ResponseWriter, r *http.Request) 
 		h.Render.Render(w, http.StatusBadRequest, "company-setup.html", data)
 		return
 	}
+
+	if err := validateWebsite(data.Website); err != nil {
+		data.Error = err.Error()
+		h.Render.Render(w, http.StatusBadRequest, "company-setup.html", data)
+		return
+	}
+
+	data.Website = normalizeWebsiteURL(data.Website)
 
 	uploadedURL, err := handleLogoUpload(r)
 	if err != nil {

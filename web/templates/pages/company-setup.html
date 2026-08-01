@@ -7,8 +7,8 @@
       <h2>My Company</h2>
       <p class="mb-5">This information will be displayed on your company public page.</p>
     {{else}}
-      <h2>Complete Registration</h2>
-      <p class="mb-5">Set up your company’s profile on JOBHOO. Once our team approves it, you’ll be able to post job openings.</p>
+      <h2>Verify Company</h2>
+      <p class="mb-6">Set up your company’s profile on JOBHOO. Once our team approves it, you’ll be able to post job openings.</p>
     {{end}}
 
     {{if .Error}}
@@ -99,13 +99,13 @@ document.getElementById('company-setup-form').addEventListener('submit', async f
 
   var desc60 = description ? description.substring(0, 60) + (description.length > 60 ? '\u2026' : '') : '(kosong)';
   var r2 = await jhConfirm({
-    title: 'Review submission',
+    title: 'Review Submission',
     message:
-      'Company name : ' + name + '\n' +
-      'Industry     : ' + (industry    || '(empty)') + '\n' +
-      'Website      : ' + (website     || '(empty)') + '\n' +
-      'Description  : ' + desc60       + '\n' +
-      'Logo         : ' + (logo ? 'Selected' : '(none)') + '\n\n' +
+      'Company: ' + name + '\n' +
+      'Industry: ' + (industry    || '(empty)') + '\n' +
+      'Website: ' + (website     || '(empty)') + '\n' +
+      'Description: ' + desc60       + '\n' +
+      'Logo: ' + (logo ? 'Selected' : '(none)') + '\n\n' +
       'Submit this registration?',
     confirmText: 'Yes, Submit',
     confirmClass: 'btn--primary',

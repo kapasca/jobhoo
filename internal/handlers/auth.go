@@ -19,6 +19,7 @@ const sessionTTL = 30 * 24 * time.Hour // 30 days
 type authPageData struct {
 	BasePageData
 	Error    string
+	Success  string
 	NextURL  string
 	Email    string
 	FullName string
@@ -82,12 +83,7 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.startSession(w, r, user.ID); err != nil {
-		http.Error(w, "could not start session", http.StatusInternalServerError)
-		return
-	}
-
-	// Create and send email verification token (advisory: not required to use site).
+	// Create and send email verification token (required to login).
 	rawToken, _, err := auth.NewSessionToken()
 	if err == nil {
 		// token valid for 48 hours
@@ -99,15 +95,65 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 		link := fmt.Sprintf("%s://%s/verify-email?token=%s", scheme, r.Host, rawToken)
 		subj := "Verify your JOBHOO email"
 		text := "Please verify your email by visiting: " + link
-		html := `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-			<h2 style="color: #001d3d; margin-bottom: 1rem;">Verify Your Email</h2>
-			<p>Welcome to JOBHOO! Please verify your email address by clicking the link below:</p>
-			<div style="text-align: center; margin: 1.5rem 0;">
-				<a href="` + link + `" style="display: inline-block; padding: 12px 24px; background-color: #ff9500; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold;">Verify Email</a>
-			</div>
-			<p style="color: #666; font-size: 0.9rem;">If you didn't create this account, please ignore this email.</p>
-			<p style="color: #666; font-size: 0.85rem; margin-top: 1.5rem;">This link expires in 48 hours.</p>
-		</div>`
+		html := `<!DOCTYPE html>
+		<html style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6;">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Verify Your Email - JOBHOO</title>
+		</head>
+		<body style="margin: 0; padding: 0; background-color: #f5f7fa;">
+			<table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f7fa; padding: 20px 0;">
+				<tr>
+					<td align="center" style="padding: 40px 20px;">
+						<table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+							<!-- Header -->
+							<tr>
+								<td style="background: linear-gradient(135deg, #001d3d 0%, #003366 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+									<h1 style="color: #fff; margin: 0; font-size: 28px; font-weight: 700;">JOBHOO</h1>
+									<p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: 14px;">Connecting Jobs & Talent</p>
+								</td>
+							</tr>
+							<!-- Content -->
+							<tr>
+								<td style="padding: 40px 30px; color: #333;">
+									<h2 style="color: #001d3d; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">Verify Your Email Address</h2>
+									<p style="margin: 0 0 10px 0; color: #555; font-size: 15px;">Welcome to JOBHOO! You're almost there.</p>
+									<p style="margin: 0 0 30px 0; color: #777; font-size: 14px;">Please verify your email address to complete your registration and start exploring opportunities.</p>
+									<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+										<tr>
+											<td align="center" style="padding: 20px 0;">
+												<a href="` + link + `" style="display: inline-block; background-color: #ff9500; color: #fff; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; transition: background-color 0.3s ease;">Verify Email Address</a>
+											</td>
+										</tr>
+									</table>
+									<p style="margin: 20px 0 0 0; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 13px; line-height: 1.8;">
+										<strong>Can't click the button?</strong><br>
+										Copy and paste this link in your browser:<br>
+										<span style="word-break: break-all; color: #666;">` + link + `</span>
+									</p>
+								</td>
+							</tr>
+							<!-- Footer -->
+							<tr>
+								<td style="background-color: #f9fafb; padding: 30px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #eee;">
+									<p style="margin: 0 0 10px 0; color: #999; font-size: 12px;">
+										<strong>Link expires in 48 hours</strong>
+									</p>
+									<p style="margin: 10px 0; color: #bbb; font-size: 12px;">
+										If you didn't create this account, you can safely ignore this email.
+									</p>
+									<p style="margin: 15px 0 0 0; padding-top: 15px; border-top: 1px solid #ddd; color: #aaa; font-size: 11px;">
+										© 2026 JOBHOO. All rights reserved.
+									</p>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</body>
+		</html>`
 		userID := user.ID
 		_ = h.Email.SendWithUserID(r.Context(), user.Email, subj, html, text, "email_verification", &userID)
 	}
@@ -123,7 +169,9 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, dashboardPathForRole(user.Role), http.StatusSeeOther)
+	// Show verification message instead of auto-login
+	data.Success = "Account created successfully, check your email to verify your address before logging in."
+	h.Render.Render(w, http.StatusOK, "signup.html", data)
 }
 
 func (h *Handlers) LoginPage(w http.ResponseWriter, r *http.Request) {
@@ -164,6 +212,16 @@ func (h *Handlers) Login(w http.ResponseWriter, r *http.Request) {
 			h.Render.RenderBlock(w, "login-modal.html", "login-modal", data)
 		} else {
 			h.Render.Render(w, http.StatusUnauthorized, "login.html", data)
+		}
+		return
+	}
+
+	if !user.EmailVerified {
+		data.Error = "Please verify your email before logging in. Check your inbox for the verification link."
+		if r.Header.Get("HX-Request") == "true" {
+			h.Render.RenderBlock(w, "login-modal.html", "login-modal", data)
+		} else {
+			h.Render.Render(w, http.StatusForbidden, "login.html", data)
 		}
 		return
 	}
@@ -292,15 +350,65 @@ func (h *Handlers) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 			link := fmt.Sprintf("%s://%s/reset-password?token=%s", scheme, r.Host, rawToken)
 			subj := "Reset Your JOBHOO Password"
 			text := "Click this link to reset your password: " + link + "\n\nThis link expires in 2 hours."
-			html := `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-				<h2 style="color: #001d3d; margin-bottom: 1rem;">Password Reset Request</h2>
-				<p>We received a request to reset your JOBHOO password. Click the button below to set a new password:</p>
-				<div style="text-align: center; margin: 1.5rem 0;">
-					<a href="` + link + `" style="display: inline-block; padding: 12px 24px; background-color: #ff9500; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold;">Reset Password</a>
-				</div>
-				<p style="color: #666; font-size: 0.9rem;">If you didn't request this, please ignore this email.</p>
-				<p style="color: #666; font-size: 0.85rem; margin-top: 1.5rem;">This link expires in 2 hours.</p>
-			</div>`
+			html := `<!DOCTYPE html>
+			<html style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6;">
+			<head>
+				<meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title>Reset Your Password - JOBHOO</title>
+			</head>
+			<body style="margin: 0; padding: 0; background-color: #f5f7fa;">
+				<table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f5f7fa; padding: 20px 0;">
+					<tr>
+						<td align="center" style="padding: 40px 20px;">
+							<table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+								<!-- Header -->
+								<tr>
+									<td style="background: linear-gradient(135deg, #001d3d 0%, #003366 100%); padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0;">
+										<h1 style="color: #fff; margin: 0; font-size: 28px; font-weight: 700;">JOBHOO</h1>
+										<p style="color: rgba(255,255,255,0.8); margin: 8px 0 0 0; font-size: 14px;">Connecting Jobs & Talent</p>
+									</td>
+								</tr>
+								<!-- Content -->
+								<tr>
+									<td style="padding: 40px 30px; color: #333;">
+										<h2 style="color: #001d3d; margin: 0 0 20px 0; font-size: 24px; font-weight: 600;">Reset Your Password</h2>
+										<p style="margin: 0 0 10px 0; color: #555; font-size: 15px;">We received a request to reset your password.</p>
+										<p style="margin: 0 0 30px 0; color: #777; font-size: 14px;">Click the button below to set a new password. This link is only valid for 2 hours.</p>
+										<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 30px 0;">
+											<tr>
+												<td align="center" style="padding: 20px 0;">
+													<a href="` + link + `" style="display: inline-block; background-color: #ff9500; color: #fff; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; transition: background-color 0.3s ease;">Reset Password</a>
+												</td>
+											</tr>
+										</table>
+										<p style="margin: 20px 0 0 0; padding-top: 20px; border-top: 1px solid #eee; color: #999; font-size: 13px; line-height: 1.8;">
+											<strong>Can't click the button?</strong><br>
+											Copy and paste this link in your browser:<br>
+											<span style="word-break: break-all; color: #666;">` + link + `</span>
+										</p>
+									</td>
+								</tr>
+								<!-- Footer -->
+								<tr>
+									<td style="background-color: #f9fafb; padding: 30px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #eee;">
+										<p style="margin: 0 0 10px 0; color: #999; font-size: 12px;">
+											<strong>Link expires in 2 hours</strong>
+										</p>
+										<p style="margin: 10px 0; color: #bbb; font-size: 12px;">
+											If you didn't request this, you can safely ignore this email.
+										</p>
+										<p style="margin: 15px 0 0 0; padding-top: 15px; border-top: 1px solid #ddd; color: #aaa; font-size: 11px;">
+											© 2026 JOBHOO. All rights reserved.
+										</p>
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</body>
+			</html>`
 			userID := user.ID
 			_ = h.Email.SendWithUserID(r.Context(), user.Email, subj, html, text, "password_reset", &userID)
 		}

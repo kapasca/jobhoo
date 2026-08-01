@@ -1,7 +1,8 @@
 // Command seed populates JOBHOO with realistic demo data for testing search,
 // filtering, category classification, and pagination at a non-trivial scale:
-// 10 recruiter accounts (one company each) and 100 jobs spread across the
-// platform's 5 job categories.
+// 10 recruiter accounts (one company each), 100 jobs spread across the
+// platform's 5 job categories, 20 candidate accounts (mix of verified/unverified),
+// and applications from candidates to jobs.
 //
 // It is safe to re-run: it first deletes any existing rows tagged with the
 // demo email domain (@jobhoo.demo), then reinserts fresh data, so it never
@@ -29,6 +30,7 @@ import (
 const demoEmailDomain = "@jobhoo.demo"
 const numCompanies = 10
 const numJobs = 100
+const numCandidates = 20
 
 func main() {
 	_ = godotenv.Load()
@@ -68,7 +70,18 @@ func main() {
 		log.Fatalf("job seed error: %v", err)
 	}
 
-	log.Println("done: 1 admin, 10 companies (1 left pending for the approval queue), and 100 jobs across 5 categories seeded.")
+	log.Printf("creating %d candidate accounts...", numCandidates)
+	candidateIDs, err := seedCandidates(ctx, pool, rng)
+	if err != nil {
+		log.Fatalf("candidate seed error: %v", err)
+	}
+
+	log.Println("creating applications from candidates to jobs...")
+	if err := seedApplications(ctx, pool, rng, candidateIDs); err != nil {
+		log.Fatalf("application seed error: %v", err)
+	}
+
+	log.Println("done: 1 admin, 10 companies (1 pending), 100 jobs, 20 candidates, and applications seeded.")
 }
 
 // seedAdmin creates a demo admin account. There's no signup path for the
@@ -80,8 +93,8 @@ func seedAdmin(ctx context.Context, pool *pgxpool.Pool) error {
 		return fmt.Errorf("hashing admin password: %w", err)
 	}
 	_, err = pool.Exec(ctx, `
-		INSERT INTO users (email, password_hash, role, full_name)
-		VALUES ($1, $2, 'admin', 'JOBHOO Admin')
+		INSERT INTO users (email, password_hash, role, full_name, email_verified)
+		VALUES ($1, $2, 'admin', 'JOBHOO Admin', true)
 	`, "admin"+demoEmailDomain, passwordHash)
 	return err
 }

@@ -76,10 +76,11 @@ func (r *UsersRepo) GetByID(ctx context.Context, id string) (*models.User, error
 
 // CandidateRegistration is a lightweight row for the admin registration log.
 type CandidateRegistration struct {
-	ID        string
-	FullName  string
-	Email     string
-	CreatedAt time.Time
+	ID            string
+	FullName      string
+	Email         string
+	EmailVerified bool
+	CreatedAt     time.Time
 }
 
 // ListCandidateRegistrations returns one page of candidate accounts and the total count.
@@ -89,7 +90,7 @@ func (r *UsersRepo) ListCandidateRegistrations(ctx context.Context, limit, offse
 		return nil, 0, err
 	}
 	rows, err := r.pool.Query(ctx, `
-		SELECT id, full_name, email, created_at
+		SELECT id, full_name, email, email_verified, created_at
 		FROM users WHERE role = 'candidate'
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2
@@ -102,7 +103,7 @@ func (r *UsersRepo) ListCandidateRegistrations(ctx context.Context, limit, offse
 	var out []CandidateRegistration
 	for rows.Next() {
 		var c CandidateRegistration
-		if err := rows.Scan(&c.ID, &c.FullName, &c.Email, &c.CreatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.FullName, &c.Email, &c.EmailVerified, &c.CreatedAt); err != nil {
 			return nil, 0, err
 		}
 		out = append(out, c)
@@ -117,7 +118,7 @@ func (r *UsersRepo) ListRecruiterRegistrations(ctx context.Context, limit, offse
 		return nil, 0, err
 	}
 	rows, err := r.pool.Query(ctx, `
-		SELECT id, full_name, email, created_at FROM users WHERE role = 'recruiter'
+		SELECT id, full_name, email, email_verified, created_at FROM users WHERE role = 'recruiter'
 		ORDER BY created_at DESC LIMIT $1 OFFSET $2
 	`, limit, offset)
 	if err != nil {
@@ -127,7 +128,7 @@ func (r *UsersRepo) ListRecruiterRegistrations(ctx context.Context, limit, offse
 	var out []CandidateRegistration
 	for rows.Next() {
 		var c CandidateRegistration
-		if err := rows.Scan(&c.ID, &c.FullName, &c.Email, &c.CreatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.FullName, &c.Email, &c.EmailVerified, &c.CreatedAt); err != nil {
 			return nil, 0, err
 		}
 		out = append(out, c)
@@ -137,12 +138,13 @@ func (r *UsersRepo) ListRecruiterRegistrations(ctx context.Context, limit, offse
 
 // UserRow is a lightweight row for the admin user management table.
 type UserRow struct {
-	ID        string
-	FullName  string
-	Email     string
-	Role      models.UserRole
-	IsFrozen  bool
-	CreatedAt time.Time
+	ID            string
+	FullName      string
+	Email         string
+	Role          models.UserRole
+	IsFrozen      bool
+	EmailVerified bool
+	CreatedAt     time.Time
 }
 
 // ListAllUsers returns one page of all users for the admin panel.
@@ -152,7 +154,7 @@ func (r *UsersRepo) ListAllUsers(ctx context.Context, limit, offset int) ([]User
 		return nil, 0, err
 	}
 	rows, err := r.pool.Query(ctx, `
-		SELECT id, full_name, email, role, is_frozen, created_at
+		SELECT id, full_name, email, role, is_frozen, email_verified, created_at
 		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2
 	`, limit, offset)
 	if err != nil {
@@ -162,7 +164,7 @@ func (r *UsersRepo) ListAllUsers(ctx context.Context, limit, offset int) ([]User
 	var out []UserRow
 	for rows.Next() {
 		var u UserRow
-		if err := rows.Scan(&u.ID, &u.FullName, &u.Email, &u.Role, &u.IsFrozen, &u.CreatedAt); err != nil {
+		if err := rows.Scan(&u.ID, &u.FullName, &u.Email, &u.Role, &u.IsFrozen, &u.EmailVerified, &u.CreatedAt); err != nil {
 			return nil, 0, err
 		}
 		out = append(out, u)

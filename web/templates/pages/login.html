@@ -27,6 +27,12 @@
     <p class="login-page-footer">
       New to JOBHOO? <a href="/signup">Create an Account</a>
     </p>
+    
+    {{if .Error}}
+    <p class="login-page-footer">
+      <a href="/forgot-password">Forgot your password?</a>
+    </p>
+    {{end}}
   </div>
 </section>
 {{end}}

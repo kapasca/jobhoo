@@ -17,11 +17,11 @@
     <div class="companies-grid">
       {{range .Companies}}
         <a href="/companies/{{.ID}}" class="featured-company-card">
-          <div class="featured-company-card__logo">
+          <p class="text-white font-bold m-0">{{.Name}}</p>
+          {{if .Industry}}<p class="text-muted m-0 font-xs">{{.Industry}}</p>{{end}}
+          <div class="featured-company-card__logo mt-3 mb-3">
             <img src="{{if .LogoURL}}{{.LogoURL}}{{else}}/static/img/jobhoo-icon.png{{end}}" alt="{{.Name}} logo">
           </div>
-          <p class="text-white font-bold m-0">{{.Name}}</p>
-          {{if .Industry}}<p class="m-0 font-xs">{{.Industry}}</p>{{end}}
           <span class="badge {{if gt .OpenJobCount 0}}badge--orange{{end}}">
             {{.OpenJobCount}} open role{{if ne .OpenJobCount 1}}s{{end}}
           </span>

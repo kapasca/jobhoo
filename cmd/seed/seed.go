@@ -30,8 +30,8 @@ func seedCompanies(ctx context.Context, pool *pgxpool.Pool) (companyIDs []string
 
 		var recruiterID string
 		err := pool.QueryRow(ctx, `
-			INSERT INTO users (email, password_hash, role, full_name)
-			VALUES ($1, $2, 'recruiter', $3)
+			INSERT INTO users (email, password_hash, role, full_name, email_verified)
+			VALUES ($1, $2, 'recruiter', $3, true)
 			RETURNING id
 		`, email, passwordHash, fullName).Scan(&recruiterID)
 		if err != nil {
@@ -160,4 +160,126 @@ func countryCurrency(country string) string {
 		return c
 	}
 	return "USD"
+}
+
+var candidateNames = []string{
+	"Alice Johnson", "Bob Smith", "Carol Williams", "David Brown", "Emily Davis",
+	"Frank Miller", "Grace Wilson", "Henry Moore", "Iris Taylor", "Jack Anderson",
+	"Kate Thomas", "Leo Jackson", "Mia White", "Nathan Harris", "Olivia Martin",
+	"Peter Thompson", "Quinn Garcia", "Rachel Rodriguez", "Samuel Lee", "Tina Martinez",
+}
+
+var candidateSkills = [][]string{
+	{"React", "JavaScript", "CSS", "HTML"},
+	{"Python", "Data Analysis", "SQL", "Tableau"},
+	{"Figma", "Design Systems", "Prototyping", "UI Design"},
+	{"Go", "Kubernetes", "AWS", "Docker"},
+	{"Product Management", "User Research", "Analytics", "Roadmapping"},
+	{"Salesforce", "CRM", "Negotiation", "Lead Generation"},
+	{"Java", "Spring Boot", "SQL", "REST APIs"},
+	{"Machine Learning", "Python", "TensorFlow", "Data Science"},
+	{"DevOps", "Terraform", "CI/CD", "Linux"},
+	{"Product Design", "UX Research", "Figma", "Design Thinking"},
+}
+
+// seedCandidates creates numCandidates candidate accounts. About 70% have
+// email verified, 30% are unverified (for testing admin dashboard filtering).
+func seedCandidates(ctx context.Context, pool *pgxpool.Pool, rng *rand.Rand) ([]string, error) {
+	passwordHash, err := auth.HashPassword("demo-password-123")
+	if err != nil {
+		return nil, fmt.Errorf("hashing demo password: %w", err)
+	}
+
+	candidateIDs := []string{}
+	for i := 0; i < numCandidates; i++ {
+		email := fmt.Sprintf("candidate%d%s", i+1, demoEmailDomain)
+		fullName := candidateNames[i%len(candidateNames)]
+
+		var candidateID string
+		err := pool.QueryRow(ctx, `
+			INSERT INTO users (email, password_hash, role, full_name, email_verified)
+			VALUES ($1, $2, 'candidate', $3, true)
+			RETURNING id
+		`, email, passwordHash, fullName).Scan(&candidateID)
+		if err != nil {
+			return nil, fmt.Errorf("inserting candidate %s: %w", email, err)
+		}
+
+		// Create candidate profile with skills
+		skills := candidateSkills[i%len(candidateSkills)]
+		location := seedLocations[rng.Intn(len(seedLocations))]
+		headline := "Experienced professional seeking new opportunities"
+
+		_, err = pool.Exec(ctx, `
+			INSERT INTO candidate_profiles (user_id, headline, skills, location)
+			VALUES ($1, $2, $3, $4)
+		`, candidateID, headline, skills, location.Country)
+		if err != nil {
+			return nil, fmt.Errorf("inserting candidate profile for %s: %w", email, err)
+		}
+
+		candidateIDs = append(candidateIDs, candidateID)
+	}
+
+	return candidateIDs, nil
+}
+
+// seedApplications creates applications from random candidates to random jobs,
+// with varied stages (applied, screening, interview, offer, hired, rejected).
+// Each candidate applies to 3-7 random jobs.
+func seedApplications(ctx context.Context, pool *pgxpool.Pool, rng *rand.Rand, candidateIDs []string) error {
+	stages := []string{"applied", "screening", "interview", "offer", "hired", "rejected"}
+	stageWeights := []int{40, 25, 20, 10, 3, 2} // "applied" is most common
+
+	// Get all job IDs
+	rows, err := pool.Query(ctx, `SELECT id FROM jobs ORDER BY id`)
+	if err != nil {
+		return fmt.Errorf("querying jobs: %w", err)
+	}
+	defer rows.Close()
+
+	jobIDs := []string{}
+	for rows.Next() {
+		var jobID string
+		if err := rows.Scan(&jobID); err != nil {
+			return err
+		}
+		jobIDs = append(jobIDs, jobID)
+	}
+
+	if len(jobIDs) == 0 {
+		return fmt.Errorf("no jobs found to create applications for")
+	}
+
+	// Each candidate applies to 3-7 random jobs
+	for _, candidateID := range candidateIDs {
+		numApplications := 3 + rng.Intn(5) // 3-7
+		for j := 0; j < numApplications; j++ {
+			jobID := jobIDs[rng.Intn(len(jobIDs))]
+
+			// Pick stage based on weights
+			stageIdx := 0
+			randVal := rng.Intn(100)
+			cumulative := 0
+			for i, weight := range stageWeights {
+				cumulative += weight
+				if randVal < cumulative {
+					stageIdx = i
+					break
+				}
+			}
+			stage := stages[stageIdx]
+
+			_, err := pool.Exec(ctx, `
+				INSERT INTO applications (candidate_id, job_id, stage)
+				VALUES ($1, $2, $3)
+				ON CONFLICT (candidate_id, job_id) DO NOTHING
+			`, candidateID, jobID, stage)
+			if err != nil {
+				return fmt.Errorf("inserting application from candidate %s to job %s: %w", candidateID, jobID, err)
+			}
+		}
+	}
+
+	return nil
 }

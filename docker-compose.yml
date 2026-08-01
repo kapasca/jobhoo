@@ -30,6 +30,12 @@ services:
       DATABASE_URL: postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable
       SESSION_SECRET: dev-only-secret-change-me
       AI_PROVIDER: mock
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-dev}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@jobhoo.local}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
     ports:
       - "8070:8070"
     volumes:
