@@ -1,4 +1,17 @@
+.env
+# Build & Compilation
 *.exe              # Ignore Windows executables
 *.out              # Ignore compiled output
 /bin/              # Ignore bin directory
 /dist/             # Ignore dist directory
+
+# Environment & Secrets
+.env               # Local environment configuration (contains secrets)
+.env.local         # Local overrides
+.env.*.local       # Environment-specific local files
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
