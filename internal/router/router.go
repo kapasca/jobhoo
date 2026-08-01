@@ -42,10 +42,21 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		})
 	})
 
+	// Authentication routes with rate limiting
+	// 5 attempts per 15 minutes for signup and login
+	authLimiter := jhmw.NewRateLimiter(5, 15*time.Minute)
+	// 10 attempts per 15 minutes for email operations
+	emailLimiter := jhmw.NewRateLimiter(10, 15*time.Minute)
+
 	r.Get("/signup", h.SignupPage)
-	r.Post("/signup", h.Signup)
+	r.With(jhmw.RateLimitMiddleware(authLimiter, 5, 15*time.Minute)).Post("/signup", h.Signup)
 	r.Get("/login", h.LoginPage)
-	r.Post("/login", h.Login)
+	r.With(jhmw.RateLimitMiddleware(authLimiter, 5, 15*time.Minute)).Post("/login", h.Login)
+	r.With(jhmw.RateLimitMiddleware(emailLimiter, 10, 15*time.Minute)).Get("/verify-email", h.VerifyEmail)
+	r.Get("/forgot-password", h.ForgotPasswordPage)
+	r.With(jhmw.RateLimitMiddleware(emailLimiter, 10, 15*time.Minute)).Post("/forgot-password", h.ForgotPassword)
+	r.Get("/reset-password", h.ResetPasswordPage)
+	r.With(jhmw.RateLimitMiddleware(emailLimiter, 10, 15*time.Minute)).Post("/reset-password", h.ResetPassword)
 	r.Post("/logout", h.Logout)
 
 	// --- Candidate-only routes ---

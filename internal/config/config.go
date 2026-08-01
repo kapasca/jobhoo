@@ -22,6 +22,13 @@ type Config struct {
 	// code — only this value changes.
 	AIProvider string
 	AIAPIKey   string
+	// Email configuration
+	EmailProvider string // "dev" | "smtp"
+	EmailFrom     string
+	SMTPHost      string
+	SMTPPort      string
+	SMTPUser      string
+	SMTPPass      string
 }
 
 func Load() (*Config, error) {
@@ -32,6 +39,30 @@ func Load() (*Config, error) {
 		SessionSecret: getEnv("SESSION_SECRET", ""),
 		AIProvider:    getEnv("AI_PROVIDER", "mock"),
 		AIAPIKey:      getEnv("AI_API_KEY", ""),
+		EmailProvider: getEnv("EMAIL_PROVIDER", "dev"),
+		EmailFrom:     getEnv("EMAIL_FROM", "no-reply@jobhoo.local"),
+		SMTPHost:      getEnv("SMTP_HOST", ""),
+		SMTPPort:      getEnv("SMTP_PORT", "587"),
+		SMTPUser:      getEnv("SMTP_USER", ""),
+		SMTPPass:      getEnv("SMTP_PASS", ""),
+	}
+
+	// Support Mailtrap-style env vars for developer testing. If MAIL_HOST is
+	// present and explicit SMTP_* vars are not set, copy them across so the
+	// app will use SMTP (Mailtrap) even in development.
+	if cfg.SMTPHost == "" {
+		if mailHost := getEnv("MAIL_HOST", ""); mailHost != "" {
+			cfg.SMTPHost = mailHost
+			cfg.SMTPPort = getEnv("MAIL_PORT", cfg.SMTPPort)
+			cfg.SMTPUser = getEnv("MAIL_USER", cfg.SMTPUser)
+			cfg.SMTPPass = getEnv("MAIL_PASS", cfg.SMTPPass)
+		}
+	}
+
+	// If developer selected EMAIL_PROVIDER=dev but SMTP/Mailtrap creds exist,
+	// prefer SMTP so emails are delivered to the Mailtrap inbox for testing.
+	if cfg.EmailProvider == "dev" && cfg.SMTPHost != "" {
+		cfg.EmailProvider = "smtp"
 	}
 
 	if cfg.DatabaseURL == "" {

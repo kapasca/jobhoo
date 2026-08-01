@@ -1,0 +1,22 @@
+{{define "title"}}Verify Your Email — JOBHOO{{end}}
+
+{{define "content"}}
+<section class="container container-max-sm">
+  <div class="card card--pad-lg">
+    <h1 class="text--center">Email Verification</h1>
+    {{if .Error}}
+      <div class="alert alert--warning">
+        <strong>Verification Failed</strong>
+        <p>{{.Error}}</p>
+        <p><a href="/login">Return to login</a></p>
+      </div>
+    {{else}}
+      <div class="alert alert--success">
+        <strong class="text--success">✓ Email Verified Successfully!</strong>
+        <p style="margin-top: 0.5rem;">Your email has been verified. Your account is now fully activated.</p>
+        <p style="margin-top: 1rem;"><a href="/dashboard" class="btn btn--primary">Go to Dashboard</a></p>
+      </div>
+    {{end}}
+  </div>
+</section>
+{{end}}

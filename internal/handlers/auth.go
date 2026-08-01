@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
+
 	"github.com/jobhoo/jobhoo/internal/auth"
 	"github.com/jobhoo/jobhoo/internal/database"
 	"github.com/jobhoo/jobhoo/internal/middleware"
@@ -21,6 +23,7 @@ type authPageData struct {
 	Email    string
 	FullName string
 	Role     string
+	Token    string
 }
 
 func (h *Handlers) SignupPage(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +85,31 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 	if err := h.startSession(w, r, user.ID); err != nil {
 		http.Error(w, "could not start session", http.StatusInternalServerError)
 		return
+	}
+
+	// Create and send email verification token (advisory: not required to use site).
+	rawToken, _, err := auth.NewSessionToken()
+	if err == nil {
+		// token valid for 48 hours
+		_ = h.Tokens.CreateEmailVerification(r.Context(), user.ID, rawToken, 48*time.Hour)
+		scheme := "https"
+		if r.TLS == nil {
+			scheme = "http"
+		}
+		link := fmt.Sprintf("%s://%s/verify-email?token=%s", scheme, r.Host, rawToken)
+		subj := "Verify your JOBHOO email"
+		text := "Please verify your email by visiting: " + link
+		html := `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+			<h2 style="color: #001d3d; margin-bottom: 1rem;">Verify Your Email</h2>
+			<p>Welcome to JOBHOO! Please verify your email address by clicking the link below:</p>
+			<div style="text-align: center; margin: 1.5rem 0;">
+				<a href="` + link + `" style="display: inline-block; padding: 12px 24px; background-color: #ff9500; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold;">Verify Email</a>
+			</div>
+			<p style="color: #666; font-size: 0.9rem;">If you didn't create this account, please ignore this email.</p>
+			<p style="color: #666; font-size: 0.85rem; margin-top: 1.5rem;">This link expires in 48 hours.</p>
+		</div>`
+		userID := user.ID
+		_ = h.Email.SendWithUserID(r.Context(), user.Email, subj, html, text, "email_verification", &userID)
 	}
 
 	// Persist the resume file if one was uploaded during candidate signup.
@@ -217,4 +245,107 @@ func dashboardPathForRole(role models.UserRole) string {
 	default:
 		return "/dashboard/candidate"
 	}
+}
+
+// VerifyEmail handles GET /verify-email?token=xxxxx
+func (h *Handlers) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "missing token", http.StatusBadRequest)
+		return
+	}
+	userID, err := h.Tokens.ConsumeEmailVerification(r.Context(), token)
+	if err != nil {
+		h.Render.Render(w, http.StatusOK, "verify-email.html", authPageData{BasePageData: newBasePageData(r, "verify-email"), Error: "Invalid or expired token."})
+		return
+	}
+	if err := h.Users.SetEmailVerified(r.Context(), userID); err != nil {
+		http.Error(w, "could not verify email", http.StatusInternalServerError)
+		return
+	}
+	h.Render.Render(w, http.StatusOK, "verify-email.html", authPageData{BasePageData: newBasePageData(r, "verify-email")})
+}
+
+// ForgotPasswordPage shows the forgot password form
+func (h *Handlers) ForgotPasswordPage(w http.ResponseWriter, r *http.Request) {
+	h.Render.Render(w, http.StatusOK, "forgot-password.html", authPageData{BasePageData: newBasePageData(r, "forgot-password")})
+}
+
+// ForgotPassword handles form post to request a password reset
+func (h *Handlers) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
+	email := strings.TrimSpace(strings.ToLower(r.FormValue("email")))
+	// Always show success page to avoid account enumeration
+	data := authPageData{BasePageData: newBasePageData(r, "forgot-password")}
+	user, err := h.Users.GetByEmail(r.Context(), email)
+	if err == nil && user != nil {
+		rawToken, _, err2 := auth.NewSessionToken()
+		if err2 == nil {
+			_ = h.Tokens.CreatePasswordReset(r.Context(), user.ID, rawToken, 2*time.Hour)
+			scheme := "https"
+			if r.TLS == nil {
+				scheme = "http"
+			}
+			link := fmt.Sprintf("%s://%s/reset-password?token=%s", scheme, r.Host, rawToken)
+			subj := "Reset Your JOBHOO Password"
+			text := "Click this link to reset your password: " + link + "\n\nThis link expires in 2 hours."
+			html := `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+				<h2 style="color: #001d3d; margin-bottom: 1rem;">Password Reset Request</h2>
+				<p>We received a request to reset your JOBHOO password. Click the button below to set a new password:</p>
+				<div style="text-align: center; margin: 1.5rem 0;">
+					<a href="` + link + `" style="display: inline-block; padding: 12px 24px; background-color: #ff9500; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold;">Reset Password</a>
+				</div>
+				<p style="color: #666; font-size: 0.9rem;">If you didn't request this, please ignore this email.</p>
+				<p style="color: #666; font-size: 0.85rem; margin-top: 1.5rem;">This link expires in 2 hours.</p>
+			</div>`
+			userID := user.ID
+			_ = h.Email.SendWithUserID(r.Context(), user.Email, subj, html, text, "password_reset", &userID)
+		}
+	}
+	data.Error = "If an account exists for that email, a reset link has been sent."
+	h.Render.Render(w, http.StatusOK, "forgot-password.html", data)
+}
+
+// ResetPasswordPage shows a form to set a new password (token required)
+func (h *Handlers) ResetPasswordPage(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	data := authPageData{BasePageData: newBasePageData(r, "reset-password"), Error: "", Token: token}
+	if token == "" {
+		data.Error = "Missing token."
+	}
+	h.Render.Render(w, http.StatusOK, "reset-password.html", data)
+}
+
+// ResetPassword processes the new password submission
+func (h *Handlers) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
+	token := r.FormValue("token")
+	pw := r.FormValue("password")
+	if token == "" || pw == "" {
+		http.Error(w, "missing fields", http.StatusBadRequest)
+		return
+	}
+	userID, err := h.Tokens.ConsumePasswordReset(r.Context(), token)
+	if err != nil {
+		h.Render.Render(w, http.StatusBadRequest, "reset-password.html", authPageData{BasePageData: newBasePageData(r, "reset-password"), Error: "Invalid or expired token."})
+		return
+	}
+	hash, err := auth.HashPassword(pw)
+	if err != nil {
+		h.Render.Render(w, http.StatusBadRequest, "reset-password.html", authPageData{BasePageData: newBasePageData(r, "reset-password"), Error: "Password must be at least 8 characters."})
+		return
+	}
+	if err := h.Users.SetPasswordHash(r.Context(), userID, hash); err != nil {
+		http.Error(w, "could not set password", http.StatusInternalServerError)
+		return
+	}
+	// Revoke all existing sessions for security
+	_ = h.Sessions.RevokeAllForUser(r.Context(), userID)
+	h.Render.Render(w, http.StatusOK, "reset-password.html", authPageData{BasePageData: newBasePageData(r, "reset-password")})
 }

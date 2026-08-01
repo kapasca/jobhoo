@@ -14,6 +14,7 @@ import (
 	"github.com/jobhoo/jobhoo/internal/ai"
 	"github.com/jobhoo/jobhoo/internal/config"
 	"github.com/jobhoo/jobhoo/internal/database"
+	"github.com/jobhoo/jobhoo/internal/email"
 	"github.com/jobhoo/jobhoo/internal/handlers"
 	"github.com/jobhoo/jobhoo/internal/router"
 )
@@ -40,6 +41,7 @@ func main() {
 		log.Fatalf("ai provider error: %v", err)
 	}
 	log.Printf("AI provider active: %s", aiProvider.Name())
+	log.Printf("Email provider active: %s", cfg.EmailProvider)
 
 	renderer, err := handlers.NewRenderer("web/templates")
 	if err != nil {
@@ -53,10 +55,25 @@ func main() {
 	applicationsRepo := database.NewApplicationsRepo(pool)
 	savedJobsRepo := database.NewSavedJobsRepo(pool)
 	profilesRepo := database.NewCandidateProfilesRepo(pool)
+	tokensRepo := database.NewEmailTokensRepo(pool)
+	emailLogsRepo := database.NewEmailLogsRepo(pool)
+
+	// Initialize base email sender based on config
+	var baseSender email.Sender
+	switch cfg.EmailProvider {
+	case "smtp":
+		baseSender = email.NewSMTPSender(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.EmailFrom)
+	default:
+		baseSender = email.NewDevSender()
+	}
+
+	// Wrap with logging sender
+	emailSender := email.NewLoggingSender(baseSender, emailLogsRepo)
 
 	h := handlers.New(
 		renderer, jobsRepo, usersRepo, sessionsRepo, companiesRepo,
 		applicationsRepo, savedJobsRepo, profilesRepo, aiProvider,
+		emailSender, tokensRepo,
 	)
 	mux := router.New(h, usersRepo, sessionsRepo, "web/static")
 

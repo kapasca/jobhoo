@@ -34,6 +34,18 @@ func (h *Handlers) ApproveCompany(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not approve company", http.StatusInternalServerError)
 		return
 	}
+	// Notify company owner that their company was approved (best-effort)
+	go func() {
+		if c, err := h.Companies.GetByID(r.Context(), id); err == nil {
+			if owner, err2 := h.Users.GetByID(r.Context(), c.OwnerID); err2 == nil {
+				subj := "Your company is approved on JOBHOO"
+				link := "/company/profile"
+				text := "Your company has been approved and you can now post jobs: " + link
+				html := "<p>Your company has been <strong>approved</strong>. <a href=\"" + link + "\">Go to profile</a></p>"
+				_ = h.Email.Send(owner.Email, subj, html, text)
+			}
+		}
+	}()
 	http.Redirect(w, r, "/admin/approvals", http.StatusSeeOther)
 }
 
@@ -53,6 +65,16 @@ func (h *Handlers) BlacklistCompany(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not blacklist company", http.StatusInternalServerError)
 		return
 	}
+	go func() {
+		if c, err := h.Companies.GetByID(r.Context(), id); err == nil {
+			if owner, err2 := h.Users.GetByID(r.Context(), c.OwnerID); err2 == nil {
+				subj := "Your company has been blocked on JOBHOO"
+				text := reason
+				html := "<p>Your company has been blocked: " + reason + "</p>"
+				_ = h.Email.Send(owner.Email, subj, html, text)
+			}
+		}
+	}()
 	http.Redirect(w, r, "/admin/approvals", http.StatusSeeOther)
 }
 
@@ -73,5 +95,15 @@ func (h *Handlers) RejectCompany(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not reject company", http.StatusInternalServerError)
 		return
 	}
+	go func() {
+		if c, err := h.Companies.GetByID(r.Context(), id); err == nil {
+			if owner, err2 := h.Users.GetByID(r.Context(), c.OwnerID); err2 == nil {
+				subj := "Your company application was rejected on JOBHOO"
+				text := reason
+				html := "<p>Your company application was <strong>rejected</strong>: " + reason + "</p>"
+				_ = h.Email.Send(owner.Email, subj, html, text)
+			}
+		}
+	}()
 	http.Redirect(w, r, "/admin/approvals", http.StatusSeeOther)
 }

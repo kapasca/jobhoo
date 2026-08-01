@@ -14,14 +14,15 @@ const (
 )
 
 type User struct {
-	ID           string
-	Email        string
-	PasswordHash string `json:"-"`
-	Role         UserRole
-	FullName     string
-	AvatarURL    string
-	IsFrozen     bool
-	CreatedAt    time.Time
+	ID            string
+	Email         string
+	PasswordHash  string `json:"-"`
+	Role          UserRole
+	FullName      string
+	AvatarURL     string
+	IsFrozen      bool
+	EmailVerified bool
+	CreatedAt     time.Time
 }
 
 type CompanyStatus string

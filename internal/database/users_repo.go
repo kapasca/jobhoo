@@ -34,9 +34,9 @@ func (r *UsersRepo) Create(ctx context.Context, email, passwordHash, fullName st
 	err := r.pool.QueryRow(ctx, `
 		INSERT INTO users (email, password_hash, role, full_name)
 		VALUES ($1, $2, $3, $4)
-		RETURNING id, email, password_hash, role, full_name, coalesce(avatar_url, ''), is_frozen, created_at
+		RETURNING id, email, password_hash, role, full_name, coalesce(avatar_url, ''), is_frozen, email_verified, created_at
 	`, email, passwordHash, role, fullName).Scan(
-		&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.IsFrozen, &u.CreatedAt,
+		&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.IsFrozen, &u.EmailVerified, &u.CreatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -47,9 +47,9 @@ func (r *UsersRepo) Create(ctx context.Context, email, passwordHash, fullName st
 func (r *UsersRepo) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	var u models.User
 	err := r.pool.QueryRow(ctx, `
-		SELECT id, email, password_hash, role, full_name, coalesce(avatar_url, ''), is_frozen, created_at
+		SELECT id, email, password_hash, role, full_name, coalesce(avatar_url, ''), is_frozen, email_verified, created_at
 		FROM users WHERE email = $1
-	`, email).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.IsFrozen, &u.CreatedAt)
+	`, email).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.IsFrozen, &u.EmailVerified, &u.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -62,9 +62,9 @@ func (r *UsersRepo) GetByEmail(ctx context.Context, email string) (*models.User,
 func (r *UsersRepo) GetByID(ctx context.Context, id string) (*models.User, error) {
 	var u models.User
 	err := r.pool.QueryRow(ctx, `
-		SELECT id, email, password_hash, role, full_name, coalesce(avatar_url, ''), is_frozen, created_at
+		SELECT id, email, password_hash, role, full_name, coalesce(avatar_url, ''), is_frozen, email_verified, created_at
 		FROM users WHERE id = $1
-	`, id).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.IsFrozen, &u.CreatedAt)
+	`, id).Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Role, &u.FullName, &u.AvatarURL, &u.IsFrozen, &u.EmailVerified, &u.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -177,6 +177,18 @@ func (r *UsersRepo) FreezeUser(ctx context.Context, id string) error {
 
 func (r *UsersRepo) UnfreezeUser(ctx context.Context, id string) error {
 	_, err := r.pool.Exec(ctx, `UPDATE users SET is_frozen = FALSE WHERE id = $1`, id)
+	return err
+}
+
+// SetEmailVerified marks a user's email as verified.
+func (r *UsersRepo) SetEmailVerified(ctx context.Context, id string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE users SET email_verified = TRUE WHERE id = $1`, id)
+	return err
+}
+
+// SetPasswordHash atomically sets a new bcrypt password hash for the user.
+func (r *UsersRepo) SetPasswordHash(ctx context.Context, id, hash string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE users SET password_hash = $1 WHERE id = $2`, hash, id)
 	return err
 }
 

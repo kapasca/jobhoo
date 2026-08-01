@@ -90,6 +90,22 @@ func (h *Handlers) ApplyToJob(w http.ResponseWriter, r *http.Request) {
 
 	data.HasApplied = true
 	data.ApplySent = true
+	// Notify the job owner (recruiter) that a new application arrived. Best-effort.
+	go func() {
+		if company, err := h.Companies.GetByID(r.Context(), job.CompanyID); err == nil {
+			if owner, err2 := h.Users.GetByID(r.Context(), company.OwnerID); err2 == nil {
+				subj := "New application for: " + job.Title
+				scheme := "https"
+				if r.TLS == nil {
+					scheme = "http"
+				}
+				link := scheme + "://" + r.Host + "/recruiter/jobs/" + job.ID + "/applicants"
+				text := "A new candidate has applied to your job: " + job.Title + "\n\nView: " + link
+				html := "<p>A new candidate has applied to <strong>" + job.Title + "</strong>.</p><p><a href=\"" + link + "\">View applicants</a></p>"
+				_ = h.Email.Send(owner.Email, subj, html, text)
+			}
+		}
+	}()
 	h.renderApplySection(w, r, data)
 }
 

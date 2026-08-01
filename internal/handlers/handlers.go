@@ -7,6 +7,7 @@ package handlers
 import (
 	"github.com/jobhoo/jobhoo/internal/ai"
 	"github.com/jobhoo/jobhoo/internal/database"
+	"github.com/jobhoo/jobhoo/internal/email"
 )
 
 type Handlers struct {
@@ -19,6 +20,8 @@ type Handlers struct {
 	SavedJobs    *database.SavedJobsRepo
 	Profiles     *database.CandidateProfilesRepo
 	AI           ai.Provider
+	Email        *email.LoggingSender
+	Tokens       *database.EmailTokensRepo
 }
 
 func New(
@@ -31,10 +34,13 @@ func New(
 	savedJobs *database.SavedJobsRepo,
 	profiles *database.CandidateProfilesRepo,
 	aiProvider ai.Provider,
+	emailSender *email.LoggingSender,
+	tokens *database.EmailTokensRepo,
 ) *Handlers {
 	return &Handlers{
 		Render: render, Jobs: jobs, Users: users, Sessions: sessions,
 		Companies: companies, Applications: applications, SavedJobs: savedJobs,
 		Profiles: profiles, AI: aiProvider,
+		Email: emailSender, Tokens: tokens,
 	}
 }
