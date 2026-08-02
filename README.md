@@ -242,7 +242,7 @@ jobhoo/
 
 ### Environment Variables
 
-See [DOC-ENVIRONMENT-SETUP.md](DOC-ENVIRONMENT-SETUP.md) for complete guide.
+See [DOC-DEVELOPMENT-GUIDE.md](DOC-DEVELOPMENT-GUIDE.md#5-konfigurasi-environment-variable) for the complete environment variable reference.
 
 ```env
 # Application
@@ -425,12 +425,9 @@ No globals, easy to test with mocks
 
 ### Project Documents
 - **[DOC-PRODUCT-OVERVIEW.md](DOC-PRODUCT-OVERVIEW.md)** — What is JOBHOO? (non-technical)
-- **[DOC-JOBHOO-DNA.md](DOC-JOBHOO-DNA.md)** — Brand identity & design system
-- **[DOC-DEVELOPMENT-GUIDE.md](DOC-DEVELOPMENT-GUIDE.md)** — Developer setup & guidelines
-- **[DOC-DEVELOPMENT-PHASE.md](DOC-DEVELOPMENT-PHASE.md)** — Current development status
-- **[DOC-CODE-AUDIT-REPORT.md](DOC-CODE-AUDIT-REPORT.md)** — Code quality assessment (A+)
-- **[DOC-ENVIRONMENT-SETUP.md](DOC-ENVIRONMENT-SETUP.md)** — Environment configuration guide
-- **[DOC-TEMPLATE-ARCHITECTURE.md](DOC-TEMPLATE-ARCHITECTURE.md)** — Template organization & patterns
+- **[DOC-DEVELOPMENT-GUIDE.md](DOC-DEVELOPMENT-GUIDE.md)** — Developer setup, architecture, AI configuration, and design system
+- **[DOC-DEVELOPMENT-PHASE.md](DOC-DEVELOPMENT-PHASE.md)** — Current development status per phase
+- **[DOC-AUDIT-REPORT.md](DOC-AUDIT-REPORT.md)** — Technical, security, performance, and UI/UX audit
 
 ### API Endpoints
 
@@ -559,16 +556,7 @@ No globals, easy to test with mocks
 
 ## 📊 Code Quality
 
-**Overall Assessment:** A+ (95/100)
-
-- ✅ Clean, maintainable Go code
-- ✅ Proper separation of concerns
-- ✅ Comprehensive error handling
-- ✅ Security-focused design
-- ✅ Well-documented codebase
-- ✅ Production-ready architecture
-
-See [DOC-CODE-AUDIT-REPORT.md](DOC-CODE-AUDIT-REPORT.md) for detailed technical audit.
+See [DOC-AUDIT-REPORT.md](DOC-AUDIT-REPORT.md) for the detailed technical, security, and performance audit.
 
 ---
 

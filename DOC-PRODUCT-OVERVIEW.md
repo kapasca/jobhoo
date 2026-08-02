@@ -1,152 +1,128 @@
-# JOBHOO — Platform Rekrutmen yang Lebih Cerdas
+# JOBHOO Product Overview
 
-> Dokumen ini ditujukan untuk pembaca umum yang ingin memahami apa itu JOBHOO, siapa penggunanya, dan bagaimana cara kerjanya — tanpa perlu memahami hal-hal teknis di baliknya.
+Dokumen ini ditujukan untuk pembaca umum yang ingin memahami apa itu JOBHOO, siapa penggunanya, dan bagaimana cara kerjanya, tanpa perlu memahami detail teknis di baliknya. Untuk detail teknis, lihat [DOC-DEVELOPMENT-GUIDE.md](DOC-DEVELOPMENT-GUIDE.md).
 
----
+## 1. Ringkasan
 
-## Apa itu JOBHOO?
+JOBHOO adalah platform rekrutmen online yang menghubungkan pencari kerja (kandidat) dengan perusahaan yang sedang membuka lowongan. Fokus platform adalah memudahkan proses rekrutmen dari awal hingga keputusan hire, bukan menjadi jaringan sosial profesional.
 
-JOBHOO adalah **platform rekrutmen online** yang menghubungkan pencari kerja (kandidat) dengan perusahaan yang sedang membuka lowongan. Berbeda dari platform lain, JOBHOO dirancang dengan fokus yang jelas: **memudahkan proses rekrutmen dari awal hingga keputusan hire**, bukan menjadi jaringan sosial profesional.
+Prinsip utama JOBHOO:
 
-Bayangkan sebuah tempat di mana:
-- Kandidat bisa menemukan pekerjaan yang benar-benar sesuai dengan keahlian mereka
-- Perusahaan bisa mengelola seluruh proses seleksi dalam satu tempat
-- Kecerdasan buatan (AI) membantu keduanya — tapi tidak pernah mengambil keputusan sendiri
+1. Kandidat menemukan pekerjaan yang sesuai dengan keahlian mereka.
+2. Perusahaan mengelola seluruh proses seleksi dalam satu tempat.
+3. AI membantu kedua sisi, tetapi tidak pernah mengambil keputusan akhir sendiri.
 
----
+## 2. Pengguna Platform
 
-## Siapa Pengguna JOBHOO?
+JOBHOO melayani tiga jenis pengguna.
 
-JOBHOO melayani tiga jenis pengguna:
+### 2.1 Kandidat (Pencari Kerja)
 
-### 🙋 Kandidat (Pencari Kerja)
-Individu yang sedang mencari pekerjaan baru. Mereka mendaftar secara gratis, melengkapi profil, mengupload resume, dan bisa melamar ke lowongan yang tersedia.
+Individu yang sedang mencari pekerjaan baru. Mendaftar secara gratis, melengkapi profil, mengunggah resume, dan melamar ke lowongan yang tersedia.
 
-### 🏢 Rekruter / Perusahaan
-Perwakilan dari sebuah perusahaan yang ingin merekrut karyawan baru. Di JOBHOO, setiap rekruter mendaftarkan perusahaannya, menunggu verifikasi dari admin JOBHOO, lalu bisa mulai membuka lowongan dan mengelola pelamar.
+### 2.2 Recruiter / Perusahaan
 
-### 🔑 Admin JOBHOO
-Tim internal JOBHOO yang memastikan hanya perusahaan-perusahaan yang sah yang boleh membuka lowongan di platform. Admin memverifikasi setiap pendaftaran perusahaan baru.
+Perwakilan dari sebuah perusahaan yang ingin merekrut karyawan baru. Setiap recruiter mendaftarkan perusahaannya, menunggu verifikasi dari admin JOBHOO, lalu dapat membuka lowongan dan mengelola pelamar.
 
----
+### 2.3 Admin JOBHOO
 
-## Bagaimana JOBHOO Bekerja?
+Tim internal yang memastikan hanya perusahaan sah yang boleh membuka lowongan di platform. Admin memverifikasi setiap pendaftaran perusahaan baru dan menjaga kualitas platform.
 
-### Alur Kandidat
+## 3. Alur Kerja
 
-```
-Daftar akun → Upload resume → Isi profil (skill, headline) 
-→ Cari/filter lowongan → Lamar dengan cover note 
-→ Pantau status lamaran di Dashboard
-```
+### 3.1 Alur Kandidat
 
-1. **Daftar & Buat Profil** — Kandidat mengisi data diri, keahlian, dan mengupload file resume (PDF/DOCX/TXT).
-2. **Cari Lowongan** — Tersedia fitur pencarian berdasarkan kata kunci, kategori pekerjaan, negara/provinsi, tipe kerja (onsite/hybrid/remote), dan tipe kontrak.
-3. **Lamar Pekerjaan** — Kandidat bisa melamar langsung dari platform, disertai catatan singkat untuk rekruter.
-4. **Pantau Lamaran** — Di dashboard, kandidat bisa melihat di tahap mana lamarannya berada saat ini (Melamar → Seleksi → Interview → Penawaran → Diterima).
-5. **Simpan Lowongan** — Lowongan yang menarik bisa di-bookmark untuk dilihat lagi nanti.
-6. **Rekomendasi AI** — Platform bisa merekomendasikan lowongan yang paling cocok berdasarkan keahlian di profil kandidat.
+1. Daftar akun dan verifikasi (alur email verifikasi masih dalam pengembangan, lihat Bagian 8).
+2. Unggah resume dan lengkapi profil (headline, skill, lokasi).
+3. Cari lowongan dengan filter kategori, lokasi, dan tipe kerja.
+4. Lamar pekerjaan disertai catatan singkat untuk recruiter.
+5. Pantau status lamaran di dashboard (Applied - Screening - Interview - Offer - Hired).
+6. Simpan lowongan yang menarik untuk dipertimbangkan nanti.
+7. Dapatkan rekomendasi lowongan dari AI berdasarkan skill di profil.
 
----
+### 3.2 Alur Recruiter
 
-### Alur Rekruter / Perusahaan
+1. Daftar akun recruiter dan daftarkan perusahaan (nama, industri, deskripsi, logo).
+2. Tunggu verifikasi admin. Recruiter tidak dapat membuka lowongan sebelum disetujui.
+3. Setelah disetujui, buka lowongan dengan detail lengkap: judul, deskripsi, lokasi, tipe kerja, skill, dan rentang gaji.
+4. Kelola pelamar melalui papan Kanban (ATS board): pindahkan kandidat antar tahap dengan satu aksi.
+5. Gunakan ranking AI sebagai saran urutan prioritas kandidat berdasarkan kecocokan skill, bukan keputusan final.
+6. Perusahaan yang terverifikasi memiliki halaman publik yang menampilkan profil dan semua lowongan aktif.
 
-```
-Daftar akun rekruter → Daftarkan perusahaan → Tunggu persetujuan admin
-→ Lengkapi profil perusahaan → Buka lowongan → Kelola pelamar di pipeline
-```
+### 3.3 Alur Admin
 
-1. **Daftar & Daftarkan Perusahaan** — Rekruter mendaftar lalu mengisi profil perusahaan (nama, industri, deskripsi, logo).
-2. **Verifikasi Admin** — Admin JOBHOO memverifikasi bahwa perusahaan tersebut legitimate. Rekruter tidak bisa membuka lowongan sebelum disetujui.
-3. **Buka Lowongan** — Setelah disetujui, rekruter bisa membuka lowongan dengan detail lengkap: judul, deskripsi, lokasi, tipe kerja, skill yang dibutuhkan, dan rentang gaji.
-4. **Pipeline Pelamar (ATS Board)** — Semua pelamar tampil di papan Kanban yang bisa dikelola: pindahkan kandidat dari tahap satu ke tahap berikutnya dengan satu klik.
-5. **Ranking AI** — Platform bisa memberi peringkat kandidat berdasarkan kecocokan skill dengan deskripsi lowongan — sebagai saran, bukan keputusan final.
-6. **Halaman Publik Perusahaan** — Setiap perusahaan yang terverifikasi punya halaman publik yang menampilkan profil dan semua lowongan aktif mereka.
+1. Periksa antrian persetujuan perusahaan baru.
+2. Tinjau profil perusahaan: industri, deskripsi, informasi recruiter.
+3. Setujui atau tolak pendaftaran, dengan alasan penolakan dikirim ke recruiter.
+4. Blacklist perusahaan bila diperlukan (blokir permanen untuk pelaku yang tidak sah).
+5. Freeze akun user bila ada masalah keamanan; sesi user langsung dicabut.
 
----
+## 4. Fitur Utama
 
-## Fitur-Fitur Utama
-
-### Untuk Pencari Kerja
+### 4.1 Untuk Kandidat
 
 | Fitur | Penjelasan |
 |---|---|
-| **Pencarian Cerdas** | Cari berdasarkan judul, skill, nama perusahaan, atau kategori |
-| **Filter Lokasi** | Pilih dari 9 negara (Indonesia, Singapura, Malaysia, Thailand, Vietnam, Filipina, Timor-Leste, Australia, Selandia Baru) dan provinsinya |
-| **Filter Tipe Kerja** | Remote, Hybrid, atau Onsite |
-| **Upload Resume** | Simpan file resume di platform, bisa diperbarui kapan saja |
-| **Status Lamaran Real-Time** | Tidak perlu menebak — status lamaran selalu terlihat di dashboard |
-| **Bookmark Lowongan** | Simpan lowongan untuk dipertimbangkan nanti |
-| **Saran Resume dari AI** | Platform menganalisa resume dan memberikan saran perbaikan |
-| **Rekomendasi Lowongan AI** | Sistem merekomendasikan lowongan berdasarkan skill kandidat |
+| Pencarian cerdas | Cari berdasarkan judul, skill, nama perusahaan, atau kategori |
+| Filter lokasi | 9 negara (Indonesia, Singapura, Malaysia, Thailand, Vietnam, Filipina, Timor-Leste, Australia, Selandia Baru) beserta provinsinya |
+| Filter tipe kerja | Remote, Hybrid, atau Onsite |
+| Upload resume | Simpan file resume di platform, dapat diperbarui kapan saja |
+| Status lamaran real-time | Status lamaran selalu terlihat di dashboard |
+| Bookmark lowongan | Simpan lowongan untuk dipertimbangkan nanti |
+| Analisis resume oleh AI | Platform menganalisis resume dan memberikan saran perbaikan |
+| Rekomendasi lowongan AI | Sistem merekomendasikan lowongan berdasarkan skill kandidat |
 
-### Untuk Rekruter / Perusahaan
+### 4.2 Untuk Recruiter / Perusahaan
 
 | Fitur | Penjelasan |
 |---|---|
-| **Profil Perusahaan** | Halaman publik perusahaan dengan logo, deskripsi, industri, dan daftar lowongan aktif |
-| **Upload Logo** | Rekruter bisa mengupload logo langsung dari platform |
-| **Buka & Kelola Lowongan** | Buat, edit, tutup, atau arsipkan lowongan dengan mudah |
-| **Jadwal Otomatis** | Atur kapan lowongan mulai dan berhenti tampil ke publik |
-| **Pipeline Pelamar** | Kelola semua pelamar dalam tahapan: Melamar → Seleksi → Interview → Penawaran → Diterima |
-| **Ranking Kandidat AI** | Dapatkan saran urutan prioritas kandidat berdasarkan kecocokan skill — sebagai referensi, bukan keputusan otomatis |
+| Profil perusahaan | Halaman publik dengan logo, deskripsi, industri, dan daftar lowongan aktif |
+| Upload logo | Recruiter dapat mengunggah logo langsung dari platform |
+| Kelola lowongan | Buat, edit, tutup, atau arsipkan lowongan |
+| Jadwal otomatis | Atur kapan lowongan mulai dan berhenti tampil ke publik |
+| Pipeline pelamar (ATS) | Kelola pelamar dalam tahapan Applied - Screening - Interview - Offer - Hired |
+| Ranking kandidat AI | Saran urutan prioritas kandidat berdasarkan kecocokan skill, sebagai referensi bukan keputusan otomatis |
 
----
+## 5. Keunggulan JOBHOO
 
-## Keunggulan JOBHOO
+1. **AI sebagai asisten, bukan pengambil keputusan.** AI hanya memberi rekomendasi; recruiter tetap yang memutuskan. Tidak ada kandidat yang tersembunyi atau ditolak otomatis oleh sistem.
+2. **Semua dalam satu platform.** Posting lowongan dan sistem manajemen pelamar (ATS) menyatu: satu login, satu alur kerja.
+3. **Transparansi untuk kandidat.** Kandidat selalu bisa melihat di tahap mana lamarannya berada, tidak menghilang begitu saja setelah melamar.
+4. **Verifikasi perusahaan.** Setiap perusahaan harus diverifikasi admin sebelum membuka lowongan, mengurangi risiko lowongan palsu.
+5. **Fokus rekrutmen, bukan jejaring sosial.** Tidak ada feed, koneksi, atau like. Platform ini murni untuk mencari pekerjaan dan merekrut karyawan.
 
-### 1. AI Sebagai Asisten, Bukan Pengambil Keputusan
-Di banyak platform, algoritma bisa secara otomatis menolak kandidat tanpa rekruter tahu. Di JOBHOO, **AI hanya memberi rekomendasi** — rekruter tetap yang memutuskan. Tidak ada kandidat yang tersembunyi atau auto-ditolak oleh sistem.
-
-### 2. Semua dalam Satu Platform
-Rekruter tidak perlu memakai platform posting lowongan yang terpisah dari sistem manajemen pelamar (ATS). Di JOBHOO, keduanya menyatu: satu login, satu alur kerja.
-
-### 3. Transparansi untuk Kandidat
-Banyak platform membuat kandidat "menghilang" setelah melamar — tidak ada kabar sama sekali. Di JOBHOO, kandidat selalu bisa melihat di tahap mana lamarannya berada.
-
-### 4. Verifikasi Perusahaan
-Setiap perusahaan yang ingin membuka lowongan harus diverifikasi terlebih dahulu oleh admin JOBHOO. Ini mengurangi risiko lowongan palsu atau tidak jelas.
-
-### 5. Fokus Rekrutmen, Bukan Jejaring Sosial
-JOBHOO tidak punya feed, koneksi, atau like. Ini platform untuk mencari pekerjaan dan merekrut karyawan — tidak lebih, tidak kurang. Pengalaman tetap bersih dan fokus.
-
----
-
-## Cakupan Geografis
+## 6. Cakupan Geografis
 
 JOBHOO saat ini mendukung lokasi kerja di:
 
-**Asia Tenggara:** Indonesia (38 provinsi), Singapura, Malaysia, Thailand, Vietnam, Filipina, Timor-Leste  
-**Oceania:** Australia, Selandia Baru
+- Asia Tenggara: Indonesia (38 provinsi), Singapura, Malaysia, Thailand, Vietnam, Filipina, Timor-Leste.
+- Oceania: Australia, Selandia Baru.
 
-Setiap negara memiliki daftar provinsi/negara bagian yang lengkap, sehingga pencarian lokasi lebih presisi.
+Setiap negara memiliki daftar provinsi/negara bagian lengkap sehingga pencarian lokasi lebih presisi.
 
----
-
-## Kategori Pekerjaan
+## 7. Kategori Pekerjaan
 
 Lowongan di JOBHOO dikelompokkan dalam 5 kategori utama:
 
-- **Engineering & Product** — Pengembang software, DevOps, Product Manager, QA, dll.
-- **Design & Creative** — UI/UX Designer, Illustrator, Creative Director, dll.
-- **Sales & Marketing** — Account Executive, Growth Marketer, Content Manager, dll.
-- **Data & Analytics** — Data Analyst, Data Scientist, BI Developer, ML Engineer, dll.
-- **Operations & Support** — Operations Manager, Customer Success, People Ops, dll.
+1. Engineering & Product - Pengembang software, DevOps, Product Manager, QA, dan lainnya.
+2. Design & Creative - UI/UX Designer, Illustrator, Creative Director, dan lainnya.
+3. Sales & Marketing - Account Executive, Growth Marketer, Content Manager, dan lainnya.
+4. Data & Analytics - Data Analyst, Data Scientist, BI Developer, ML Engineer, dan lainnya.
+5. Operations & Support - Operations Manager, Customer Success, People Ops, dan lainnya.
 
-Rekruter juga bisa mengetikkan kategori sendiri jika tidak ada yang cocok.
+Recruiter juga dapat mengetikkan kategori sendiri jika tidak ada yang cocok.
 
----
+## 8. Keterbatasan Saat Ini
 
-## Keterbatasan Saat Ini
+JOBHOO masih dalam tahap pengembangan aktif. Beberapa hal yang belum tersedia sepenuhnya:
 
-JOBHOO masih dalam tahap pengembangan aktif. Beberapa hal yang belum tersedia:
+1. Notifikasi email - kandidat belum menerima email otomatis saat status lamaran berubah.
+2. Reset password dan verifikasi email - infrastruktur token sudah ada, alur pengguna belum lengkap.
+3. Validasi file resume - belum ada pemeriksaan tipe file/ukuran maksimum saat upload.
+4. Aplikasi mobile - saat ini hanya tersedia versi web, belum ada aplikasi Android/iOS.
 
-- **Notifikasi Email** — Kandidat belum menerima email otomatis saat ada perubahan status lamaran
-- **Reset Password via Email** — Jika lupa password, perlu menghubungi admin secara manual
-- **Aplikasi Mobile** — Saat ini hanya tersedia versi web; belum ada aplikasi Android/iOS
+Rincian status pengembangan per fitur ada di [DOC-DEVELOPMENT-PHASE.md](DOC-DEVELOPMENT-PHASE.md). Rincian temuan teknis dan keamanan ada di [DOC-AUDIT-REPORT.md](DOC-AUDIT-REPORT.md).
 
----
+## 9. Status Platform
 
-## Status Platform
-
-JOBHOO saat ini berfungsi penuh sebagai **prototype / MVP** (versi awal yang sudah bisa digunakan). Semua fitur utama berjalan dan sudah diuji. Platform siap untuk demo dan pengujian oleh pengguna nyata.
+JOBHOO saat ini berfungsi sebagai prototipe/MVP yang sudah dapat digunakan. Semua fitur utama (pencarian, lamar, ATS, verifikasi perusahaan, ranking AI) berjalan dan telah diuji secara fungsional. Platform siap untuk demo dan pengujian oleh pengguna nyata, dengan sejumlah perbaikan tersisa sebelum peluncuran publik penuh.

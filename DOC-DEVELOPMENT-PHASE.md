@@ -1,17 +1,17 @@
-# JOBHOO — Checklist Detail per Fase
+# JOBHOO Development Phase Checklist
 
-Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum teruji penuh · `[ ]` belum dikerjakan
+Status pengerjaan JOBHOO per fase, dirinci per fitur. Untuk gambaran produk, lihat [DOC-PRODUCT-OVERVIEW.md](DOC-PRODUCT-OVERVIEW.md). Untuk panduan teknis, lihat [DOC-DEVELOPMENT-GUIDE.md](DOC-DEVELOPMENT-GUIDE.md). Untuk temuan audit, lihat [DOC-AUDIT-REPORT.md](DOC-AUDIT-REPORT.md).
 
----
+Format penanda: `[x]` selesai dan sudah diverifikasi, `[~]` ada tapi belum lengkap/belum teruji penuh, `[ ]` belum dikerjakan.
 
-## Fase 1 — Scaffold & Fondasi
+## 1. Fase 1 - Scaffold dan Fondasi
 
 - [x] Struktur project Go (cmd/, internal/, web/)
 - [x] Docker + Docker Compose (app + Postgres)
 - [x] Schema database & migration terstruktur
 - [x] Design token (warna navy/orange/white/black, spacing, tipografi Lexend)
 - [x] Component library CSS dasar
-- [x] Sistem utility class CSS (di-upgrade signifikan dari inline style — hasil kerja Anda)
+- [x] Sistem utility class CSS (di-upgrade signifikan dari inline style, hasil kerja Anda)
 - [x] Homepage dasar
 - [x] Job listing dasar
 - [x] Seeder data dummy (10 company/recruiter, 100 job lintas 5 kategori)
@@ -19,7 +19,7 @@ Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum
 
 ---
 
-## Fase 2 — Autentikasi
+## 2. Fase 2 - Autentikasi
 
 - [x] Signup (pilih role candidate/recruiter)
 - [x] Login
@@ -29,7 +29,7 @@ Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum
 - [x] Sesi bisa di-revoke
 - [x] Proteksi route berbasis role (RequireAuth, RequireRole)
 - [x] Login dipindah ke popup/modal (redesign Anda)
-- [x] **Bug: login 404 saat diakses non-modal (mis. redirect otomatis) — DIPERBAIKI**
+- [x] **Bug: login 404 saat diakses non-modal (mis. redirect otomatis) - DIPERBAIKI**
 - [ ] Reset password (lupa password)
 - [ ] Verifikasi email saat signup
 - [ ] Rate limiting percobaan login
@@ -45,22 +45,22 @@ Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum
 
 ---
 
-## Fase 3 — Job Detail & Apply Flow
+## 3. Fase 3 - Job Detail dan Apply Flow
 
 - [x] Halaman detail job lengkap
 - [x] Apply dengan cover note
 - [x] Cegah apply dobel ke job yang sama
 - [x] Save/bookmark job
 - [x] Job detail dipindah ke popup/modal (redesign Anda)
-- [x] **Bug: job detail 404 saat diakses langsung/di-share — DIPERBAIKI** (sekarang fallback ke halaman penuh)
-- [x] **Bug: form apply merender modal bersarang ke dirinya sendiri — DIPERBAIKI**
+- [x] **Bug: job detail 404 saat diakses langsung/di-share - DIPERBAIKI** (sekarang fallback ke halaman penuh)
+- [x] **Bug: form apply merender modal bersarang ke dirinya sendiri - DIPERBAIKI**
 - [ ] Upload resume file (PDF/DOCX) saat apply
 - [ ] Notifikasi email ke recruiter saat ada apply baru
 - [ ] Notifikasi ke kandidat saat status lamaran berubah
 
 ---
 
-## Fase 4 — Recruiter & ATS
+## 4. Fase 4 - Recruiter dan ATS
 
 - [x] Setup company (sekali di awal, sebelum posting job)
 - [x] Form post job (kategori, tipe kerja, lokasi, gaji, skill)
@@ -69,8 +69,8 @@ Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum
 - [x] Bagian Rejected terpisah (collapsible)
 - [x] Ubah stage pelamar
 - [x] AI ranking kandidat (tombol "Rank candidates with AI", advisory only)
-- [ ] **Edit lowongan yang sudah diposting** *(prioritas tinggi — lihat catatan bisnis)*
-- [ ] **Tutup/arsipkan lowongan** *(prioritas tinggi — lihat catatan bisnis)*
+- [ ] **Edit lowongan yang sudah diposting** *(prioritas tinggi, lihat catatan bisnis)*
+- [ ] **Tutup/arsipkan lowongan** *(prioritas tinggi, lihat catatan bisnis)*
 - [ ] Bulk action (ubah beberapa pelamar sekaligus)
 - [ ] Catatan internal recruiter per kandidat
 - [ ] Jadwal interview/kalender
@@ -78,30 +78,30 @@ Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum
 
 ---
 
-## Fase 5 — AI Layer
+## 5. Fase 5 - Lapisan AI
 
 - [x] Interface `ai.Provider` modular (ganti vendor tanpa ubah kode aplikasi)
-- [x] Mock provider — logic asli (keyword-overlap), tanpa API key, teruji
-- [x] Anthropic provider — kode pemanggilan API lengkap dan benar secara logika
-- [ ] **Anthropic provider belum pernah dites dengan API key sungguhan** *(prioritas menengah — risiko tersembunyi)*
+- [x] Mock provider - logic asli (keyword-overlap), tanpa API key, teruji
+- [x] Anthropic provider - kode pemanggilan API lengkap dan benar secara logika
+- [ ] **Anthropic provider belum pernah dites dengan API key sungguhan** *(prioritas menengah, risiko tersembunyi)*
 - [ ] OpenAI provider (masih stub kosong)
-- [x] Resume summarization — logic ada
-- [x] Job recommendation — terhubung ke dashboard kandidat
-- [x] Resume improvement suggestion — terhubung ke halaman profil
-- [x] Candidate ranking — terhubung ke ATS board
-- [~] `ExplainMatch` (jelaskan alasan match per job) — **logic sudah ada di kode, belum disambungkan ke UI mana pun**
+- [x] Resume summarization - logic ada
+- [x] Job recommendation - terhubung ke dashboard kandidat
+- [x] Resume improvement suggestion - terhubung ke halaman profil
+- [x] Candidate ranking - terhubung ke ATS board
+- [~] `ExplainMatch` (jelaskan alasan match per job) - **logic sudah ada di kode, belum disambungkan ke UI mana pun**
 - [ ] Compare candidates side-by-side
 
 ---
 
-## Fase 6 — Candidate Profile & Dashboard
+## 6. Fase 6 - Candidate Profile dan Dashboard
 
 - [x] Edit profil (headline, lokasi, skill, resume teks)
 - [x] Dashboard: daftar lamaran + status
 - [x] Dashboard: daftar job tersimpan
 - [x] Tombol AI saran perbaikan resume
 - [x] Tombol AI rekomendasi job
-- [ ] Upload resume file (PDF/DOCX) — masih plain text
+- [ ] Upload resume file (PDF/DOCX) - masih plain text
 
 - [ ] Resume verification on profile: when a candidate uploads or updates a
 	resume on their profile, run the same automated validation. While verification
@@ -114,7 +114,7 @@ Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum
 
 ---
 
-## Fase 7 — Admin Dashboard
+## 7. Fase 7 - Admin Dashboard
 
 - [x] Angka ringkas platform (total user, kandidat, recruiter, company, job, aplikasi)
 - [ ] Aksi moderasi (nonaktifkan user, hapus job spam)
@@ -122,13 +122,13 @@ Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum
 
 ---
 
-## Fase 8 — Polish, Search, & Keamanan
+## 8. Fase 8 - Polish, Search, dan Keamanan
 
 - [x] CSRF protection (double-submit cookie) di semua form
 - [x] Halaman 404 kustom sesuai desain
 - [x] Ownership check (recruiter tidak bisa akses pipeline company lain)
-- [x] **Search pintar** — satu kotak mencocokkan judul, company, kategori, skill sekaligus
-- [x] Filter Sort, Location, Work Type, Employment Type — benar-benar berfungsi
+- [x] **Search pintar** - satu kotak mencocokkan judul, company, kategori, skill sekaligus
+- [x] Filter Sort, Location, Work Type, Employment Type - benar-benar berfungsi
 - [x] Label filter aktif human-readable ("Full Time" bukan "full_time")
 - [x] Halaman Explore Companies (directory publik)
 - [x] Grid job card responsif (CSS Grid auto-fill/minmax, tanpa breakpoint manual)
@@ -137,12 +137,12 @@ Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum
 - [ ] Rate limiting (login, apply, signup)
 - [ ] Reset password *(tumpang tindih dengan Fase 2)*
 - [ ] Notifikasi email (apply baru, ubah status) *(tumpang tindih dengan Fase 3)*
-- [ ] Audit aksesibilitas (screen reader, kontras, keyboard nav) — belum pernah dilakukan
-- [ ] Verifikasi visual langsung di browser oleh manusia — semua pengecekan saya sejauh ini lewat kode & template engine, belum pernah "dilihat mata" oleh saya
+- [ ] Audit aksesibilitas (screen reader, kontras, keyboard nav) - belum pernah dilakukan
+- [ ] Verifikasi visual langsung di browser oleh manusia - semua pengecekan saya sejauh ini lewat kode dan template engine, belum pernah "dilihat mata" oleh saya
 
 ---
 
-## Rekap angka
+## 9. Rekap Angka
 
 | Fase | Item selesai | Item belum |
 |---|---|---|
@@ -155,4 +155,4 @@ Format: `[x]` selesai & sudah diverifikasi · `[~]` ada tapi belum lengkap/belum
 | 7. Admin | 1/3 | 2 |
 | 8. Polish/security | 9/16 | 7 |
 
-**Total kasar: ±56/94 item granular (±60%)** — angka ini lebih rendah dari taksiran "88-90%" saya sebelumnya karena checklist ini jauh lebih rinci (per-fitur, bukan per-fase). Jangan terkecoh persentase: bagian yang paling menentukan kelayakan pakai (loop inti apply→review→hire) sudah solid; sisanya kebanyakan hal pelengkap (notifikasi, reset password, upload file) yang penting tapi tidak memblokir penggunaan dasar.
+**Total kasar: kurang lebih 56/94 item granular (kurang lebih 60%).** Angka ini lebih rendah dari taksiran "88-90%" sebelumnya karena checklist ini jauh lebih rinci (per fitur, bukan per fase). Jangan terkecoh persentase: bagian yang paling menentukan kelayakan pakai (loop inti apply-review-hire) sudah solid; sisanya kebanyakan hal pelengkap (notifikasi, reset password, upload file) yang penting tapi tidak memblokir penggunaan dasar.

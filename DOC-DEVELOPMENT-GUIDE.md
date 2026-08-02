@@ -1,515 +1,437 @@
-# JOBHOO — Complete Setup, Development Guide & Troubleshooting
+# JOBHOO Development Guide
 
-Recruitment platform menghubungkan kandidat dan recruiter dengan AI sebagai asisten pengambilan keputusan — bukan pengganti.
+Panduan teknis lengkap untuk menjalankan, mengembangkan, dan memahami arsitektur JOBHOO. Untuk gambaran produk non-teknis, lihat [DOC-PRODUCT-OVERVIEW.md](DOC-PRODUCT-OVERVIEW.md). Untuk status pengerjaan per fitur, lihat [DOC-DEVELOPMENT-PHASE.md](DOC-DEVELOPMENT-PHASE.md). Untuk temuan audit teknis/keamanan, lihat [DOC-AUDIT-REPORT.md](DOC-AUDIT-REPORT.md).
 
-**Status:** Platform berfungsi end-to-end dengan 100% fitur core tersedia.
+## 1. Ringkasan
 
----
+JOBHOO adalah platform rekrutmen fokus (bukan HRIS, bukan jejaring sosial) yang menghubungkan kandidat dengan role yang tepat dan membantu recruiter menemukan kandidat terbaik. Platform berfungsi end-to-end dengan fitur inti (pencarian, lamar, ATS, verifikasi perusahaan, ranking AI) tersedia.
 
-## Table of Contents
+## 2. Tech Stack
 
-1. [Overview](#overview)
-2. [Stack & Architecture](#stack--architecture)
-3. [Project Structure](#project-structure)
-4. [Installation Guide (Windows)](#installation-guide-windows)
-5. [Features Checklist](#features-checklist)
-6. [What Makes JOBHOO Different](#what-makes-jobhoo-different)
-7. [Running Locally](#running-locally)
-8. [Troubleshooting & Common Issues](#troubleshooting--common-issues)
-9. [Known Gaps Before Production](#known-gaps-before-production)
+1. Backend: Go, Chi v5 router, PostgreSQL dengan driver pgx v5.
+2. Frontend: Go `html/template` (server-rendered) + HTMX untuk interaksi tanpa full page reload.
+3. AI: Provider tunggal berbasis OpenAI (lihat Bagian 6).
+4. Email: Dev logger dan SMTP sender, dengan audit logging.
+5. Deployment: Docker + Docker Compose, multi-stage Dockerfile (build di image Go, run di Alpine).
+6. Autentikasi: Sesi tersimpan di database (bukan JWT), token di-hash (SHA256) sebelum disimpan, password di-hash dengan bcrypt.
 
----
+Dependensi langsung (`go.mod`): `chi/v5`, `pgx/v5`, `godotenv`, `bluemonday` (sanitasi HTML), `golang.org/x/crypto` (bcrypt).
 
-## Overview
-
-JOBHOO adalah platform rekrutmen fokus (bukan HRIS, bukan social network) yang menghubungkan kandidat dengan role yang tepat dan membantu recruiter menemukan kandidat terbaik.
-
-**Tech Stack:**
-- **Backend:** Go (net/http + chi router)
-- **Frontend:** Server-rendered Go templates + HTMX
-- **Database:** PostgreSQL
-- **AI:** Provider interface modular (mock/Anthropic/OpenAI)
-- **Deployment:** Docker + Docker Compose
-
-**Brand Identity:**
-- **Warna:** Dark theme — navy #1F2747 dominan, orange #FF7A00 aksen saja
-- **Tipografi:** Lexend
-- **Geometri:** Rounded corners mengikuti bentuk logo
-
----
-
-## Stack & Architecture
-
-### Backend: Go + PostgreSQL + HTMX
-
-Setiap halaman di-render server-side via `html/template`. HTMX menangani interaksi dinamis tanpa full page reload — filter kategori, pagination, board Kanban ATS, semuanya via AJAX.
-
-Database schema di-migrate otomatis saat container pertama kali spin up, lewat `docker-entrypoint-initdb.d` mounted ke folder migration `.up.sql` files.
-
-### AI Layer: Provider Interface
-
-`internal/ai.Provider` adalah interface tunggal untuk semua AI features. JOBHOO menggunakan **OpenAI provider secara eksklusif**.
-
-```go
-type Provider interface {
-  RankCandidates(ctx, profile, jobDesc) Ranking
-  ExplainMatch(ctx, profile, jobDesc) string
-  RecommendJobs(ctx, profileSkills, allJobs) []Job
-  ImproveSuggestions(ctx, resumeText) []string
-}
-```
-
-Configure OpenAI via `.env`:
-- `AI_API_KEY` - Your OpenAI or gateway API key
-- `AI_MODEL` - Model identifier (e.g., gpt-4o, openai/gpt-5-nano)
-- `AI_BASE_URL` - Custom gateway (optional, defaults to OpenAI official API)
-
-### Design System: Token-Driven
-
-Semua warna, spacing, radius, tipe hidup di `web/static/css/tokens.css`. Komponen di `components.css` hanya referensi token — tidak ada magic number di luar satu file.
-
-| Token | Value | Use |
-|---|---|---|
-| `--jh-navy-700` | `#1F2747` | Dominan struktur |
-| `--jh-orange-500` | `#FF7A00` | Satu-satunya aksen |
-| `--jh-white` | `#FFFFFF` | Typography |
-| `--jh-black` | `#0A0C16` | High contrast |
-
----
-
-## Project Structure
+## 3. Struktur Proyek
 
 ```
 cmd/
-  server/main.go          Entrypoint app (config → db → ai → router → server)
-  seed/main.go            CLI untuk seed demo data (10 company, 100 job)
+  server/main.go          Entrypoint app (config -> db -> ai -> router -> server)
+  seed/                   CLI untuk seed demo data
 
 internal/
-  config/                 Environment config (1 struct, 1 file)
-  database/               pgx pool + repositories (SQL hanya di sini)
-    migrations/           Schema & seeder SQL (*.up.sql & *.down.sql)
-    applications_repo.go  
-    candidate_profiles_repo.go
-    companies_repo.go
-    jobs_repo.go
-    saved_jobs_repo.go
-    sessions_repo.go
-    users_repo.go
-  models/                 Shared domain types (User, Job, Company, etc.)
-  ai/                     OpenAI AI provider (exclusive)
-    provider.go           Provider interface definition
-    openai.go             OpenAI API implementation (all features)
-    openai_test.go        Comprehensive unit & integration tests
-    prompts.go            System prompts for AI consistency
-  handlers/               HTTP handlers (thin: parse → repo call → render)
-    pages.go              Homepage, jobs listing, job detail
-    auth.go               Signup, login, logout
-    recruiter.go          Post job, recruiter dashboard, ATS board
-    profile.go            Candidate profile
-    dashboard.go          Admin dashboard
-    render.go             Template rendering helper
-  router/                 Full route table (1 file)
-  middleware/             Auth, CSRF, logging
-  
+  config/                 Environment config (satu struct, satu file)
+  database/                pgx pool + repositories (SQL hanya di sini)
+    migrations/            Schema SQL (*.up.sql & *.down.sql), versi bertambah seiring waktu
+    *_repo.go              Satu repository per entitas (users, jobs, companies, applications, dst.)
+  models/                  Domain types (User, Job, Company, dll.)
+  ai/                      Lapisan AI (provider interface + implementasi OpenAI)
+    provider.go            Definisi interface Provider
+    openai.go               Implementasi OpenAI (semua metode)
+    openai_test.go          Unit & integration test
+    prompts.go              System prompt bersama
+    resume.go                Struktur hasil ekstraksi resume + parsing DOCX manual
+  handlers/                HTTP handler (thin: parse request -> panggil repo -> render template)
+  middleware/               Auth, CSRF, rate limiting
+  router/                  Tabel routing lengkap
+  auth/                    Utilitas hashing password & token
+  email/                   Email sender (dev/smtp) + tipe pesan
+
 web/
   templates/
-    layouts/base.html     Nav, footer, layout utama
-    components/           Reusable partials (job-card, etc.)
-    pages/                1 template per route
+    layouts/               Layout dasar (nav, footer)
+    components/            Partial yang dapat digunakan ulang (job-card, modal admin, dll.)
+    pages/                 Satu template per halaman
   static/
-    css/tokens.css        Design tokens
-    css/components.css    Component styles
-    img/                  Logo assets
+    css/                   Design tokens dan komponen CSS
+    js/                    Script sisi klien (chips, confirm, ats-board)
+    img/                   Aset logo
+    uploads/               File yang diunggah pengguna (mounted volume di Docker)
 
-docker-compose.yml        Service definition (app + db)
-Dockerfile               Multi-stage build (Go compile + Alpine run)
-go.mod, go.sum           Dependencies
-.env.example             Template environment config
+docker-compose.yml        Definisi service (app + db)
+Dockerfile                Multi-stage build (Go compile + Alpine run)
+go.mod, go.sum             Dependency management
+.env.example               Template konfigurasi environment
+Makefile                   Perintah pengembangan singkat (run, build, up, down, seed, fmt, tidy)
 ```
 
----
+## 4. Instalasi & Menjalankan Secara Lokal
 
-## Installation Guide (Windows)
+### 4.1 Prasyarat
 
-### Prerequisites
+Docker Desktop (disarankan, mencakup WSL2 di Windows). Tidak perlu instalasi Go atau PostgreSQL terpisah karena semuanya berjalan dalam container.
 
-**Docker Desktop for Windows**
-- Download: https://www.docker.com/products/docker-desktop/
-- Pilih "Use WSL 2 instead of Hyper-V" saat install (default biasanya)
-- Docker akan minta restart jika WSL2 belum aktif — terima saja
-
-**Catatan:** Tidak perlu install Go, PostgreSQL, atau tool lain — semuanya dalam container.
-
-### Step-by-Step
-
-**1. Clone/extract project:**
-```powershell
-cd C:\Users\YourName\jobhoo
-```
-
-**2. Setup environment:**
-```powershell
-copy .env.example .env
-```
-
-Dalam `.env`, perhatikan:
-- `PORT=8070` — port aplikasi
-- `DATABASE_URL=postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable` — **PENTING: `@db` bukan `@localhost`** (untuk Docker networking)
-- `AI_PROVIDER=mock` — cukup untuk testing
-
-**3. Pastikan Docker Desktop sudah running** — cek ikon paus di system tray
-
-**4. Build & start:**
-```powershell
-docker compose up --build
-```
-
-Tunggu sampai muncul:
-```
-app-1  | 2026/07/28 03:06:01 JOBHOO listening on :8070 (env=development)
-```
-
-**5. Buka terminal baru, seed demo data:**
-```powershell
-docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed
-```
-
-Expected output:
-```
-clearing previous demo data...
-creating 10 recruiter accounts + companies...
-creating 100 jobs across 5 categories...
-done: 10 companies and 100 jobs across 5 categories seeded.
-```
-
-**6. Open browser:**
-```
-http://localhost:8070
-```
-
-Halaman harus menampilkan:
-- Hero section
-- 6 latest job opportunities cards dari database
-- Menu "Browse Jobs" & "Post a Job" berfungsi
-
-### Demo Accounts
-
-**Admin:**
-- Email: `admin@jobhoo.demo`
-- Password: `demo-password-123`
-
-**Recruiter (10 akun):**
-- Email: `recruiter1@jobhoo.demo` s/d `recruiter10@jobhoo.demo`
-- Password: `demo-password-123`
-- `recruiter10` sengaja dibiarkan status company-nya **pending** untuk testing approval queue
-
-**Candidate:**
-- Signup baru lewat `/signup`
-
-### Menghentikan
+### 4.2 Langkah Instalasi (Docker)
 
 ```powershell
-# Tekan Ctrl+C di terminal yang menjalankan docker compose up
-docker compose down
-```
-
-### Reset Database Penuh
-
-```powershell
-docker compose down -v
-docker compose up --build
-docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed
-```
-
----
-
-## Features Checklist
-
-### Candidate Features ✅
-- ✅ Browse & cari lowongan (search, filter kategori, filter lokasi/negara, pagination)
-- ✅ Lihat detail lowongan lengkap (termasuk salary dengan pemisah ribuan + mata uang)
-- ✅ Apply ke lowongan dengan cover note
-- ✅ Simpan/bookmark lowongan
-- ✅ Edit profil (headline, resume file upload, resume text, skills chip-input, location)
-- ✅ **Resume wajib** diupload saat registrasi atau melengkapi profil
-- ✅ AI: saran perbaikan resume
-- ✅ AI: rekomendasi lowongan berdasarkan skill
-- ✅ Dashboard: riwayat lamaran + status, lowongan tersimpan
-
-### Recruiter Features ✅
-- ✅ Registrasi company, menunggu persetujuan admin sebelum bisa posting
-- ✅ Upload logo company (live preview sebelum simpan)
-- ✅ Wajib lengkapi profil company (industry + description) sebelum bisa posting job
-- ✅ Post lowongan baru (dengan chip-input skill, scheduling opens_at/closes_at, HTML description)
-- ✅ Kategori lowongan bebas: pilih dari 5 bawaan atau ketik custom
-- ✅ Lokasi: country + state/province (9 negara ASEAN + Oceania), auto-fill currency
-- ✅ Salary dengan currency sesuai negara (IDR, SGD, MYR, dll.)
-- ✅ Dashboard (Job Management): daftar job + status + tanggal buka/tutup + jumlah pelamar
-- ✅ Action dropdown per job: Pipeline, Edit, Close/Reopen, Archive
-- ✅ ATS Board Kanban: Applied → Screening → Interview → Offer → Hired
-- ✅ AI: ranking kandidat otomatis (saran saja, tidak mengubah stage)
-- ✅ Company public page (auto-redirect dari menu "Public Page" di nav)
-
-### Admin Features ✅
-- ✅ Dashboard: statistik platform (total user, company, job, aplikasi)
-- ✅ Company Approval Queue: approve/reject company baru dengan alasan penolakan
-- ✅ Badge jumlah pending di tombol approval
-
-### Security ✅
-- ✅ Signup/login/logout dengan bcrypt password hashing
-- ✅ Sesi tersimpan di DB (bisa di-revoke), bukan JWT stateless
-- ✅ Proteksi route berbasis role (kandidat/recruiter/admin terpisah)
-- ✅ CSRF protection di semua form
-- ✅ Recruiter tidak bisa akses pipeline company lain (ownership check)
-- ✅ Token session di-hash sebelum simpan DB
-- ✅ File upload: MIME type validation dari header file (bukan ekstensi)
-- ✅ HTML descriptions: sanitized via bluemonday (allowlist tag)
-
-### Data & Infrastructure ✅
-- ✅ PostgreSQL dengan schema terstruktur (migrations 0001–0009)
-- ✅ Seeder demo data (1 admin, 10 company, 100 job ASEAN lokasi)
-- ✅ Docker + Docker Compose
-- ✅ Multi-stage Dockerfile (build di golang, run di alpine)
-- ✅ Docker bind-mount untuk uploaded files (`web/static/uploads/`) agar persisten di host
-
----
-
-## What Makes JOBHOO Different
-
-### 1. AI Explains, Not Just Filters
-Kebanyakan job portal hanya keyword-match. JOBHOO dirancang agar AI memberi **alasan** di balik tiap skor — "cocok karena X, kurang di Y" — baik untuk recruiter menilai kandidat maupun kandidat menilai job.
-
-### 2. AI Never Takes Decisions
-Ranking AI di ATS board JOBHOO **tidak pernah** mengubah stage kandidat atau menyembunyikan siapa pun — murni saran di atas data yang tetap terlihat utuh. Banyak platform lain membiarkan algoritma auto-reject tanpa recruiter sadar.
-
-### 3. Provider-Agnostic Architecture
-Kebanyakan startup menanam satu vendor AI di kode inti. JOBHOO pisah lewat satu interface — ganti dari Anthropic ke OpenAI tanpa ubah satu baris kode aplikasi.
-
-### 4. Narrow Focus (Sengaja)
-Brief awal eksplisit menolak jadi "LinkedIn kedua" — tidak ada feed sosial, tidak ada follow/connect. Platform besar tambah fitur sosial untuk retensi; JOBHOO sengaja tidak, supaya pengalaman tetap "cari kerja, kelola pelamar".
-
-### 5. ATS Built-In, Bukan Add-On
-Banyak job board hanya tempat posting — recruiter tetap pakai ATS terpisah (Greenhouse, Lever). JOBHOO menyatukan keduanya: satu platform, satu login, satu alur kerja.
-
-### 6. Transparansi Status Lamaran
-Banyak platform membuat kandidat "menghilang" setelah apply. Dashboard kandidat JOBHOO menampilkan stage lamaran real-time (Applied/Screening/Interview/dsb).
-
----
-
-## Running Locally
-
-### With Docker (Recommended)
-
-```bash
 cp .env.example .env
-docker compose up --build              # Build & start app + Postgres
-docker compose run --rm app ./jobhoo-seed    # Seed demo data
-```
-
-Open: http://localhost:8070
-
-**Reseed tanpa recreate DB:**
-```bash
-docker compose run --rm app ./jobhoo-seed
-```
-
-**Wipe DB penuh:**
-```bash
-docker compose down -v
 docker compose up --build
-docker compose run --rm app ./jobhoo-seed
 ```
 
-### Without Docker (Requires Local Postgres)
+Tunggu hingga muncul log `JOBHOO listening on :8070 (env=development)`, lalu seed data demo di terminal baru:
+
+```powershell
+docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed
+```
+
+Buka `http://localhost:8070`.
+
+Catatan penting: di dalam Docker, gunakan `DATABASE_URL` dengan host `@db` (nama service), bukan `@localhost`.
+
+### 4.3 Akun Demo
+
+| Peran | Email | Password |
+|---|---|---|
+| Admin | admin@jobhoo.demo | demo-password-123 |
+| Recruiter (1-10) | recruiter1@jobhoo.demo s/d recruiter10@jobhoo.demo | demo-password-123 |
+| Candidate | Daftar baru lewat `/signup` | - |
+
+`recruiter10` sengaja dibiarkan berstatus company pending untuk menguji antrian approval.
+
+### 4.4 Menghentikan & Reset
+
+```powershell
+docker compose down            # Hentikan
+docker compose down -v         # Hentikan + hapus volume data (reset penuh)
+docker compose up --build      # Jalankan ulang
+```
+
+### 4.5 Tanpa Docker (Perlu PostgreSQL Lokal)
 
 ```bash
-# Create database & apply migrations manually
 createdb jobhoo
-psql jobhoo < internal/database/migrations/0001_init.up.sql
-psql jobhoo < internal/database/migrations/0003_sessions.up.sql
-psql jobhoo < internal/database/migrations/0004_job_category.up.sql
-psql jobhoo < internal/database/migrations/0005_fix_cascade.up.sql
-
-# Run app
+cd internal/database/migrations && bash init-migrations.sh
 go run ./cmd/server
-
-# Seed demo data (di terminal baru)
-go run ./cmd/seed
+go run ./cmd/seed          # Di terminal baru
 ```
 
----
+## 5. Konfigurasi Environment Variable
 
-## Troubleshooting & Common Issues
+Lihat `.env.example` untuk template lengkap. Ringkasan variabel:
 
-### Issue 1: Homepage Kosong (Hanya Navbar)
+| Variabel | Wajib | Keterangan |
+|---|---|---|
+| `APP_ENV` | Tidak | `development` (default) atau `production` |
+| `PORT` | Tidak | Port HTTP server, default `8080` (dev lokal biasanya `8070`) |
+| `DATABASE_URL` | Ya | Connection string PostgreSQL |
+| `SESSION_SECRET` | Ya di production | Signing secret cookie sesi |
+| `AI_API_KEY` | Ya untuk fitur AI | API key OpenAI atau gateway kompatibel |
+| `AI_MODEL` | Tidak | Model identifier, contoh `openai/gpt-5-nano` |
+| `AI_BASE_URL` | Tidak | URL gateway kustom; kosong berarti pakai OpenAI resmi |
+| `AI_VISION_MODEL` | Tidak | Override model khusus untuk parsing resume via vision (PDF/gambar) |
+| `EMAIL_PROVIDER` | Tidak | `dev` (log ke konsol, default) atau `smtp` |
+| `EMAIL_FROM` | Tidak | Alamat pengirim email |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Hanya jika `EMAIL_PROVIDER=smtp` | Kredensial SMTP |
 
-**Gejala:**
-- Homepage load tapi hanya navbar, konten kosong
-- "could not load jobs" error di browser
+Catatan kompatibilitas: variabel lama `MAIL_HOST`/`MAIL_PORT`/`MAIL_USER`/`MAIL_PASS` (gaya Mailtrap) masih didukung sebagai fallback jika `SMTP_*` kosong.
 
-**Root Cause:**
-Template rendering error (biasanya nil pointer evaluating `.CurrentUser.Role` saat `.CurrentUser` adalah nil).
+## 6. Lapisan AI (Provider OpenAI)
 
-**Solusi:**
-1. Cek `web/templates/layouts/base.html` — gunakan nested `if` untuk nil-safe access:
-   ```go
-   {{if not .CurrentUser}}
-     // Show public links
-   {{else if eq .CurrentUser.Role "recruiter"}}
-     // Show recruiter links
-   {{else if eq .CurrentUser.Role "candidate"}}
-     // Show candidate links
-   {{end}}
-   ```
-2. Rebuild image: `docker compose build --no-cache && docker compose up`
+JOBHOO menggunakan provider OpenAI secara eksklusif untuk semua fitur AI. Tidak ada pencabangan multi-provider; konfigurasi hanya lewat environment variable untuk memilih model dan gateway.
 
-### Issue 2: Seeder Hangs atau Tidak Eksekusi
+### 6.1 Interface Provider
 
-**Gejala:**
-- `docker compose run --rm app ./jobhoo-seed` seperti tidak ada output
-- Atau: error "can't scan into dest[18]: cannot scan NULL into *string"
+Interface `ai.Provider` (di `internal/ai/provider.go`) adalah satu-satunya seam antara JOBHOO dan backend AI. Handler tidak pernah mengimpor SDK vendor secara langsung.
 
-**Root Cause:**
-- Database URL `@localhost:5432` tidak valid di dalam Docker container (inside container, nama service adalah `db`)
-- Field struct tidak nullable tapi database return NULL
-
-**Solusi:**
-1. **Pass DATABASE_URL dengan `@db`:**
-   ```powershell
-   docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed
-   ```
-
-2. **Nullable field di models jika DB return NULL:**
-   ```go
-   type Job struct {
-     CompanyLogoURL *string  // Pointer, bukan string langsung
-   }
-   ```
-
-### Issue 3: Foreign Key Constraint Error
-
-**Gejala:**
-```
-ERROR: update or delete on table "users" violates foreign key constraint "jobs_created_by_fkey"
+```go
+type Provider interface {
+    RankCandidates(ctx, job, candidates) ([]CandidateRanking, error)
+    ExplainMatch(ctx, job, candidate) (MatchExplanation, error)
+    RecommendJobs(ctx, candidate, jobs) ([]JobRecommendation, error)
+    ExtractResumeText(ctx, rawText string) (ResumeExtraction, error)
+    ExtractResumeFile(ctx, fileData []byte, mediaType string) (ResumeExtraction, error)
+    Name() string
+}
 ```
 
-**Root Cause:**
-Migration lupa menambah `ON DELETE CASCADE` ke foreign key.
+Poin penting:
 
-**Solusi:**
-1. Buat migration baru `0005_fix_cascade.up.sql`:
-   ```sql
-   ALTER TABLE jobs 
-     DROP CONSTRAINT jobs_created_by_fkey,
-     ADD CONSTRAINT jobs_created_by_fkey 
-       FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE;
-   ```
+1. Output AI selalu bersifat advisory. Tidak ada metode yang mengambil keputusan hiring; semua hasil adalah saran untuk ditinjau manusia.
+2. Resume (hasil ekstraksi terstruktur) adalah sumber utama untuk semua pencocokan AI. Field skill di profil kandidat bersifat sekunder, hanya sebagai cross-check tambahan.
+3. `RankCandidates` tidak pernah menyembunyikan atau menghapus kandidat dari hasil; hanya memberi skor dan urutan.
 
-2. Rebuild: `docker compose down -v && docker compose up --build`
+### 6.2 Konfigurasi
 
-### Issue 4: Port 8070 Sudah Dipakai
-
-**Gejala:**
-```
-Bind for 0.0.0.0:8070 failed: port is already allocated
-```
-
-**Solusi:**
-1. **Option A:** Ubah `.env`:
-   ```
-   PORT=8071
-   ```
-   
-2. **Option B:** Ubah `docker-compose.yml`:
-   ```yaml
-   ports:
-     - "8071:8070"
-   ```
-
-3. **Option C:** Kill proses yang pakai port:
-   ```powershell
-   netstat -ano | findstr :8070
-   taskkill /PID <PID> /F
-   ```
-
-### Issue 5: Docker Image Cache (Kode Lama Masih Jalan)
-
-**Gejala:**
-- Ubah kode tapi aplikasi masih jalankan versi lama
-
-**Solusi:**
-```powershell
-docker compose build --no-cache
-docker compose down
-docker compose up
-```
-
-### Issue 6: Database Sudah Ada, Migrasi Tidak Jalan
-
-**Gejala:**
-- `docker compose down` tapi volume `.down.sql` files dari migrasi lama tetap dijalankan
-
-**Solusi:**
-```powershell
-docker compose down -v   # -v menghapus volume data
-docker compose up --build
-```
-
-### Issue 7: Docker Desktop Gagal Start (WSL2 Error)
-
-**Gejala:**
-```
-Docker Desktop requires WSL 2 backend
-```
-
-**Solusi:**
-1. Buka PowerShell sebagai Administrator
-2. Jalankan: `wsl --install`
-3. Restart komputer
-4. Coba Docker Desktop lagi
-
----
-
-## Known Gaps Before Production
-
-### No Email
-Tidak ada email verification, password reset, atau notifikasi saat stage lamaran berubah.
-
-### No Rate Limiting
-Login/signup/apply tidak ada rate limiting. Perlu ditambah sebelum public launch untuk mencegah credential-stuffing dan spam.
-
-### CSRF Baseline Only
-Standard double-submit-cookie, bukan per-session token.
-
-### File Storage Ephemeral in Production
-Di dev, uploaded files disimpan di `web/static/uploads/` via Docker bind-mount. Di production, perlu migrasi ke object storage (S3-compatible) — lokasi path sudah di-abstract, tinggal swap handler.
-
-### No Accessibility Pass
-Keyboard focus & semantic markup sudah dari design system, tapi belum ada full screen-reader audit.
-- Semua 13 page template di-parse & execute dengan mock data shaped seperti struct asli
-
-**Sebelum deploy, jalankan di machine dengan internet normal:**
 ```bash
-go build ./...
-go vet ./...
-go test ./...
+AI_API_KEY=sk-xxx...
+AI_MODEL=openai/gpt-5-nano
+AI_VISION_MODEL=openai/gpt-5-nano   # opsional, override model untuk parsing PDF/gambar
+AI_BASE_URL=https://api.maiarouter.ai/v1   # opsional, kosongkan untuk OpenAI resmi
 ```
 
----
+Jika `AI_BASE_URL` kosong, provider otomatis menggunakan `https://api.openai.com/v1`.
 
-## Quick Reference
+### 6.3 Cara Kerja Gateway
 
-| Task | Command |
+1. Provider membaca `AI_BASE_URL` dari environment saat inisialisasi.
+2. Jika tidak diset, default ke endpoint resmi OpenAI.
+3. Trailing slash pada base URL dibersihkan otomatis.
+4. Model dipilih dari `AI_MODEL`; endpoint yang dipanggil adalah `{baseURL}/chat/completions`.
+
+Gateway kustom yang sudah diuji: Maia Router (`https://api.maiarouter.ai/v1`), dengan model `openai/gpt-5-nano`.
+
+Catatan implementasi untuk model reasoning (keluarga `gpt-5*`, `o1`/`o3`/`o4`): model ini butuh parameter `max_completion_tokens` (bukan `max_tokens`) dan menolak `temperature`/`top_p` non-default. Provider mendeteksi ini otomatis lewat helper `isReasoningModel`.
+
+### 6.4 Karakteristik Performa
+
+| Operasi | Estimasi durasi |
 |---|---|
-| Start app + DB | `docker compose up --build` |
-| Seed demo data | `docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed` |
-| Stop | `docker compose down` |
-| Reset DB | `docker compose down -v && docker compose up --build` |
-| View logs | `docker compose logs app` |
-| Shell ke DB | `docker compose exec db psql -U jobhoo -d jobhoo` |
-| Rebuild image | `docker compose build --no-cache` |
+| Ekstraksi/analisis resume (teks) | 2-3 detik |
+| Ekstraksi resume via vision (PDF/gambar) | 8-10 detik |
+| Ranking kandidat | 3-5 detik per job |
+| Rekomendasi lowongan | 2-4 detik per batch |
+| Timeout permintaan | 60 detik (server HTTP timeout 90 detik untuk mengakomodasi ini) |
 
----
+### 6.5 Penanganan Error
 
-**Last Updated:** 2026-07-28  
-**Status:** End-to-end platform berfungsi ✅
+Provider mengembalikan error deskriptif untuk kondisi: API key tidak valid, model tidak tersedia untuk key tersebut, error jaringan ke gateway, respons JSON tidak valid, atau timeout context.
+
+## 7. Sistem Desain
+
+Standar visual resmi JOBHOO. Semua komponen, halaman, dan aset baru mengikuti panduan ini agar identitas platform konsisten. Referensi implementasi: `web/static/css/tokens.css` (token) dan `web/static/css/components.css` (komponen, hanya mereferensikan token, tanpa nilai hex/pixel langsung).
+
+### 7.1 Kepribadian Merek
+
+JOBHOO adalah platform rekrutmen yang profesional namun tidak kaku:
+
+1. Percaya diri - tampilan gelap dan bersih, bukan abu-abu atau putih seperti kebanyakan job board.
+2. Fokus - tidak ada elemen dekoratif berlebihan; setiap elemen punya fungsi.
+3. Hangat - sentuhan oranye yang terkontrol agar tidak terasa dingin atau korporat steril.
+4. Modern - rounded corners, spacing besar, tipografi berat.
+
+Kata kunci desain: dark, clean, orange-accented, rounded, purposeful.
+
+### 7.2 Warna
+
+JOBHOO menggunakan dark theme sepenuhnya; tidak ada mode terang.
+
+| Nama | Hex | Penggunaan |
+|---|---|---|
+| Navy 700 (Brand Navy) | `#192132` | Background utama halaman |
+| Navy 900 | `#0f1220` | Ujung bawah gradient atmosphere |
+| Surface Card | `#1f2942` | Kartu, panel, form |
+| Surface Inset | `#151d30` | Input field, area recessed |
+| Orange 500 (Brand Orange) | `#d96600` | Aksen utama, CTA, active state |
+| Orange 400 | `#e87d33` | Hover state tombol oranye, icon |
+| Ink 100 | `#eef0f6` | Teks utama (body, label, heading) |
+| Ink 300 | `#b7bdd1` | Teks sekunder (subtitle, hint) |
+| Ink 500 | `#7d84a3` | Teks tersier (placeholder, caption) |
+| Border | `#2a3549` | Garis batas komponen |
+| Border Strong | `#3a4462` | Garis lebih menonjol (hover, focus) |
+
+Aturan warna:
+
+1. Oranye hanya untuk aksen, bukan background atau teks paragraf.
+2. Tidak ada warna lain selain navy dan oranye, kecuali warna status (hijau untuk sukses, merah untuk error).
+3. Background halaman selalu gradient: `linear-gradient(180deg, #192132 0%, #0f1220 100%)`.
+4. Overlay/backdrop menggunakan `rgba(0, 0, 0, 0.4)` di atas background.
+
+Warna status:
+
+| Status | Warna |
+|---|---|
+| Sukses / Hired | `#045b25` (hijau gelap) |
+| Error / Rejected | `#5b0404` (merah gelap) |
+| Warning / Pending | `rgba(217, 102, 0, 0.08)` dengan border `#d96600` |
+| Netral / Closed | Surface Inset dengan Ink 500 |
+
+### 7.3 Tipografi
+
+Typeface: Lexend (Google Fonts), satu-satunya typeface di seluruh platform. Fallback: `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`.
+
+| Token | Rem | Pixel | Penggunaan |
+|---|---|---|---|
+| `text-xs` | 0.75rem | 12px | Badge, label kecil, hint |
+| `text-sm` | 0.875rem | 14px | Tabel, metadata, nav link |
+| `text-base` | 1rem | 16px | Teks body utama, form input |
+| `text-lg` | 1.125rem | 18px | Subtitle, deskripsi penting |
+| `text-xl` | 1.375rem | 22px | Heading seksi kecil (h3) |
+| `text-2xl` | 1.75rem | 28px | Heading level 2 (h2) |
+| `text-3xl` | 2.25rem | 36px | Heading besar (h2 hero) |
+| `text-4xl` | 3rem | 48px | Heading halaman utama (h1) |
+
+Line height: `leading-tight` (1.2) untuk heading, `leading-normal` (1.55) untuk body text, `leading-relaxed` (1.75) untuk deskripsi panjang.
+
+Bobot font: 700 untuk heading dan label form, 600 untuk tombol dan nav aktif, 500 untuk nav inaktif dan metadata, 400 untuk body text dan placeholder.
+
+### 7.4 Spacing
+
+Sistem berbasis 8px (basis 0.25rem = 4px, kelipatan 2):
+
+| Token | Rem | Pixel |
+|---|---|---|
+| `space-1` | 0.25rem | 4px |
+| `space-2` | 0.5rem | 8px |
+| `space-3` | 0.75rem | 12px |
+| `space-4` | 1rem | 16px |
+| `space-5` | 1.5rem | 24px |
+| `space-6` | 2rem | 32px |
+| `space-7` | 3rem | 48px |
+| `space-8` | 4rem | 64px |
+| `space-9` | 6rem | 96px |
+
+Prinsip: elemen dalam satu komponen memakai `space-1` sampai `space-3`. Antar komponen memakai `space-4` sampai `space-6`. Antar section/halaman memakai `space-7` sampai `space-9`.
+
+### 7.5 Border Radius
+
+Rounded corners konsisten; tidak ada elemen kotak (0px) kecuali garis/divider. Semakin besar elemen, semakin besar radius-nya.
+
+| Token | Nilai | Digunakan Pada |
+|---|---|---|
+| `radius-sm` | 10px | Badge, chip, tombol kecil, tag |
+| `radius-md` | 16px | Input field, tombol utama, dropdown |
+| `radius-lg` | 22px | Kartu (card), panel, modal |
+| `radius-xl` | 28px | Modal besar, hero section |
+| `radius-pill` | 999px | Badge pill, filter chip |
+
+### 7.6 Elevasi & Bayangan
+
+| Token | Nilai | Penggunaan |
+|---|---|---|
+| `shadow-sm` | `0 2px 8px rgba(10,12,22, 0.24)` | Kartu statis |
+| `shadow-md` | `0 8px 24px rgba(10,12,22, 0.32)` | Modal, dropdown, floating element |
+| `shadow-glow-orange` | `0 0 0 4px rgba(217,102,0, 0.16)` | Focus ring, input aktif |
+
+### 7.7 Komponen Utama
+
+**Tombol** - 3 varian: Primary (background oranye, teks putih, untuk aksi utama), Secondary (transparan, border strong, untuk aksi sekunder), Ghost (transparan, teks ink-300, untuk navigasi ringan). Ukuran: Default (padding `0.75rem 1.375rem`), Small (`0.5rem 1rem`), Large (`0.875rem 1.75rem`). Hover: Primary ke `#e87d33` dengan glow oranye; Secondary berubah jadi background oranye.
+
+**Kartu** - Background `surface-card`, border 1px `border`, radius `radius-lg`, padding standar `space-5`. Job Card memiliki header (logo + nama company + waktu posting + bookmark), judul lowongan, dan body (logo besar + metadata: kategori, lokasi, tipe kerja, tipe kontrak).
+
+**Badge dan Chip** - Radius `radius-pill`, padding `0.3rem 0.7rem`, font `text-xs` weight 600. Varian: Default (surface-inset/ink-300), Orange (aksen aktif), Green (Hired), Red (Rejected), Gray (Closed/Archived).
+
+**Form dan Input** - Background `surface-inset`, border 1px `border`, radius `radius-md`, padding `0.75rem 1rem`. Focus: border oranye + `shadow-glow-orange`. Placeholder: `ink-500`.
+
+**Page Header** - Background gradient `linear-gradient(to right, rgba(0,0,0,0.4), rgba(0,0,0,0.4), transparent)`, min-height 130px, judul `text-4xl` bold putih, subtitle `text-lg` ink-300.
+
+**Navbar** - Sticky top, background `rgba(navy, 0.85)` + backdrop-blur 10px, border bawah 1px. Menu berbeda per peran: Kandidat (Browse Jobs, nama user, Dashboard), Recruiter (Job Management, Public Page, My Profile), Admin (Browse Jobs, Dashboard), Tamu (Browse Jobs, Post a Job).
+
+**Modal** - Overlay `rgba(0,0,0,0.5)`, panel `surface-card` radius-lg, max-width 700px, max-height 90vh dengan scroll internal. Animasi masuk: slide dari atas + fade, durasi 300ms. Mobile: bottom-sheet (radius hanya di atas, lebar 100%).
+
+### 7.8 Layout & Grid
+
+| Class | Max-width | Penggunaan |
+|---|---|---|
+| `.container` | 1200px | Layout umum |
+| `.container-max-sm` | 480px | Modal login, form singkat |
+| `.container-max-md` | 520px | Form signup, company setup |
+| `.container-max-lg` | 680px | Form post job, profile |
+| `.container-max-xl` | 840px | Job detail, company detail kecil |
+| `.container-max-2xl` | 900px | Company detail publik |
+
+Grid: auto-fill `minmax(300px, 1fr)` untuk daftar job card, 2 kolom untuk pasangan field, 3 kolom untuk field currency/salary. Mobile (<= 640px): semua grid collapse ke 1 kolom.
+
+Breakpoint: <= 640px mobile (grid 1 kolom, bottom-sheet modal), <= 768px tablet (hamburger menu), <= 1024px sidebar diperkecil.
+
+### 7.9 Animasi & Motion
+
+Easing standar `cubic-bezier(0.4, 0, 0.2, 1)`. Durasi: fast 120ms (hover, focus ring), normal 200ms (tombol, card hover, dropdown), modal enter 300ms, mobile drawer 220ms. Tidak ada animasi dekoratif (bounce/elastic); setiap motion memberi feedback visual yang jelas. `prefers-reduced-motion` mengurangi semua durasi menjadi `0.001ms`.
+
+### 7.10 Ikonografi
+
+SVG inline gaya Lucide/Heroicons (viewBox 24x24, `stroke="currentColor"`, `stroke-width="2"`). Digunakan pada metadata job card untuk seniority, kategori, employment type, work arrangement, lokasi, dan salary.
+
+### 7.11 Scrollbar Kustom
+
+Lebar 8px, track transparan, thumb `orange-500` (hover `orange-400`), border-radius `radius-sm`.
+
+### 7.12 Batasan Desain
+
+1. Jangan gunakan warna latar putih atau abu-abu terang.
+2. Jangan tambah typeface selain Lexend.
+3. Jangan gunakan oranye sebagai background area besar.
+4. Jangan gunakan border-radius 0 pada komponen interaktif.
+5. Jangan tambah shadow berwarna selain oranye glow dan navy shadow.
+6. Jangan gunakan animasi bounce, elastic, atau dekoratif.
+7. Jangan letakkan teks gelap di atas background navy (kontras terlalu rendah).
+8. Jangan hard-code nilai hex/pixel langsung di CSS; selalu gunakan token dari `tokens.css`.
+
+## 8. Troubleshooting
+
+### 8.1 Homepage Kosong (Hanya Navbar Tampil)
+
+Penyebab: error rendering template, biasanya nil pointer saat mengevaluasi `.CurrentUser.Role` ketika `.CurrentUser` adalah nil.
+
+Solusi: gunakan nested `if` yang nil-safe di `web/templates/layouts/base.html`:
+
+```go
+{{if not .CurrentUser}}
+  // Tampilkan menu publik
+{{else if eq .CurrentUser.Role "recruiter"}}
+  // Menu recruiter
+{{else if eq .CurrentUser.Role "candidate"}}
+  // Menu candidate
+{{end}}
+```
+
+Rebuild: `docker compose build --no-cache && docker compose up`.
+
+### 8.2 Seeder Hang atau Tidak Berjalan
+
+Penyebab: `DATABASE_URL` dengan `@localhost` tidak valid di dalam container (nama service adalah `db`), atau field struct tidak nullable padahal database mengembalikan NULL.
+
+Solusi: jalankan seeder dengan `DATABASE_URL` eksplisit menggunakan host `@db`:
+
+```powershell
+docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed
+```
+
+Untuk kolom yang bisa NULL di database, gunakan pointer di struct Go (`*string`, bukan `string`).
+
+### 8.3 Foreign Key Constraint Error
+
+Penyebab: migration lupa menambahkan `ON DELETE CASCADE` pada foreign key.
+
+Solusi: buat migration baru untuk memperbaiki constraint, contoh:
+
+```sql
+ALTER TABLE jobs
+  DROP CONSTRAINT jobs_created_by_fkey,
+  ADD CONSTRAINT jobs_created_by_fkey
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE;
+```
+
+### 8.4 Port Sudah Dipakai
+
+Ubah `PORT` di `.env`, atau ubah mapping port di `docker-compose.yml`, atau hentikan proses yang memakai port tersebut (`netstat -ano | findstr :8070` lalu `taskkill /PID <PID> /F` di Windows).
+
+### 8.5 Docker Menjalankan Kode Lama
+
+Rebuild tanpa cache: `docker compose build --no-cache` lalu `docker compose down` dan `docker compose up`.
+
+### 8.6 Migrasi Tidak Berjalan Ulang
+
+Migrasi hanya otomatis dijalankan pada volume database yang baru. Untuk memaksa migrasi ulang: `docker compose down -v` (menghapus volume) lalu `docker compose up --build`. Untuk menambahkan migration baru ke database dev yang sudah berjalan, jalankan manual, contoh:
+
+```powershell
+Get-Content internal/database/migrations/0016_new_feature.up.sql | docker exec -i jobhoo-db-1 psql -U jobhoo -d jobhoo
+```
+
+### 8.7 Docker Desktop Gagal Start (WSL2)
+
+Buka PowerShell sebagai Administrator, jalankan `wsl --install`, restart komputer, lalu coba Docker Desktop lagi.
+
+## 9. Referensi Cepat
+
+| Tugas | Perintah |
+|---|---|
+| Build & jalankan app + DB | `docker compose up --build` |
+| Deploy ulang kode ke dev environment | `docker compose up -d --build app` |
+| Seed data demo | `docker compose run --rm -e DATABASE_URL="postgres://jobhoo:jobhoo_dev_password@db:5432/jobhoo?sslmode=disable" app ./jobhoo-seed` |
+| Hentikan | `docker compose down` |
+| Reset database penuh | `docker compose down -v && docker compose up --build` |
+| Lihat log | `docker compose logs -f app` |
+| Shell ke database | `docker compose exec db psql -U jobhoo -d jobhoo` |
+| Build & vet sebelum deploy | `go build ./... && go vet ./...` |
+| Jalankan test | `go test ./...` |
+
+## 10. Dokumen Terkait
+
+1. [DOC-PRODUCT-OVERVIEW.md](DOC-PRODUCT-OVERVIEW.md) - Gambaran produk non-teknis.
+2. [DOC-DEVELOPMENT-PHASE.md](DOC-DEVELOPMENT-PHASE.md) - Checklist status pengembangan per fase.
+3. [DOC-AUDIT-REPORT.md](DOC-AUDIT-REPORT.md) - Audit teknis, keamanan, performa, dan UI/UX.
