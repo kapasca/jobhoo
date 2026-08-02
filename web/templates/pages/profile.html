@@ -93,6 +93,12 @@
   </ul>
 {{end}}
 
+{{define "suggestions-error"}}
+  <div class="alert alert--danger">
+    <strong>Error generating suggestions:</strong> {{.error}}
+  </div>
+{{end}}
+
 {{define "suggestions-empty"}}
   <p class="profile-note">Add your resume text above and save before requesting suggestions.</p>
 {{end}}

@@ -468,6 +468,38 @@ input:focus, select:focus, textarea:focus {
   box-shadow: var(--jh-shadow-glow-orange);
   outline: none;
 }
+/* Password field with eye icon toggle */
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+.password-field input {
+  flex: 1;
+  padding-right: var(--jh-space-2); 
+}
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--jh-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s;
+  z-index: 10;
+}
+.password-toggle:hover {
+  color: var(--jh-orange-400);
+}
+.password-toggle svg {
+  stroke: currentColor;
+}
 .dropdown {
   padding: var(--jh-space-3) var(--jh-space-4);
   cursor: pointer;
