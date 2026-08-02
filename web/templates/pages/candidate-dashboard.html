@@ -67,9 +67,10 @@
 
   <div class="d-flex justify-between items-center mt-7">
     <h2 class="font-xl m-0">Recommended for You</h2>
-    <button class="btn btn--secondary btn--sm" hx-post="/dashboard/candidate/recommendations" hx-target="#recommendations" hx-swap="innerHTML">
+    <button class="btn btn--secondary btn--sm" hx-post="/dashboard/candidate/recommendations" hx-target="#recommendations" hx-swap="innerHTML" hx-indicator="#recommendations-spinner">
       ✨ Get AI recommendations
     </button>
+    <span id="recommendations-spinner" class="htmx-indicator spinner-inline"></span>
   </div>
   <div id="recommendations" class="mt-3">
     <p class="m-0 font-sm">Click above for jobs matched to your profile skills.</p>
@@ -103,4 +104,10 @@
 
 {{define "recommendations-empty"}}
   <p class="recommendation-empty">Complete your profile first to get AI job recommendations.</p>
+{{end}}
+
+{{define "recommendations-error"}}
+  <div class="alert alert--danger">
+    <strong>Couldn't load recommendations:</strong> {{.error}}
+  </div>
 {{end}}

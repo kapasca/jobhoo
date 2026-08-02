@@ -587,6 +587,7 @@ tr:last-child td { border-bottom: none; }
 }
 .alert--warning { border-color: var(--jh-orange-500); background: rgba(var(--jh-orange-rgb), 0.08); text-align: center; }
 .alert--success { border-color: var(--jh-green-500); background: rgba(0, 128, 0, 0.08); text-align: center; color: var(--jh-green-600); }
+.alert-to-columns { display: flex; flex-direction: column; align-items: flex-start; gap: var(--jh-space-2); }
 
 .toast {
   position: fixed; bottom: var(--jh-space-6); right: var(--jh-space-6);
@@ -610,6 +611,24 @@ tr:last-child td { border-bottom: none; }
   border-radius: var(--jh-radius-sm);
 }
 @keyframes jh-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+/* --- HTMX request indicators (AI calls can take up to ~60s, so every
+   AI-triggered button gets a visible spinner while waiting) --- */
+.htmx-indicator { opacity: 0; transition: opacity 150ms ease-in; }
+.htmx-request.htmx-indicator, .htmx-request .htmx-indicator { opacity: 1; }
+
+.spinner-inline {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--jh-surface-inset, #333);
+  border-top-color: var(--jh-accent, #ff8a00);
+  border-radius: 50%;
+  animation: jh-spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+@keyframes jh-spin { to { transform: rotate(360deg); } }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
@@ -1248,6 +1267,26 @@ tr:last-child td { border-bottom: none; }
   overflow: hidden;
 }
 
+/* --- ATS Card & AI Scoring --- */
+.ats-card {
+  position: relative;
+}
+
+.ats-card-score-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  color: var(--jh-orange-400);
+  background-color: var(--jh-bg);
+  border: 3px solid var(--jh-border);
+  padding: 5px 9px 5px 12px;
+  border-radius: var(--jh-radius-sm);
+  font-weight: 700;
+  font-size: var(--jh-text-base);
+  box-shadow: var(--jh-shadow-glow-orange);
+  z-index: 10;
+}
+
 /* --- Programmatic Confirmation Dialog (jhConfirm) --- */
 .jh-confirm-overlay {
   position: fixed; inset: 0; z-index: 500;
@@ -1607,6 +1646,9 @@ tr:last-child td { border-bottom: none; }
 
 /* Typography utilities */
 .text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+.text-justify { text-align: justify; }
 .text-white { color: var(--jh-white); }
 .text-muted { color: var(--jh-ink-300); }
 .text-secondary { color: var(--jh-ink-500); }
@@ -1870,7 +1912,7 @@ tr:last-child td { border-bottom: none; }
 .ats-header-top {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--jh-space-3);
   margin-bottom: var(--jh-space-4);
@@ -2111,7 +2153,7 @@ tr:last-child td { border-bottom: none; }
 .ats-column-content {
   display: flex;
   flex-direction: column;
-  gap: var(--jh-space-3);
+  gap: var(--jh-space-4);
 }
 
 .ats-empty-column {
@@ -2200,52 +2242,13 @@ tr:last-child td { border-bottom: none; }
   padding: var(--jh-space-3) var(--jh-space-4);
   border-bottom: 1px solid var(--jh-border);
   font-size: var(--jh-text-sm); color: var(--jh-ink-300);
-  vertical-align: top;
+  vertical-align: middle;
 }
 .cmp-table td:first-child {
   font-size: var(--jh-text-xs); text-transform: uppercase; letter-spacing: 0.04em;
   color: var(--jh-ink-500); font-weight: 600; width: 90px;
 }
 .cmp-table tr:last-child td { border-bottom: none; }
-
-.ats-card-name {
-  color: var(--jh-white);
-  font-weight: 600;
-  margin: 0 0 2px;
-}
-
-.ats-card-email {
-  font-size: var(--jh-text-xs);
-  margin: 0 0 var(--jh-space-2);
-  color: var(--jh-ink-400);
-}
-
-.ats-card-skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: var(--jh-space-2);
-}
-
-.ats-card-skill-badge {
-  font-size: 10px;
-  padding: 2px 8px;
-}
-
-.ats-card-ai-note {
-  padding: var(--jh-space-2) var(--jh-space-3);
-  margin-bottom: var(--jh-space-2);
-  border-color: var(--jh-orange-500);
-}
-
-.ats-card-ai-score {
-  margin: 0;
-  font-size: var(--jh-text-xs);
-}
-
-.ats-card-ai-score strong {
-  color: var(--jh-orange-400);
-}
 
 /* Job detail page */
 .job-detail-footer {
@@ -2487,6 +2490,67 @@ tr:last-child td { border-bottom: none; }
 
 .link-primary:hover {
   color: var(--jh-orange-400);
+}
+
+.ats-card-score {
+  padding: var(--jh-space-3);
+}
+
+.ats-card-name {
+  color: var(--jh-white);
+  font-weight: 600;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ats-card-email {
+  font-size: var(--jh-text-xs);
+  margin: 0 0 var(--jh-space-2);
+  color: var(--jh-ink-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ats-card-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: var(--jh-space-2);
+}
+
+.ats-card-skill-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+}
+
+.ai-rank-result {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.ai-rank-label {
+  font-size: var(--jh-text-xs);
+  color: var(--jh-ink-500);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.ai-rank-value {
+  font-size: var(--jh-text-xl);
+  color: var(--jh-orange-400);
+  font-weight: 600;
+  margin-bottom: var(--jh-space-2);
+}
+
+.ai-rank-summary {
+  font-size: var(--jh-text-xs);
+  color: var(--jh-ink-300);
+  margin: 0;
+  text-align: left;
 }
 
 /* ============================================================

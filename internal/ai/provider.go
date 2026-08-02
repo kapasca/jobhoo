@@ -27,18 +27,19 @@ type Provider interface {
 	// specific candidate does or doesn't fit a specific job.
 	ExplainMatch(ctx context.Context, job JobContext, candidate CandidateContext) (MatchExplanation, error)
 
-	// SummarizeResume produces a concise structured summary of a resume for
-	// quick recruiter scanning.
-	SummarizeResume(ctx context.Context, resumeText string) (ResumeSummary, error)
-
 	// RecommendJobs suggests jobs a candidate is likely to be a strong fit
 	// for, with a reason for each recommendation.
 	RecommendJobs(ctx context.Context, candidate CandidateContext, jobs []JobContext) ([]JobRecommendation, error)
 
-	// SuggestResumeImprovements gives a candidate actionable, specific
-	// suggestions to strengthen their resume for a target job (or in
-	// general, if job is nil).
-	SuggestResumeImprovements(ctx context.Context, resumeText string, job *JobContext) ([]string, error)
+	// ExtractResumeText parses raw resume text (from a TXT upload, or text
+	// pulled out of a DOCX file) into structured, factual fields. This is
+	// the primary source of truth for candidate profiling — see
+	// ResumeExtraction.
+	ExtractResumeText(ctx context.Context, rawText string) (ResumeExtraction, error)
+
+	// ExtractResumeFile parses a resume file directly via vision (PDF or
+	// image) into the same structured fields as ExtractResumeText.
+	ExtractResumeFile(ctx context.Context, fileData []byte, mediaType string) (ResumeExtraction, error)
 
 	// Name identifies the provider for logging/diagnostics (e.g. "openai",
 	// "anthropic", "mock").
@@ -56,6 +57,12 @@ type JobContext struct {
 	Seniority   string
 }
 
+// CandidateContext carries everything an AI call needs to know about one
+// candidate. ResumeText should always be built from the candidate's parsed
+// resume (see ResumeExtraction / FormatResumeExtractionText) — it is the
+// PRIMARY source of truth. Skills is the candidate's separately entered
+// profile field; every prompt in this package is written to treat it as a
+// SECONDARY, lower-weight cross-check, never a replacement for the resume.
 type CandidateContext struct {
 	ID         string
 	Name       string
@@ -74,13 +81,6 @@ type MatchExplanation struct {
 	Strengths   []string
 	Gaps        []string
 	OverallNote string
-}
-
-type ResumeSummary struct {
-	Headline   string
-	KeySkills  []string
-	Experience string
-	Highlights []string
 }
 
 type JobRecommendation struct {

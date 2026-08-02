@@ -48,7 +48,7 @@ Database schema di-migrate otomatis saat container pertama kali spin up, lewat `
 
 ### AI Layer: Provider Interface
 
-`internal/ai.Provider` adalah satu-satunya interface yang dipakai handler. Swap dari Anthropic ke OpenAI ke mock provider **tanpa mengubah kode aplikasi**.
+`internal/ai.Provider` adalah interface tunggal untuk semua AI features. JOBHOO menggunakan **OpenAI provider secara eksklusif**.
 
 ```go
 type Provider interface {
@@ -59,7 +59,10 @@ type Provider interface {
 }
 ```
 
-Set `AI_PROVIDER=mock|anthropic|openai` di `.env` untuk memilih.
+Configure OpenAI via `.env`:
+- `AI_API_KEY` - Your OpenAI or gateway API key
+- `AI_MODEL` - Model identifier (e.g., gpt-4o, openai/gpt-5-nano)
+- `AI_BASE_URL` - Custom gateway (optional, defaults to OpenAI official API)
 
 ### Design System: Token-Driven
 
@@ -93,12 +96,11 @@ internal/
     sessions_repo.go
     users_repo.go
   models/                 Shared domain types (User, Job, Company, etc.)
-  ai/                     Provider interface + implementations
-    provider.go           Interface definition
-    provider_mock.go      Real logic, no external calls
-    provider_anthropic.go Actual Anthropic API client
-    provider_openai.go    Stub (ready to implement)
-    registry.go           Select provider by name
+  ai/                     OpenAI AI provider (exclusive)
+    provider.go           Provider interface definition
+    openai.go             OpenAI API implementation (all features)
+    openai_test.go        Comprehensive unit & integration tests
+    prompts.go            System prompts for AI consistency
   handlers/               HTTP handlers (thin: parse → repo call → render)
     pages.go              Homepage, jobs listing, job detail
     auth.go               Signup, login, logout

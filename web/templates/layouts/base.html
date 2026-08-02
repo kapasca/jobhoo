@@ -34,6 +34,9 @@
           {{if .CurrentUser}}
             <a href="{{.DashboardPath}}" class="jh-nav__link {{if eq .ActiveNav "dashboard"}}is-active{{end}}">Dashboard</a>
           {{end}}
+          {{if and .CurrentUser (eq .CurrentUser.Role "admin")}}
+            <a href="/admin/activity" class="jh-nav__link {{if eq .ActiveNav "activity"}}is-active{{end}}">Activity</a>
+          {{end}}
         {{end}}
       </nav>
       <div class="jh-nav__actions">
@@ -84,6 +87,9 @@
           {{end}}
           {{if .CurrentUser}}
             <a href="{{.DashboardPath}}" class="jh-mobile-menu__link">Dashboard</a>
+          {{end}}
+          {{if and .CurrentUser (eq .CurrentUser.Role "admin")}}
+            <a href="/admin/activity" class="jh-mobile-menu__link">Activity</a>
           {{end}}
           <a href="/companies" class="jh-mobile-menu__link">Explore Companies</a>
         {{end}}

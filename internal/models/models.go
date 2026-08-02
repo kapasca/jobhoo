@@ -270,12 +270,14 @@ type Application struct {
 	UpdatedAt   time.Time
 
 	// Populated via joins for display purposes.
-	CandidateName   string
-	CandidateEmail  string
-	CandidateSkills []string
-	JobTitle        string
-	CompanyName     string
-	Location        string
+	CandidateName          string
+	CandidateEmail         string
+	CandidateSkills        []string
+	CandidateResumeText    string
+	CandidateResumeFileURL string
+	JobTitle               string
+	CompanyName            string
+	Location               string
 }
 
 type CandidateProfile struct {
@@ -286,4 +288,20 @@ type CandidateProfile struct {
 	Skills        []string
 	Location      string
 	UpdatedAt     time.Time
+}
+
+// AIMatchInsight is the persisted result of an AI ranking/explanation call
+// for one (job, candidate) pair, backed by the ai_match_insights table. It
+// exists so AI scores and explanations survive page reloads and don't need
+// to be recomputed (and re-billed) on every ATS board visit.
+type AIMatchInsight struct {
+	JobID       string
+	CandidateID string
+	Provider    string
+	Score       float64
+	Summary     string
+	Strengths   []string
+	Gaps        []string
+	OverallNote string
+	CreatedAt   time.Time
 }

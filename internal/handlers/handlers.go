@@ -5,9 +5,12 @@
 package handlers
 
 import (
+	"context"
+
 	"github.com/jobhoo/jobhoo/internal/ai"
 	"github.com/jobhoo/jobhoo/internal/database"
 	"github.com/jobhoo/jobhoo/internal/email"
+	"github.com/jobhoo/jobhoo/internal/models"
 )
 
 type Handlers struct {
@@ -20,8 +23,10 @@ type Handlers struct {
 	SavedJobs    *database.SavedJobsRepo
 	Profiles     *database.CandidateProfilesRepo
 	AI           ai.Provider
+	AIInsights   *database.AIInsightsRepo
 	Email        *email.LoggingSender
 	Tokens       *database.EmailTokensRepo
+	AICallLogs   *database.AICallLogsRepo
 }
 
 func New(
@@ -34,13 +39,24 @@ func New(
 	savedJobs *database.SavedJobsRepo,
 	profiles *database.CandidateProfilesRepo,
 	aiProvider ai.Provider,
+	aiInsights *database.AIInsightsRepo,
 	emailSender *email.LoggingSender,
 	tokens *database.EmailTokensRepo,
+	aiCallLogs *database.AICallLogsRepo,
 ) *Handlers {
 	return &Handlers{
 		Render: render, Jobs: jobs, Users: users, Sessions: sessions,
 		Companies: companies, Applications: applications, SavedJobs: savedJobs,
-		Profiles: profiles, AI: aiProvider,
-		Email: emailSender, Tokens: tokens,
+		Profiles: profiles, AI: aiProvider, AIInsights: aiInsights,
+		Email: emailSender, Tokens: tokens, AICallLogs: aiCallLogs,
 	}
+}
+
+// withAIUser attaches the current user to ctx so every AI call is logged
+// against who triggered it, for the admin Activity page.
+func withAIUser(ctx context.Context, u *models.User) context.Context {
+	if u == nil {
+		return ctx
+	}
+	return ai.WithUserContext(ctx, ai.UserContext{ID: u.ID, Name: u.FullName, Email: u.Email, Role: string(u.Role)})
 }

@@ -1,0 +1,46 @@
+{{define "title"}}Activity — JOBHOO{{end}}
+
+{{define "content"}}
+<div class="page-header">
+  <div class="container">
+    <div class="page-header__inner">
+      <div>
+        <h1 class="page-header__title">AI Activity</h1>
+        <p class="page-header__subtitle">Every prompt sent to the AI and the response it returned, newest first.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="container container-padding-full pt-0">
+  {{if .Logs}}
+  <div class="table-responsive mb-4"><table>
+    <thead><tr>
+      <th align="left">Time</th>
+      <th align="left">User</th>
+      <th align="left">Method</th>
+      <th align="center">Status</th>
+      <th align="center">Duration</th>
+      <th align="left">Prompt</th>
+      <th align="left">Response</th>
+    </tr></thead>
+    <tbody>{{range .Logs}}<tr>
+      <td class="nowrap font-xs">{{.CreatedAt.Format "2 Jan 2006 15:04:05"}}</td>
+      <td class="font-xs">
+        {{if .UserName}}{{.UserName}}<br><span class="text-muted">{{.UserEmail}}</span> <span class="badge">{{.UserRole}}</span>{{else}}<span class="text-muted">—</span>{{end}}
+      </td>
+      <td class="font-xs">{{.Method}}</td>
+      <td align="center">{{if eq .Status "success"}}<span class="badge badge--green">OK</span>{{else}}<span class="badge badge--red" title="{{.ErrorMessage}}">Error</span>{{end}}</td>
+      <td align="center" class="nowrap font-xs">{{.ExecutionMs}}ms</td>
+      <td class="font-xs" style="max-width: 320px; white-space: pre-wrap;">{{.Prompt}}</td>
+      <td class="font-xs" style="max-width: 320px; white-space: pre-wrap;">{{.Response}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{if gt .TotalPages 1}}<div class="pagination__wrapper mb-4">
+    {{if gt .Page 1}}<a href="?p={{sub .Page 1}}" class="btn btn--secondary btn--sm">← Prev</a>{{end}}
+    <span class="pagination__info">Page {{.Page}} of {{.TotalPages}}</span>
+    {{if lt .Page .TotalPages}}<a href="?p={{add .Page 1}}" class="btn btn--secondary btn--sm">Next →</a>{{end}}
+  </div>{{end}}
+  {{else}}<p class="text-muted">No AI activity recorded yet.</p>{{end}}
+</section>
+{{end}}

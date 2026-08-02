@@ -255,9 +255,10 @@ DATABASE_URL=postgres://jobhoo:jobhoo_dev_password@localhost:5432/jobhoo?sslmode
 # Security
 SESSION_SECRET=change-me-in-production  # Required in production
 
-# AI Provider
-AI_PROVIDER=mock                # mock | anthropic | openai
-AI_API_KEY=
+# AI Configuration (OpenAI provider with optional gateway)
+AI_API_KEY=                     # Your OpenAI or gateway API key
+AI_MODEL=gpt-4o                 # Model identifier
+AI_BASE_URL=                    # Optional: custom gateway URL
 
 # Email
 EMAIL_PROVIDER=dev              # dev (console) | smtp (real sending)

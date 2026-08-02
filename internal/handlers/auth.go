@@ -8,6 +8,7 @@ import (
 
 	"fmt"
 
+	"github.com/jobhoo/jobhoo/internal/ai"
 	"github.com/jobhoo/jobhoo/internal/auth"
 	"github.com/jobhoo/jobhoo/internal/database"
 	"github.com/jobhoo/jobhoo/internal/middleware"
@@ -159,13 +160,19 @@ func (h *Handlers) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Persist the resume file if one was uploaded during candidate signup.
-	// Validation already confirmed a file exists at this point.
+	// Validation already confirmed a file exists at this point. We also try
+	// to extract structured content immediately so resume_text is
+	// AI-populated from the very first upload, not just on later profile edits.
 	if role == models.RoleCandidate {
-		if resumeURL, err := handleResumeUpload(r); err != nil {
+		if resumeURL, fileData, ext, err := handleResumeUpload(r); err != nil {
 			// File present but invalid type/size — create profile without URL.
 			_ = h.Profiles.Upsert(r.Context(), user.ID, "", "", "", "", []string{})
 		} else if resumeURL != "" {
-			_ = h.Profiles.Upsert(r.Context(), user.ID, "", "", resumeURL, "", []string{})
+			resumeText := ""
+			if extraction, extractErr := h.extractResumeFile(withAIUser(r.Context(), user), fileData, ext); extractErr == nil {
+				resumeText = ai.MarshalResumeExtraction(extraction)
+			}
+			_ = h.Profiles.Upsert(r.Context(), user.ID, "", resumeText, resumeURL, "", []string{})
 		}
 	}
 

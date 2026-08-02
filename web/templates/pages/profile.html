@@ -46,6 +46,11 @@
 
     <div class="field">
       <label>Resume / Curriculum Vitae{{if not .ResumeFileURL}} <span class="text-orange">— required</span>{{end}}</label>
+      {{if .Warning}}
+        <div class="alert alert--warning mb-2 py-3 px-4">
+          <p class="m-0 font-sm">{{.Warning}}</p>
+        </div>
+      {{end}}
       {{if not .ResumeFileURL}}
         <div class="alert alert--warning mb-2 py-3 px-4">
           <p class="m-0 font-sm">You haven't uploaded a resume yet. Recruiters and the AI matching system need it to find you for roles.</p>
@@ -57,15 +62,7 @@
       {{end}}
       <div class="field__input-group">
         <input type="file" id="resume_file" name="resume_file" accept=".pdf,.docx,.txt">
-        <span class="field__hint">PDF, DOCX, or TXT — max 5 MB.</span>
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="resume_text">Resume text <span class="field__optional">(optional)</span></label>
-      <div class="field__input-group">
-        <textarea id="resume_text" name="resume_text" rows="8" placeholder="Paste your resume text here...">{{.ResumeText}}</textarea>
-        <span class="field__hint">Plain text — used by AI for matching and improvement suggestions.</span>
+        <span class="field__hint">PDF, DOCX, or TXT — max 5 MB. JOBHOO's AI reads your resume content directly; there's no separate resume text field to fill in.</span>
       </div>
     </div>
     <button type="submit" class="btn btn--primary btn--block mt-4">Save profile</button>
@@ -73,32 +70,66 @@
 
   <div class="card card--pad-lg">
     <div class="d-flex justify-between items-center">
-      <h3 class="m-0">AI resume suggestions</h3>
-      <button class="btn btn--secondary btn--sm" hx-post="/profile/suggestions" hx-target="#suggestions" hx-swap="innerHTML">
-        ✨ Suggest improvements
+      <h3 class="m-0">Resume Parsing Result</h3>
+      <button class="btn btn--secondary btn--sm" {{if not .ResumeFileURL}}disabled{{end}}
+        hx-post="/profile/resume-analysis" hx-target="body" hx-swap="beforeend" hx-indicator="#resume-analysis-spinner">
+        🔍 Show what AI extracted
       </button>
     </div>
-    <div id="suggestions" class="mt-3">
-      <p class="m-0 font-sm">Save a resume above, then click "Suggest improvements".</p>
-    </div>
+    <p class="m-0 font-sm mt-2">Your resume is the primary source JOBHOO's AI uses to match you to jobs. See exactly what it read — experience, education, skills, achievements, and your story — before it's ever shared with a recruiter.</p>
+    <span id="resume-analysis-spinner" class="htmx-indicator spinner-inline mt-2"></span>
   </div>
 </section>
 <script src="/static/js/chips.js"></script>
 <script>initChips('skills-chips', 'skills-hidden');</script>
 {{end}}
 
-{{define "suggestions-list"}}
-  <ul class="list-unstyled">
-    {{range .}}<li>{{.}}</li>{{end}}
-  </ul>
-{{end}}
+{{define "resume-analysis-modal"}}
+<div class="modal-wrapper">
+  <div class="modal-backdrop" onclick="this.closest('.modal-wrapper')?.remove()"></div>
+  <div class="modal">
+    <div class="job-card__header">
+      <div class="job-card__company-section">
+        <span class="job-card__company">How AI reads your resume</span>
+      </div>
+      <button class="modal-close" onclick="this.closest('.modal-wrapper')?.remove()" title="Close" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+    <div class="modal-content-scroll">
+      {{if .Error}}
+        <div class="alert alert--danger">{{.Error}}</div>
+      {{else if .HasData}}
+        {{if .Extraction.Headline}}<h4>{{.Extraction.Headline}}</h4>{{end}}
+        {{if .Extraction.CandidateStory}}<p>{{.Extraction.CandidateStory}}</p>{{end}}
 
-{{define "suggestions-error"}}
-  <div class="alert alert--danger">
-    <strong>Error generating suggestions:</strong> {{.error}}
+        <h5 class="mt-4">Experience</h5>
+        {{if .Extraction.Experience}}
+          <ul class="list-unstyled">{{range .Extraction.Experience}}<li>{{.}}</li>{{end}}</ul>
+        {{else}}<p class="font-sm">No experience entries found.</p>{{end}}
+
+        <h5 class="mt-4">Education</h5>
+        {{if .Extraction.Education}}
+          <ul class="list-unstyled">{{range .Extraction.Education}}<li>{{.}}</li>{{end}}</ul>
+        {{else}}<p class="font-sm">No education entries found.</p>{{end}}
+
+        <h5 class="mt-4">Skills (from resume)</h5>
+        {{if .Extraction.Skills}}
+          <p>{{range $i, $s := .Extraction.Skills}}{{if $i}}, {{end}}{{$s}}{{end}}</p>
+        {{else}}<p class="font-sm">No skills found.</p>{{end}}
+
+        <h5 class="mt-4">Achievements</h5>
+        {{if .Extraction.Achievements}}
+          <ul class="list-unstyled">{{range .Extraction.Achievements}}<li>{{.}}</li>{{end}}</ul>
+        {{else}}<p class="font-sm">No achievements found.</p>{{end}}
+      {{else}}
+        <p>No resume analysis available yet.</p>
+      {{end}}
+    </div>
   </div>
+</div>
 {{end}}
 
-{{define "suggestions-empty"}}
-  <p class="profile-note">Add your resume text above and save before requesting suggestions.</p>
-{{end}}

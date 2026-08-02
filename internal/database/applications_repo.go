@@ -78,7 +78,7 @@ func (r *ApplicationsRepo) ListByCandidate(ctx context.Context, candidateID stri
 func (r *ApplicationsRepo) ListByJob(ctx context.Context, jobID string) ([]models.Application, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT a.id, a.job_id, a.candidate_id, a.stage, coalesce(a.cover_note,''), a.created_at, a.updated_at,
-		       u.full_name, u.email, coalesce(cp.skills, '{}')
+		       u.full_name, u.email, coalesce(cp.skills, '{}'), coalesce(cp.resume_text, ''), coalesce(cp.resume_file_url, '')
 		FROM applications a
 		JOIN users u ON u.id = a.candidate_id
 		LEFT JOIN candidate_profiles cp ON cp.user_id = a.candidate_id
@@ -94,7 +94,7 @@ func (r *ApplicationsRepo) ListByJob(ctx context.Context, jobID string) ([]model
 	for rows.Next() {
 		var a models.Application
 		if err := rows.Scan(&a.ID, &a.JobID, &a.CandidateID, &a.Stage, &a.CoverNote, &a.CreatedAt, &a.UpdatedAt,
-			&a.CandidateName, &a.CandidateEmail, &a.CandidateSkills); err != nil {
+			&a.CandidateName, &a.CandidateEmail, &a.CandidateSkills, &a.CandidateResumeText, &a.CandidateResumeFileURL); err != nil {
 			return nil, err
 		}
 		apps = append(apps, a)

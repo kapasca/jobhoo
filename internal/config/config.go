@@ -10,18 +10,13 @@ import (
 )
 
 type Config struct {
-	Env         string // "development" | "production"
-	Port        string
-	DatabaseURL string
+	Env           string // "development" | "production"
+	Port          string
+	DatabaseURL   string
+	SessionSecret string // signs auth session cookies
 
-	// SessionSecret signs auth session cookies.
-	SessionSecret string
-
-	// AIProvider selects which implementation of ai.Provider is wired up at
-	// boot (see internal/ai). Swapping providers never touches application
-	// code — only this value changes.
-	AIProvider string
-	AIAPIKey   string
+	// AI configuration - uses OpenAI provider exclusively
+	AIAPIKey string
 	// Email configuration
 	EmailProvider string // "dev" | "smtp"
 	EmailFrom     string
@@ -37,7 +32,6 @@ func Load() (*Config, error) {
 		Port:          getEnv("PORT", "8080"),
 		DatabaseURL:   getEnv("DATABASE_URL", ""),
 		SessionSecret: getEnv("SESSION_SECRET", ""),
-		AIProvider:    getEnv("AI_PROVIDER", "mock"),
 		AIAPIKey:      getEnv("AI_API_KEY", ""),
 		EmailProvider: getEnv("EMAIL_PROVIDER", "dev"),
 		EmailFrom:     getEnv("EMAIL_FROM", "no-reply@jobhoo.local"),

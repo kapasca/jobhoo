@@ -36,11 +36,12 @@ func main() {
 	}
 	defer pool.Close()
 
-	aiProvider, err := ai.New(cfg.AIProvider, cfg.AIAPIKey)
+	aiCallLogsRepo := database.NewAICallLogsRepo(pool)
+	aiProvider, err := ai.NewOpenAIProvider(cfg.AIAPIKey, aiCallLogsRepo)
 	if err != nil {
 		log.Fatalf("ai provider error: %v", err)
 	}
-	log.Printf("AI provider active: %s", aiProvider.Name())
+	log.Printf("AI provider: %s (OpenAI with model %s)", aiProvider.Name(), os.Getenv("AI_MODEL"))
 	log.Printf("Email provider active: %s", cfg.EmailProvider)
 
 	renderer, err := handlers.NewRenderer("web/templates")
@@ -57,6 +58,7 @@ func main() {
 	profilesRepo := database.NewCandidateProfilesRepo(pool)
 	tokensRepo := database.NewEmailTokensRepo(pool)
 	emailLogsRepo := database.NewEmailLogsRepo(pool)
+	aiInsightsRepo := database.NewAIInsightsRepo(pool)
 
 	// Initialize base email sender based on config
 	var baseSender email.Sender
@@ -72,16 +74,16 @@ func main() {
 
 	h := handlers.New(
 		renderer, jobsRepo, usersRepo, sessionsRepo, companiesRepo,
-		applicationsRepo, savedJobsRepo, profilesRepo, aiProvider,
-		emailSender, tokensRepo,
+		applicationsRepo, savedJobsRepo, profilesRepo, aiProvider, aiInsightsRepo,
+		emailSender, tokensRepo, aiCallLogsRepo,
 	)
 	mux := router.New(h, usersRepo, sessionsRepo, "web/static")
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      mux,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 90 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 

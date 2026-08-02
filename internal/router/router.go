@@ -19,7 +19,7 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 	r.Use(chimw.RealIP)
 	r.Use(chimw.Logger)
 	r.Use(chimw.Recoverer)
-	r.Use(chimw.Timeout(15 * time.Second))
+	r.Use(chimw.Timeout(75 * time.Second))
 	r.Use(jhmw.WithUser(sessions, users)) // attaches CurrentUser to context for every request
 	r.Use(jhmw.CSRF)                      // double-submit CSRF check on every state-changing request
 
@@ -66,7 +66,7 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Post("/dashboard/candidate/recommendations", h.RecommendedJobs)
 		r.Get("/profile", h.ProfilePage)
 		r.Post("/profile", h.ProfileUpdate)
-		r.Post("/profile/suggestions", h.ResumeSuggestions)
+		r.Post("/profile/resume-analysis", h.ResumeAnalysis)
 	})
 
 	// --- Recruiter-only routes ---
@@ -89,6 +89,7 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Post("/recruiter/jobs/{id}/delete", h.DeleteJob)
 		r.Get("/recruiter/jobs/{id}/applicants", h.ATSBoard)
 		r.Post("/recruiter/jobs/{id}/rank", h.RankCandidates)
+		r.Post("/recruiter/applications/{id}/explain", h.ExplainMatch)
 		r.Post("/ats/applications/{id}/stage", h.UpdateApplicationStage)
 	})
 
@@ -100,6 +101,7 @@ func New(h *handlers.Handlers, users *database.UsersRepo, sessions *database.Ses
 		r.Post("/admin/approvals/{id}/approve", h.ApproveCompany)
 		r.Post("/admin/approvals/{id}/reject", h.RejectCompany)
 		r.Post("/admin/approvals/{id}/blacklist", h.BlacklistCompany)
+		r.Get("/admin/activity", h.AdminActivity)
 		r.Post("/admin/users/{id}/freeze", h.FreezeUser)
 		r.Post("/admin/users/{id}/unfreeze", h.UnfreezeUser)
 		r.Post("/admin/jobs/{id}/freeze", h.FreezeJob)

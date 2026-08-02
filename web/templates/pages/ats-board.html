@@ -8,9 +8,12 @@
       <h1 class="ats-header-title">ATS Board</h1>
       <p class="ats-job-position">{{.Job.Title}}</p>
     </div>
-    <button class="btn btn--primary" hx-post="/recruiter/jobs/{{.Job.ID}}/rank" hx-target="#ats-columns" hx-swap="outerHTML">
-      ✨ Rank candidates with AI
-    </button>
+    <div>
+      <span id="rank-spinner" class="htmx-indicator spinner-inline"></span>
+      <button class="btn btn--primary ms-5" hx-post="/recruiter/jobs/{{.Job.ID}}/rank" hx-target="#ats-columns" hx-swap="outerHTML" hx-indicator="#rank-spinner">
+        ✨ Rank Candidates with AI
+      </button>
+    </div>
   </div>
 </section>
 
@@ -55,12 +58,39 @@
       aiSummary: el.dataset.aiSummary,
       applied:   el.dataset.applied,
       skills:    JSON.parse(el.dataset.skills || '[]'),
+      resume:    el.dataset.resume ? JSON.parse(el.dataset.resume) : null,
+      resumeUrl: el.dataset.resumeUrl,
     };
   }
 
   function skillsHtml(skills) {
-    if (!skills.length) return '<span class="text-muted font-xs">—</span>';
+    if (!skills.length) return '<span class="text-muted font-xs">' + '&mdash;' + '</span>';
     return skills.map(function(s){ return '<span class="badge">' + esc(s) + '</span>'; }).join(' ');
+  }
+
+  function resumeListHtml(items) {
+    if (!items || !items.length) return '<p class="font-xs text-muted m-0">None found.</p>';
+    return '<ul class="list-unstyled mb-0">' + items.map(function(i){ return '<li class="font-sm">' + esc(i) + '</li>'; }).join('') + '</ul>';
+  }
+
+  function resumeExtractionHtml(resume) {
+    if (!resume) return '<p class="font-sm text-muted">No parsed resume data available yet.</p>';
+    var html = '';
+    if (resume.headline) html += '<p class="font-sm mb-2"><strong class="text-white">' + esc(resume.headline) + '</strong></p>';
+    html += '<p class="font-sm mt-2 mb-1"><strong class="text-white">Education</strong></p>' + resumeListHtml(resume.education);
+    html += '<p class="font-sm mt-2 mb-1"><strong class="text-white">Experience</strong></p>' + resumeListHtml(resume.experience);
+    html += '<p class="font-sm mt-2 mb-1"><strong class="text-white">Skills (from resume)</strong></p>' + resumeListHtml(resume.skills);
+    html += '<p class="font-sm mt-2 mb-1"><strong class="text-white">Achievements</strong></p>' + resumeListHtml(resume.achievements);
+    if (resume.candidate_story) html += '<p class="font-xs mt-2 mb-0"><strong class="text-white">Candidate Story</strong></p><p class="font-xs m-0">' + esc(resume.candidate_story) + '</p>';
+    return html;
+  }
+
+  // Self-swapping div: fires the Explain Match request as soon as it's loaded into the DOM (hx-trigger="load"),
+  // so recruiters see the analysis without clicking a button.
+  function explainAnalysisHtml(d) {
+    return '<div id="_explain-result-' + d.id + '" hx-post="/recruiter/applications/' + esc(d.id) + '/explain" hx-trigger="load" hx-swap="innerHTML" hx-indicator="#_explain-spinner-' + d.id + '">' +
+      '<p class="font-sm text-muted m-0 d-flex items-center gap-2">Analyzing match&hellip; <span id="_explain-spinner-' + d.id + '" class="htmx-indicator spinner-inline"></span></p>' +
+    '</div>';
   }
 
   /* ── Detail modal ─────────────────────────────────────────────── */
@@ -72,30 +102,40 @@
       ? '<button class="btn btn--secondary btn--sm" onclick="_removeCmp(\'' + d.id + '\')">✓ Remove from Comparison</button>'
       : '<button class="btn btn--primary btn--sm"' + (cmpFull ? ' disabled title="Max 2 candidates"' : '') + ' onclick="_addCmp(\'' + d.id + '\')">Compare</button>';
 
-    var aiHtml = d.aiScore
-      ? '<div class="alert mb-3"><p class="m-0 font-sm"><strong class="text-white">AI fit: ' + esc(d.aiScore) + '%</strong><br><span>' + esc(d.aiSummary) + '</span></p></div>'
-      : '';
     var coverHtml = d.cover
       ? '<p class="font-sm mb-0"><em>"' + esc(d.cover) + '"</em></p>'
+      : '';
+
+    var aiScoreRow = d.aiScore
+      ? '<tr><td style="min-width:100px">AI Score</td><td><strong class="text-orange">' + esc(d.aiScore) + '%</strong></td></tr>'
       : '';
 
     var html =
       '<div class="modal-wrapper" id="_cd-modal">' +
         '<div class="modal-backdrop" onclick="_closeDetailModal()"></div>' +
-        '<div class="modal" style="max-width:520px;">' +
+        '<div class="modal" style="max-width:650px;">' +
           '<div class="job-card__header">' +
             '<div class="job-card__company-section"><p class="text-white font-bold m-0">' + esc(d.name) + '</p></div>' +
             '<button class="modal-close" onclick="_closeDetailModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
           '</div>' +
           '<div class="modal-content-scroll">' +
-            '<table class="cmp-table mt-2">' +
+            '<div class="alert alert-to-column py-1 px-2"><table class="cmp-table mt-2">' +
+              aiScoreRow +
               '<tr><td>Email</td><td><a href="mailto:' + esc(d.email) + '" class="link-primary font-sm">' + esc(d.email) + '</a></td></tr>' +
               '<tr><td>Applied</td><td class="font-sm">' + esc(d.applied) + '</td></tr>' +
               '<tr><td>Stage</td><td><span class="badge">' + esc(stageLabel[d.stage] || d.stage) + '</span></td></tr>' +
-              (d.aiScore ? '<tr><td>AI Score</td><td><strong class="text-white">' + esc(d.aiScore) + '%</strong></td></tr>' : '') +
               '<tr><td>Skills</td><td class="d-flex flex-wrap gap-1">' + skillsHtml(d.skills) + '</td></tr>' +
+              (d.resumeUrl ? '<tr><td>Resume</td><td><a class="btn btn--secondary btn--sm" href="' + esc(d.resumeUrl) + '" target="_blank" rel="noopener" download>Download Original Resume File</a></td></tr>' : '') +
               (d.cover ? '<tr><td>Cover Note</td><td class="font-sm"><em>"' + esc(d.cover) + '"</em></td></tr>' : '') +
-            '</table>' +
+            '</table></div>' +
+            '<div class="mt-5">' +
+              '<p class="font-sm mb-4"><strong class="text-white">AI Match Analysis</strong></p>' +
+              explainAnalysisHtml(d) +
+            '</div>' +
+            '<div class="mt-5">' +
+              '<p class="font-sm mb-4"><strong class="text-white">Resume parsing result:</strong></p><div class="alert alert-to-columns">' +
+              resumeExtractionHtml(d.resume) + '</div>' +
+            '</div>' +
           '</div>' +
           '<div class="modal-footer d-flex justify-between items-center">' +
             '<span class="font-xs text-muted">' + (inCmp ? 'In comparison' : (_cmpList.length >= 2 ? 'Comparison full (2/2)' : _cmpList.length + '/2 selected')) + '</span>' +
@@ -107,6 +147,7 @@
     // Store current data for add/remove callbacks
     window._cdCurrent = d;
     document.body.insertAdjacentHTML('beforeend', html);
+    if (window.htmx) htmx.process(document.getElementById('_cd-modal'));
     document.body.style.overflow = 'hidden';
   };
 
@@ -175,12 +216,15 @@
             '<button class="modal-close" onclick="_closeCmpModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
           '</div>' +
           '<div class="modal-content-scroll">' +
-            '<table class="cmp-table">' +
+            '<div class="alert alert-to-columns pt-0 pb-0"><table class="cmp-table">' +
               '<thead><tr>' +
                 '<th></th>' +
                 '<th class="text-white">' + esc(a.name) + '</th>' +
                 '<th class="text-white">' + esc(b.name) + '</th>' +
               '</tr></thead><tbody>' +
+              row('AI Score',
+                a.aiScore ? '<strong class="text-white">'+esc(a.aiScore)+'%</strong>' : '<span class="text-muted">—</span>',
+                b.aiScore ? '<strong class="text-white">'+esc(b.aiScore)+'%</strong>' : '<span class="text-muted">—</span>') +
               row('Email',
                 '<a href="mailto:'+esc(a.email)+'" class="link-primary font-sm">'+esc(a.email)+'</a>',
                 '<a href="mailto:'+esc(b.email)+'" class="link-primary font-sm">'+esc(b.email)+'</a>') +
@@ -188,16 +232,20 @@
               row('Stage',
                 '<span class="badge">'+esc(stageLabel[a.stage]||a.stage)+'</span>',
                 '<span class="badge">'+esc(stageLabel[b.stage]||b.stage)+'</span>') +
-              row('AI Score',
-                a.aiScore ? '<strong class="text-white">'+esc(a.aiScore)+'%</strong>' : '<span class="text-muted">—</span>',
-                b.aiScore ? '<strong class="text-white">'+esc(b.aiScore)+'%</strong>' : '<span class="text-muted">—</span>') +
+              row('Resume',
+                a.resumeUrl ? '<a class="btn btn--secondary btn--sm" href="'+esc(a.resumeUrl)+'" target="_blank" rel="noopener" download>Download Original Resume File</a>' : '<span class="text-muted">—</span>',
+                b.resumeUrl ? '<a class="btn btn--secondary btn--sm" href="'+esc(b.resumeUrl)+'" target="_blank" rel="noopener" download>Download Original Resume File</a>' : '<span class="text-muted">—</span>') +
               row('Skills',
                 '<div class="d-flex flex-wrap gap-1">'+skillsHtml(a.skills)+'</div>',
                 '<div class="d-flex flex-wrap gap-1">'+skillsHtml(b.skills)+'</div>') +
               row('Cover Note',
                 a.cover ? '<em class="font-sm">"'+esc(a.cover)+'"</em>' : '<span class="text-muted">—</span>',
                 b.cover ? '<em class="font-sm">"'+esc(b.cover)+'"</em>' : '<span class="text-muted">—</span>') +
-            '</tbody></table>' +
+              row('AI Match Analysis', explainAnalysisHtml(a), explainAnalysisHtml(b)) +
+              row('Resume Parsing',
+                '<div class="alert alert-to-columns font-xs">'+resumeExtractionHtml(a.resume)+'</div>',
+                '<div class="alert alert-to-columns font-xs">'+resumeExtractionHtml(b.resume)+'</div>') +
+            '</tbody></table></div>' +
           '</div>' +
           '<div class="modal-footer d-flex gap-3 justify-between items-center">' +
             '<button class="btn btn--ghost btn--sm" onclick="_clearCompare();_closeCmpModal()">Clear comparison</button>' +
@@ -206,6 +254,7 @@
         '</div>' +
       '</div>';
     document.body.insertAdjacentHTML('beforeend', html);
+    if (window.htmx) htmx.process(document.getElementById('_cmp-modal'));
     document.body.style.overflow = 'hidden';
   };
 
@@ -220,6 +269,9 @@
 
 {{define "ats-columns"}}
 <div id="ats-columns" class="ats-columns-container">
+  {{if .RankError}}
+    <div class="alert alert--warning ats-rank-error">{{.RankError}}</div>
+  {{end}}
   {{range .Columns}}
     <div class="ats-column">
       <h3 class="ats-column-header">
@@ -239,7 +291,7 @@
 {{end}}
 
 {{define "ats-card"}}
-<div class="card ats-card ats-card--clickable"
+<div class="card ats-card ats-card--clickable mt-3"
      data-cid="{{.ID}}"
      data-name="{{js .CandidateName}}"
      data-email="{{js .CandidateEmail}}"
@@ -249,9 +301,23 @@
      data-ai-summary="{{if .HasAIRank}}{{js .AISummary}}{{end}}"
      data-applied="{{.CreatedAt.Format "2 Jan 2006"}}"
      data-skills='[{{range $i, $s := .CandidateSkills}}{{if $i}},{{end}}"{{js $s}}"{{end}}]'
+     data-resume="{{if .ResumeExtractionJS}}{{.ResumeExtractionJS}}{{end}}"
+     data-resume-url="{{.CandidateResumeFileURL}}"
      onclick="if(!event.target.closest('.ats-card-form')){_openCandidateDetail(this);}">
-  <p class="ats-card-name pt-3 px-3">{{.CandidateName}}</p>
-  <p class="ats-card-email pb-2 px-3">{{.CandidateEmail}}</p>
+  {{if .HasAIRank}}
+  <div class="ats-card-score-badge">{{printf "%.0f" .AIScore}}%</div>
+  {{end}}
+  <div>
+     <div>
+      <p class="ats-card-name pt-3 px-3">{{.CandidateName}}</p>
+      <p class="ats-card-email pb-2 px-3">{{.CandidateEmail}}</p>
+    </div>
+  </div>
+  {{if .HasAIRank}}
+  <div class="ai-rank-result px-3 pb-2">
+    <p class="font-xs text-muted m-0">{{.AISummary}}</p>
+  </div>
+  {{end}}
   <form method="POST" action="/ats/applications/{{.ID}}/stage" class="ats-card-form">
     <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
     <select name="stage" onchange="this.form.submit()" class="ats-card-select">
@@ -265,3 +331,25 @@
   </form>
 </div>
 {{end}}
+
+{{define "explain-match-result"}}
+{{if .Error}}
+  <div class="alert alert--danger">{{.Error}}</div>
+{{else}}
+  <div class="alert alert-to-columns">
+    {{if .HasScore}}<p class="m-0 font-sm"><strong class="text-white text-center">AI fit: {{printf "%.0f" .Score}}%</strong></p>{{end}}
+    {{if .OverallNote}}
+      <p class="font-xs mt-1 text-left">{{.OverallNote}}</p>
+    {{end}}
+    {{if .Strengths}}
+      <p class="font-sm mt-2 mb-0"><strong class="text-white text-center">Strengths</strong></p>
+      <ul class="list-unstyled mb-2 font-xs">{{range .Strengths}}<li>{{.}}</li>{{end}}</ul>
+    {{end}}
+    {{if .Gaps}}
+      <p class="font-sm mt-2 mb-0"><strong class="text-white text-center">Gaps</strong></p>
+      <ul class="list-unstyled mb-0 font-xs">{{range .Gaps}}<li>{{.}}</li>{{end}}</ul>
+    {{end}}
+  </div>
+{{end}}
+{{end}}
+
